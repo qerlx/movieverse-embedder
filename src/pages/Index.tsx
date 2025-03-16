@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import HeroSlider from "@/components/HeroSlider";
 import CategoryRow from "@/components/CategoryRow";
+import DnsPopup from "@/components/DnsPopup";
 import { useToast } from "@/hooks/use-toast";
 import { Movie, TVShow } from "@/types";
 import {
@@ -76,7 +77,10 @@ const Index = () => {
   }
 
   return (
-    <div className="pb-8">
+    <div className="pb-8 relative">
+      {/* DNS Popup - only shown on home page */}
+      <DnsPopup />
+      
       {heroItems.length > 0 && (
         <HeroSlider items={heroItems} type="movie" />
       )}
@@ -117,6 +121,11 @@ const Index = () => {
           items={trendingTVShows} 
           type="tv" 
         />
+      </div>
+      
+      {/* Subtle credit at the bottom */}
+      <div className="text-xs text-muted-foreground/40 text-center mt-12 mb-4">
+        Made by qerlx
       </div>
     </div>
   );
