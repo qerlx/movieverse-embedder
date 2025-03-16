@@ -1,0 +1,197 @@
+
+import { MovieResult, TVResult, ConfigurationResponse } from "@/types";
+
+const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMzQzYzU2N2ZhZTk3Y2JlZGM0OGQ1YWQ0Yjg5M2YzMSIsIm5iZiI6MTc0MTc1NzA2NC43MzMsInN1YiI6IjY3ZDExYTg4MTM5OTBhMDU4YjYwYWExMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.PfUfbFyxCtI3bJehMrDRUuuKOPp58WC-_4B4aUovCyA";
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const EMBED_BASE_URL = "https://embed.su/embed";
+
+const API_OPTIONS = {
+  method: 'GET',
+  headers: {
+    accept: 'application/json',
+    Authorization: `Bearer ${TMDB_TOKEN}`
+  }
+};
+
+// Get TMDb configuration
+export const getConfiguration = async (): Promise<ConfigurationResponse> => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/configuration`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch configuration');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching configuration:', error);
+    throw error;
+  }
+};
+
+// Get popular movies
+export const getPopularMovies = async (page = 1): Promise<MovieResult> => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/movie/popular?language=en-US&page=${page}`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch popular movies');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching popular movies:', error);
+    throw error;
+  }
+};
+
+// Get trending movies
+export const getTrendingMovies = async (timeWindow = 'week'): Promise<MovieResult> => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/trending/movie/${timeWindow}`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch trending movies');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching trending movies:', error);
+    throw error;
+  }
+};
+
+// Get now playing movies
+export const getNowPlayingMovies = async (page = 1): Promise<MovieResult> => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/movie/now_playing?language=en-US&page=${page}`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch now playing movies');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching now playing movies:', error);
+    throw error;
+  }
+};
+
+// Get top rated movies
+export const getTopRatedMovies = async (page = 1): Promise<MovieResult> => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/movie/top_rated?language=en-US&page=${page}`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch top rated movies');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching top rated movies:', error);
+    throw error;
+  }
+};
+
+// Get movies by genre
+export const getMoviesByGenre = async (genreId: number, page = 1): Promise<MovieResult> => {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/discover/movie?with_genres=${genreId}&page=${page}&sort_by=popularity.desc`,
+      API_OPTIONS
+    );
+    if (!response.ok) throw new Error('Failed to fetch movies by genre');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching movies by genre:', error);
+    throw error;
+  }
+};
+
+// Get popular TV shows
+export const getPopularTVShows = async (page = 1): Promise<TVResult> => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/tv/popular?language=en-US&page=${page}`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch popular TV shows');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching popular TV shows:', error);
+    throw error;
+  }
+};
+
+// Get trending TV shows
+export const getTrendingTVShows = async (timeWindow = 'week'): Promise<TVResult> => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/trending/tv/${timeWindow}`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch trending TV shows');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching trending TV shows:', error);
+    throw error;
+  }
+};
+
+// Get top rated TV shows
+export const getTopRatedTVShows = async (page = 1): Promise<TVResult> => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/tv/top_rated?language=en-US&page=${page}`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch top rated TV shows');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching top rated TV shows:', error);
+    throw error;
+  }
+};
+
+// Get TV shows by genre
+export const getTVShowsByGenre = async (genreId: number, page = 1): Promise<TVResult> => {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/discover/tv?with_genres=${genreId}&page=${page}&sort_by=popularity.desc`,
+      API_OPTIONS
+    );
+    if (!response.ok) throw new Error('Failed to fetch TV shows by genre');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching TV shows by genre:', error);
+    throw error;
+  }
+};
+
+// Get movie details
+export const getMovieDetails = async (id: number) => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/movie/${id}?append_to_response=videos,credits,similar`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch movie details');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching movie details:', error);
+    throw error;
+  }
+};
+
+// Get TV show details
+export const getTVShowDetails = async (id: number) => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/tv/${id}?append_to_response=videos,credits,similar`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch TV show details');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching TV show details:', error);
+    throw error;
+  }
+};
+
+// Get TV show season details
+export const getTVShowSeasonDetails = async (id: number, seasonNumber: number) => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/tv/${id}/season/${seasonNumber}`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch TV show season details');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching TV show season details:', error);
+    throw error;
+  }
+};
+
+// Search for movies and TV shows
+export const searchMulti = async (query: string, page = 1) => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/search/multi?query=${encodeURIComponent(query)}&page=${page}`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to search');
+    return await response.json();
+  } catch (error) {
+    console.error('Error searching:', error);
+    throw error;
+  }
+};
+
+// Generate embed URLs
+export const getMovieEmbedUrl = (tmdbId: number): string => {
+  return `${EMBED_BASE_URL}/movie/${tmdbId}`;
+};
+
+export const getTVShowEmbedUrl = (tmdbId: number, season: number, episode: number): string => {
+  return `${EMBED_BASE_URL}/tv/${tmdbId}/${season}/${episode}`;
+};
