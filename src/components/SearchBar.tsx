@@ -99,17 +99,18 @@ const SearchBar = () => {
           isMobile
             ? isExpanded
               ? "w-full"
-              : "w-10"
+              : "w-12" // Increased from w-10 to w-12 for larger tap target
             : "w-full max-w-md"
         }`}
       >
         {isMobile && !isExpanded ? (
           <button
             type="button"
-            className="text-muted-foreground hover:text-white transition-colors p-2"
+            className="text-muted-foreground hover:text-white transition-colors p-3" // Increased padding from p-2 to p-3
             onClick={toggleExpand}
+            aria-label="Open search"
           >
-            <Search size={20} />
+            <Search size={24} /> {/* Increased icon size from 20 to 24 */}
           </button>
         ) : (
           <>
@@ -120,19 +121,22 @@ const SearchBar = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search movies & shows..."
-                className="w-full py-2 px-4 pr-10 bg-muted/50 border border-border/50 rounded-full text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/70 transition-all"
+                className="w-full py-3 px-5 pr-12 bg-muted/50 border border-border/50 rounded-full text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/70 transition-all"
+                // Increased padding from py-2 to py-3, px-4 to px-5, pr-10 to pr-12, and text-sm to text-base
               />
               <button
                 type="submit"
-                className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-white transition-colors"
+                className="absolute right-0 top-0 h-full px-4 text-muted-foreground hover:text-white transition-colors"
+                // Increased padding from px-3 to px-4
+                aria-label="Submit search"
               >
-                <Search size={18} />
+                <Search size={22} /> {/* Increased icon size from 18 to 22 */}
               </button>
             </div>
             {isMobile && (
               <button
                 type="button"
-                className="ml-2 text-muted-foreground hover:text-white"
+                className="ml-3 p-2 text-muted-foreground hover:text-white text-base" // Added p-2 padding and increased font size
                 onClick={toggleExpand}
               >
                 Cancel
@@ -148,11 +152,11 @@ const SearchBar = () => {
             {results.map((item) => (
               <div
                 key={`${item.id}-${item.media_type || (item.title ? "movie" : "tv")}`}
-                className="p-2 hover:bg-muted rounded cursor-pointer transition-colors"
+                className="p-3 hover:bg-muted rounded cursor-pointer transition-colors" // Increased padding from p-2 to p-3
                 onClick={() => handleResultClick(item)}
               >
                 <div className="flex items-center">
-                  <div className="w-10 h-14 bg-muted rounded overflow-hidden flex-shrink-0">
+                  <div className="w-12 h-16 bg-muted rounded overflow-hidden flex-shrink-0"> {/* Increased size from w-10 h-14 to w-12 h-16 */}
                     {item.poster_path ? (
                       <img
                         src={`https://image.tmdb.org/t/p/w92${item.poster_path}`}
@@ -167,10 +171,10 @@ const SearchBar = () => {
                     )}
                   </div>
                   <div className="ml-3">
-                    <p className="font-medium text-sm text-balance">
+                    <p className="font-medium text-base text-balance"> {/* Increased text size from text-sm to text-base */}
                       {item.title || item.name}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground"> {/* Increased text size from text-xs to text-sm */}
                       {item.media_type === "movie" || item.title
                         ? `Movie · ${
                             item.release_date
@@ -190,7 +194,7 @@ const SearchBar = () => {
             <div className="pt-2 pb-1 px-2 border-t border-border/50 mt-1">
               <button
                 onClick={handleSubmit}
-                className="w-full text-center text-sm text-primary hover:underline"
+                className="w-full text-center py-2 text-base text-primary hover:underline" // Added py-2 padding and increased text size
               >
                 See all results
               </button>
