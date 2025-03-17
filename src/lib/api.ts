@@ -1,4 +1,3 @@
-
 import { MovieResult, TVResult, ConfigurationResponse } from "@/types";
 
 const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMzQzYzU2N2ZhZTk3Y2JlZGM0OGQ1YWQ0Yjg5M2YzMSIsIm5iZiI6MTc0MTc1NzA2NC43MzMsInN1YiI6IjY3ZDExYTg4MTM5OTBhMDU4YjYwYWExMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.PfUfbFyxCtI3bJehMrDRUuuKOPp58WC-_4B4aUovCyA";
@@ -167,11 +166,32 @@ export const getTVShowDetails = async (id: number) => {
 export const getTVShowSeasonDetails = async (id: number, seasonNumber: number) => {
   try {
     const response = await fetch(`${TMDB_BASE_URL}/tv/${id}/season/${seasonNumber}`, API_OPTIONS);
-    if (!response.ok) throw new Error('Failed to fetch TV show season details');
-    return await response.json();
+    
+    if (!response.ok) {
+      // If the response is not ok, try to get the error message from the response
+      try {
+        const errorData = await response.json();
+        console.error('API error:', errorData);
+        return { 
+          success: false, 
+          status_message: errorData.status_message || 'Failed to fetch TV show season details', 
+          episodes: [] 
+        };
+      } catch (e) {
+        // If we can't parse the error response, return a generic error
+        return { 
+          success: false, 
+          status_message: `Failed with status: ${response.status}`, 
+          episodes: [] 
+        };
+      }
+    }
+    
+    const data = await response.json();
+    return { ...data, success: true };
   } catch (error) {
     console.error('Error fetching TV show season details:', error);
-    throw error;
+    return { success: false, status_message: 'Network or server error', episodes: [] };
   }
 };
 

@@ -29,6 +29,7 @@ const TVShowDetail = () => {
   const [seasonDetails, setSeasonDetails] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingSeason, setIsLoadingSeason] = useState(false);
+  const [episodesError, setEpisodesError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTVShowDetails = async () => {
@@ -71,16 +72,22 @@ const TVShowDetail = () => {
       
       try {
         setIsLoadingSeason(true);
+        setEpisodesError(null);
         const tvShowId = parseInt(id);
         const data = await getTVShowSeasonDetails(tvShowId, selectedSeason);
-        setSeasonDetails(data);
+        
+        console.log("Season details:", data);
+        
+        if (data.success === false) {
+          setEpisodesError("Episodes are not available for this season.");
+          setSeasonDetails({ episodes: [] });
+        } else {
+          setSeasonDetails(data);
+        }
       } catch (error) {
         console.error("Error fetching season details:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load season details. Please try again later.",
-          variant: "destructive",
-        });
+        setEpisodesError("Failed to load episodes. Try another season if available.");
+        setSeasonDetails({ episodes: [] });
       } finally {
         setIsLoadingSeason(false);
       }
@@ -225,7 +232,7 @@ const TVShowDetail = () => {
         <div className="flex flex-col md:flex-row items-start justify-between gap-4 mb-6">
           <h2 className="text-2xl font-bold">Episodes</h2>
           
-          {actualSeasons.length > 0 && (
+          {tvShow.seasons && tvShow.seasons.length > 0 && (
             <div className="w-full md:w-auto">
               <Select
                 value={selectedSeason.toString()}
@@ -235,14 +242,16 @@ const TVShowDetail = () => {
                   <SelectValue placeholder="Select Season" />
                 </SelectTrigger>
                 <SelectContent>
-                  {actualSeasons.map((season: Season) => (
-                    <SelectItem
-                      key={season.id}
-                      value={season.season_number.toString()}
-                    >
-                      Season {season.season_number}
-                    </SelectItem>
-                  ))}
+                  {tvShow.seasons
+                    .filter((season: Season) => season.season_number > 0)
+                    .map((season: Season) => (
+                      <SelectItem
+                        key={season.id}
+                        value={season.season_number.toString()}
+                      >
+                        Season {season.season_number}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -255,10 +264,15 @@ const TVShowDetail = () => {
           </div>
         ) : (
           <>
-            {seasonDetails?.episodes?.length > 0 ? (
+            {episodesError ? (
+              <div className="py-8 text-center">
+                <p className="text-muted-foreground">{episodesError}</p>
+                <p className="mt-2 text-sm">Try selecting a different season or check back later.</p>
+              </div>
+            ) : seasonDetails?.episodes?.length > 0 ? (
               <div className="space-y-4">
                 {seasonDetails.episodes.map((episode: Episode) => (
-                  <Collapsible key={episode.id} className="bg-card rounded-lg overflow-hidden animate-fade-in">
+                  <Collapsible key={episode.id || `ep-${episode.episode_number}`} className="bg-card rounded-lg overflow-hidden animate-fade-in">
                     <div className="flex items-center p-4">
                       <div className="w-16 h-16 bg-muted/20 rounded overflow-hidden flex-shrink-0">
                         {episode.still_path ? (
@@ -281,7 +295,7 @@ const TVShowDetail = () => {
                             <div className="text-xs text-muted-foreground">
                               Episode {episode.episode_number}
                             </div>
-                            <h3 className="font-medium">{episode.name}</h3>
+                            <h3 className="font-medium">{episode.name || `Episode ${episode.episode_number}`}</h3>
                           </div>
                           
                           <div className="flex items-center gap-2">
@@ -325,7 +339,7 @@ const TVShowDetail = () => {
               </div>
             ) : (
               <div className="py-8 text-center text-muted-foreground">
-                No episodes found for this season.
+                No episodes found for this season. Try selecting a different season.
               </div>
             )}
           </>
