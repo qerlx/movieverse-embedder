@@ -385,10 +385,10 @@ const TVShowDetail = () => {
                           <CalendarIcon size={12} className="mr-1" />
                           {episode.air_date || "Unknown"}
                         </span>
-                        {episode.runtime && (
+                        {(episode as any).runtime && (
                           <span className="text-xs text-muted-foreground flex items-center">
                             <Clock size={12} className="mr-1" />
-                            {episode.runtime} min
+                            {(episode as any).runtime} min
                           </span>
                         )}
                       </div>
