@@ -1,11 +1,25 @@
 
 import React, { useEffect, useState } from "react";
-import { Movie } from "@/types";
+import { Movie, Genre } from "@/types";
 import MovieCard from "@/components/MovieCard";
 import { useToast } from "@/hooks/use-toast";
-import { getPopularMovies, getNowPlayingMovies, getTopRatedMovies } from "@/lib/api";
+import { 
+  getPopularMovies, 
+  getNowPlayingMovies, 
+  getTopRatedMovies, 
+  getMoviesByGenre, 
+  getMovieGenres 
+} from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
+import { ChevronDown, Filter } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 const Movies = () => {
   const { toast } = useToast();
@@ -13,7 +27,23 @@ const Movies = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [category, setCategory] = useState<"popular" | "now_playing" | "top_rated">("popular");
+  const [category, setCategory] = useState<"popular" | "now_playing" | "top_rated" | "genre">("popular");
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
+
+  // Fetch movie genres
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const data = await getMovieGenres();
+        setGenres(data.genres);
+      } catch (error) {
+        console.error("Error fetching movie genres:", error);
+      }
+    };
+    
+    fetchGenres();
+  }, []);
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -21,18 +51,22 @@ const Movies = () => {
         setIsLoading(true);
         
         let response;
-        switch (category) {
-          case "popular":
-            response = await getPopularMovies(currentPage);
-            break;
-          case "now_playing":
-            response = await getNowPlayingMovies(currentPage);
-            break;
-          case "top_rated":
-            response = await getTopRatedMovies(currentPage);
-            break;
-          default:
-            response = await getPopularMovies(currentPage);
+        if (category === "genre" && selectedGenre) {
+          response = await getMoviesByGenre(selectedGenre.id, currentPage);
+        } else {
+          switch (category) {
+            case "popular":
+              response = await getPopularMovies(currentPage);
+              break;
+            case "now_playing":
+              response = await getNowPlayingMovies(currentPage);
+              break;
+            case "top_rated":
+              response = await getTopRatedMovies(currentPage);
+              break;
+            default:
+              response = await getPopularMovies(currentPage);
+          }
         }
         
         setMovies(response.results);
@@ -52,21 +86,46 @@ const Movies = () => {
     };
 
     fetchMovies();
-  }, [category, currentPage, toast]);
+  }, [category, currentPage, selectedGenre, toast]);
 
   const changeCategory = (newCategory: "popular" | "now_playing" | "top_rated") => {
     setCategory(newCategory);
+    setSelectedGenre(null);
+    setCurrentPage(1);
+  };
+
+  const selectGenre = (genre: Genre) => {
+    setSelectedGenre(genre);
+    setCategory("genre");
+    setCurrentPage(1);
+  };
+
+  const clearGenreFilter = () => {
+    setSelectedGenre(null);
+    setCategory("popular");
     setCurrentPage(1);
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-        <h1 className="text-3xl font-bold">Movies</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold">Movies</h1>
+          
+          {selectedGenre && (
+            <Badge 
+              variant="secondary" 
+              className="ml-2 cursor-pointer"
+              onClick={clearGenreFilter}
+            >
+              {selectedGenre.name} ×
+            </Badge>
+          )}
+        </div>
         
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           <Button
-            variant={category === "popular" ? "default" : "outline"}
+            variant={category === "popular" && !selectedGenre ? "default" : "outline"}
             onClick={() => changeCategory("popular")}
             className="transition-all duration-300"
           >
@@ -86,6 +145,33 @@ const Movies = () => {
           >
             Top Rated
           </Button>
+          
+          {genres.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-1"
+                >
+                  <Filter size={16} />
+                  Genres
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 max-h-[70vh] overflow-y-auto">
+                <DropdownMenuGroup>
+                  {genres.map((genre) => (
+                    <DropdownMenuItem 
+                      key={genre.id} 
+                      onClick={() => selectGenre(genre)}
+                      className={selectedGenre?.id === genre.id ? "bg-muted" : ""}
+                    >
+                      {genre.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

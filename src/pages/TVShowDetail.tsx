@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
-import { Star, Calendar, Play, ChevronDown } from "lucide-react";
+import { Star, Calendar, Play, ChevronDown, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TVShow, Season, Episode, Cast } from "@/types";
 import CategoryRow from "@/components/CategoryRow";
@@ -30,6 +30,7 @@ const TVShowDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingSeason, setIsLoadingSeason] = useState(false);
   const [episodesError, setEpisodesError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const fetchTVShowDetails = async () => {
@@ -73,21 +74,43 @@ const TVShowDetail = () => {
       try {
         setIsLoadingSeason(true);
         setEpisodesError(null);
-        const tvShowId = parseInt(id);
-        const data = await getTVShowSeasonDetails(tvShowId, selectedSeason);
         
-        console.log("Season details:", data);
+        const tvShowId = parseInt(id);
+        console.log(`Starting request for show ${tvShowId}, season ${selectedSeason}, retry: ${retryCount}`);
+        
+        const data = await getTVShowSeasonDetails(tvShowId, selectedSeason);
+        console.log("Season details response:", data);
         
         if (data.success === false) {
-          setEpisodesError("Episodes are not available for this season.");
+          console.error("Failed to load episode data:", data.status_message);
+          setEpisodesError(`Episodes are not available for this season. ${data.status_message || ''}`);
+          setSeasonDetails({ episodes: [] });
+        } else if (!data.episodes || data.episodes.length === 0) {
+          setEpisodesError("No episodes found for this season.");
           setSeasonDetails({ episodes: [] });
         } else {
-          setSeasonDetails(data);
+          // Fix any episodes without proper episode numbers
+          const processedEpisodes = data.episodes.map((episode: any, index: number) => {
+            if (!episode.episode_number || episode.episode_number <= 0) {
+              return { ...episode, episode_number: index + 1 };
+            }
+            return episode;
+          });
+          setSeasonDetails({ ...data, episodes: processedEpisodes });
         }
       } catch (error) {
         console.error("Error fetching season details:", error);
         setEpisodesError("Failed to load episodes. Try another season if available.");
         setSeasonDetails({ episodes: [] });
+        
+        // Retry once after a short delay (only for network errors)
+        if (retryCount === 0) {
+          setRetryCount(1);
+          setTimeout(() => {
+            console.log("Retrying season fetch...");
+            setRetryCount(0); // This will trigger the useEffect again
+          }, 2000);
+        }
       } finally {
         setIsLoadingSeason(false);
       }
@@ -96,7 +119,7 @@ const TVShowDetail = () => {
     if (tvShow) {
       fetchSeasonDetails();
     }
-  }, [id, selectedSeason, tvShow, toast]);
+  }, [id, selectedSeason, tvShow, retryCount, toast]);
 
   const handleWatchClick = (episodeNumber: number) => {
     navigate(`/watch/tv/${id}/${selectedSeason}/${episodeNumber}`);
@@ -266,8 +289,32 @@ const TVShowDetail = () => {
           <>
             {episodesError ? (
               <div className="py-8 text-center">
-                <p className="text-muted-foreground">{episodesError}</p>
-                <p className="mt-2 text-sm">Try selecting a different season or check back later.</p>
+                <div className="flex flex-col items-center">
+                  <AlertTriangle size={48} className="text-orange-500 mb-4" />
+                  <p className="text-muted-foreground">{episodesError}</p>
+                  <p className="mt-2 text-sm">Try selecting a different season or check back later.</p>
+                  
+                  {/* Provide direct watch button anyway if there are expected episodes */}
+                  <div className="mt-6 p-4 border border-border rounded-lg">
+                    <h3 className="font-medium mb-2">Can't see episodes?</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      You can try to watch specific episodes directly by clicking the buttons below:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {[1, 2, 3, 4, 5].map(epNum => (
+                        <Button 
+                          key={epNum} 
+                          size="sm" 
+                          variant="outline" 
+                          className="gap-1"
+                          onClick={() => handleWatchClick(epNum)}
+                        >
+                          <Play size={14} /> Episode {epNum}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : seasonDetails?.episodes?.length > 0 ? (
               <div className="space-y-4">
