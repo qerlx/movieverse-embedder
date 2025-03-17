@@ -1,11 +1,9 @@
-
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getMovieDetails, getTVShowDetails } from "@/lib/api";
 import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -15,6 +13,7 @@ const Watch = () => {
     episode?: string;
   }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [embedUrls, setEmbedUrls] = useState<{server1: string, server2: string}>({
@@ -34,7 +33,6 @@ const Watch = () => {
         const itemId = parseInt(id);
         
         if (type === "movie") {
-          // Fetch movie details
           const movieData = await getMovieDetails(itemId);
           setTitle(movieData.title);
           setEmbedUrls({
@@ -42,7 +40,6 @@ const Watch = () => {
             server2: `https://www.2embed.cc/embed/${itemId}`
           });
         } else if (type === "tv" && season && episode) {
-          // Fetch TV show details
           const tvData = await getTVShowDetails(itemId);
           setTitle(`${tvData.name} - S${season} E${episode}`);
           setEmbedUrls({
@@ -50,7 +47,6 @@ const Watch = () => {
             server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`
           });
         } else {
-          // Invalid parameters for TV show
           throw new Error("Invalid parameters for TV show");
         }
       } catch (error) {
@@ -60,7 +56,6 @@ const Watch = () => {
           description: "Failed to load media. Please try again later.",
           variant: "destructive",
         });
-        // Navigate back on error
         navigate(-1);
       } finally {
         setIsLoading(false);
@@ -80,7 +75,6 @@ const Watch = () => {
   };
 
   const handleIframeError = () => {
-    // If current server fails, try the other one
     if (activeServer === lastWorkingServer) {
       const otherServer = activeServer === "server1" ? "server2" : "server1";
       toast({
@@ -92,21 +86,34 @@ const Watch = () => {
     }
   };
 
+  const handleBackNavigation = () => {
+    if (location.key !== "default") {
+      navigate(-1);
+    } else {
+      if (type === "movie") {
+        navigate(`/movie/${id}`);
+      } else if (type === "tv" && season && episode) {
+        navigate(`/tv/${id}`);
+      } else {
+        navigate('/');
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black">
       <div className="container mx-auto px-4 py-4 flex flex-col h-screen">
-        {/* Header */}
         <div className="flex items-center mb-4">
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBackNavigation}
             className="text-white hover:text-primary transition-colors flex items-center"
+            aria-label="Go back"
           >
             <ArrowLeft size={20} className="mr-2" />
             Back
           </button>
           <h1 className="text-xl font-medium text-white ml-4 truncate">{title}</h1>
           
-          {/* Server selection */}
           <div className="ml-auto flex space-x-2">
             <Button 
               size="sm" 
@@ -144,7 +151,7 @@ const Watch = () => {
               </div>
               
               <iframe
-                key={activeServer} // Force iframe refresh when server changes
+                key={activeServer}
                 src={embedUrls[activeServer]}
                 title={title}
                 frameBorder="0"
@@ -154,7 +161,6 @@ const Watch = () => {
               ></iframe>
             </div>
             
-            {/* Video controls */}
             <div className="flex justify-center mt-4 space-x-2">
               <Button 
                 variant="outline" 
@@ -175,7 +181,6 @@ const Watch = () => {
                 size="sm" 
                 className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
                 onClick={() => {
-                  // Switch to the next server
                   const nextServer = activeServer === "server1" ? "server2" : "server1";
                   handleServerSwitch(nextServer);
                 }}

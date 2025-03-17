@@ -6,6 +6,7 @@ import { searchMulti } from "@/lib/api";
 import { MediaItem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Logo from "@/components/ui/logo";
 
 const SearchBar = () => {
   const [query, setQuery] = useState("");
@@ -89,6 +90,12 @@ const SearchBar = () => {
         inputRef.current?.focus();
       }, 100);
     }
+
+    // Hide logo text when expanded (handled in Layout component by watching isExpanded)
+    // The actual logo change is implemented in the Layout component
+    document.dispatchEvent(new CustomEvent('searchBarExpandToggle', { 
+      detail: { expanded: !isExpanded } 
+    }));
   };
 
   return (
@@ -98,7 +105,7 @@ const SearchBar = () => {
         className={`flex items-center transition-all duration-300 ${
           isMobile
             ? isExpanded
-              ? "w-full"
+              ? "w-full animate-fade-in"
               : "w-12" // Increased from w-10 to w-12 for larger tap target
             : "w-full max-w-md"
         }`}
@@ -136,7 +143,7 @@ const SearchBar = () => {
             {isMobile && (
               <button
                 type="button"
-                className="ml-3 p-2 text-muted-foreground hover:text-white text-base" // Added p-2 padding and increased font size
+                className="ml-3 p-2 text-muted-foreground hover:text-white text-base animate-fade-in" // Added animation
                 onClick={toggleExpand}
               >
                 Cancel

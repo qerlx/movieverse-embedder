@@ -12,6 +12,7 @@ const Layout = () => {
   const [showNavbar, setShowNavbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchExpanded, setSearchExpanded] = useState(false);
   const isMobile = useIsMobile();
 
   // Handle navbar hide on scroll
@@ -38,6 +39,18 @@ const Layout = () => {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Listen for search bar expansion events
+  useEffect(() => {
+    const handleSearchToggle = (e: CustomEvent) => {
+      setSearchExpanded(e.detail.expanded);
+    };
+
+    document.addEventListener('searchBarExpandToggle', handleSearchToggle as EventListener);
+    return () => {
+      document.removeEventListener('searchBarExpandToggle', handleSearchToggle as EventListener);
+    };
+  }, []);
 
   const NavItems = () => (
     <>
@@ -97,7 +110,19 @@ const Layout = () => {
       >
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Logo />
+            {isMobile && searchExpanded ? (
+              <div className="w-10 h-10 flex items-center justify-center">
+                <img 
+                  src="/lovable-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
+                  alt="MovieStreamHub" 
+                  className="w-8 h-8 object-contain animate-scale-in" 
+                />
+              </div>
+            ) : (
+              <div className={`transition-all duration-300 ${isMobile && searchExpanded ? 'opacity-0 scale-0 w-0' : 'opacity-100 animate-fade-in'}`}>
+                <Logo />
+              </div>
+            )}
             {!isMobile && (
               <nav className="hidden md:flex items-center gap-2">
                 <NavItems />
@@ -110,7 +135,7 @@ const Layout = () => {
             {isMobile && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 text-muted-foreground hover:text-white transition-colors"
+                className={`p-2 text-muted-foreground hover:text-white transition-colors ${searchExpanded ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 animate-fade-in'}`}
               >
                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>

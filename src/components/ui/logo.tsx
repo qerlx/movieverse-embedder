@@ -5,9 +5,25 @@ import { cn } from "@/lib/utils";
 
 interface LogoProps {
   className?: string;
+  iconOnly?: boolean;
 }
 
-const Logo: React.FC<LogoProps> = ({ className }) => {
+const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
+  if (iconOnly) {
+    return (
+      <Link 
+        to="/" 
+        className={cn("flex items-center justify-center", className)}
+      >
+        <img 
+          src="/lovable-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
+          alt="MovieStreamHub" 
+          className="w-8 h-8 object-contain" 
+        />
+      </Link>
+    );
+  }
+  
   return (
     <Link 
       to="/" 
