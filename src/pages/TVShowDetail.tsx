@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
-import { Star, Calendar, Play, ChevronDown, AlertTriangle } from "lucide-react";
+import { Star, Calendar, Play, ChevronDown, AlertTriangle, Tv2, Calendar as CalendarIcon, Clock, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TVShow, Season, Episode, Cast } from "@/types";
 import CategoryRow from "@/components/CategoryRow";
@@ -19,6 +18,17 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { 
+  Card, 
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle 
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 const TVShowDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -42,9 +52,7 @@ const TVShowDetail = () => {
         const data = await getTVShowDetails(tvShowId);
         setTVShow(data);
         
-        // Set initial selected season
         if (data.seasons && data.seasons.length > 0) {
-          // Find the first actual season (some shows have season 0 for specials)
           const firstSeason = data.seasons.find(
             (season: Season) => season.season_number > 0
           );
@@ -89,7 +97,6 @@ const TVShowDetail = () => {
           setEpisodesError("No episodes found for this season.");
           setSeasonDetails({ episodes: [] });
         } else {
-          // Fix any episodes without proper episode numbers
           const processedEpisodes = data.episodes.map((episode: any, index: number) => {
             if (!episode.episode_number || episode.episode_number <= 0) {
               return { ...episode, episode_number: index + 1 };
@@ -103,12 +110,11 @@ const TVShowDetail = () => {
         setEpisodesError("Failed to load episodes. Try another season if available.");
         setSeasonDetails({ episodes: [] });
         
-        // Retry once after a short delay (only for network errors)
         if (retryCount === 0) {
           setRetryCount(1);
           setTimeout(() => {
             console.log("Retrying season fetch...");
-            setRetryCount(0); // This will trigger the useEffect again
+            setRetryCount(0);
           }, 2000);
         }
       } finally {
@@ -167,7 +173,6 @@ const TVShowDetail = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero section with backdrop */}
       <div className="relative">
         {backdropUrl && (
           <div className="absolute inset-0 w-full h-full">
@@ -182,7 +187,6 @@ const TVShowDetail = () => {
 
         <div className="relative container mx-auto px-4 pt-12 pb-8 min-h-[70vh] flex flex-col justify-center">
           <div className="flex flex-col md:flex-row gap-8 items-start">
-            {/* Poster */}
             <div className="w-full max-w-xs mx-auto md:mx-0 animate-fade-in">
               <div className="rounded-lg overflow-hidden shadow-xl">
                 <img
@@ -193,7 +197,6 @@ const TVShowDetail = () => {
               </div>
             </div>
 
-            {/* Details */}
             <div className="flex-1 animate-fade-up" style={{ animationDelay: "200ms" }}>
               <h1 className="text-3xl md:text-5xl font-bold mb-4">{tvShow.name}</h1>
               
@@ -250,10 +253,12 @@ const TVShowDetail = () => {
         </div>
       </div>
 
-      {/* Episodes section */}
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row items-start justify-between gap-4 mb-6">
-          <h2 className="text-2xl font-bold">Episodes</h2>
+          <div className="flex items-center">
+            <Tv2 className="h-6 w-6 mr-2 text-primary" />
+            <h2 className="text-2xl font-bold">Episodes</h2>
+          </div>
           
           {tvShow.seasons && tvShow.seasons.length > 0 && (
             <div className="w-full md:w-auto">
@@ -261,7 +266,7 @@ const TVShowDetail = () => {
                 value={selectedSeason.toString()}
                 onValueChange={(value) => setSelectedSeason(parseInt(value))}
               >
-                <SelectTrigger className="w-full md:w-[180px]">
+                <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="Select Season" />
                 </SelectTrigger>
                 <SelectContent>
@@ -272,7 +277,7 @@ const TVShowDetail = () => {
                         key={season.id}
                         value={season.season_number.toString()}
                       >
-                        Season {season.season_number}
+                        Season {season.season_number} {season.name !== `Season ${season.season_number}` && `(${season.name})`}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -288,100 +293,141 @@ const TVShowDetail = () => {
         ) : (
           <>
             {episodesError ? (
-              <div className="py-8 text-center">
-                <div className="flex flex-col items-center">
-                  <AlertTriangle size={48} className="text-orange-500 mb-4" />
-                  <p className="text-muted-foreground">{episodesError}</p>
-                  <p className="mt-2 text-sm">Try selecting a different season or check back later.</p>
-                  
-                  {/* Provide direct watch button anyway if there are expected episodes */}
-                  <div className="mt-6 p-4 border border-border rounded-lg">
-                    <h3 className="font-medium mb-2">Can't see episodes?</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      You can try to watch specific episodes directly by clicking the buttons below:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {[1, 2, 3, 4, 5].map(epNum => (
-                        <Button 
-                          key={epNum} 
-                          size="sm" 
-                          variant="outline" 
-                          className="gap-1"
-                          onClick={() => handleWatchClick(epNum)}
-                        >
-                          <Play size={14} /> Episode {epNum}
-                        </Button>
-                      ))}
+              <div className="py-8">
+                <Card className="border-orange-200 bg-orange-50/10">
+                  <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+                    <div className="mr-4 bg-orange-100 rounded-full p-2">
+                      <AlertTriangle size={24} className="text-orange-500" />
                     </div>
-                  </div>
-                </div>
+                    <div>
+                      <CardTitle className="text-xl font-semibold">Episodes Unavailable</CardTitle>
+                      <CardDescription>{episodesError}</CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4">
+                      Try selecting a different season or check back later.
+                    </p>
+                    
+                    <div className="p-4 border border-border rounded-lg bg-card/50">
+                      <h3 className="font-medium mb-2">Quick Episode Access</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Try accessing specific episodes directly:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4, 5].map(epNum => (
+                          <Button 
+                            key={epNum} 
+                            size="sm" 
+                            className="gap-1 bg-primary/80 hover:bg-primary"
+                            onClick={() => handleWatchClick(epNum)}
+                          >
+                            <Play size={14} /> Episode {epNum}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             ) : seasonDetails?.episodes?.length > 0 ? (
-              <div className="space-y-4">
-                {seasonDetails.episodes.map((episode: Episode) => (
-                  <Collapsible key={episode.id || `ep-${episode.episode_number}`} className="bg-card rounded-lg overflow-hidden animate-fade-in">
-                    <div className="flex items-center p-4">
-                      <div className="w-16 h-16 bg-muted/20 rounded overflow-hidden flex-shrink-0">
-                        {episode.still_path ? (
-                          <img
-                            src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
-                            alt={episode.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                            No img
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {seasonDetails.episodes.map((episode: Episode, index: number) => (
+                  <Card key={episode.id || `ep-${episode.episode_number}`} 
+                    className={cn(
+                      "overflow-hidden transition-all duration-200 hover:shadow-lg border border-border/50 group",
+                    )}
+                  >
+                    <div className="aspect-video bg-muted/20 relative overflow-hidden">
+                      {episode.still_path ? (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w500${episode.still_path}`}
+                          alt={episode.name}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/10">
+                          <Film className="h-12 w-12 text-muted-foreground/30" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div className="p-4 w-full">
+                          <Button
+                            onClick={() => handleWatchClick(episode.episode_number)}
+                            className="w-full gap-2"
+                            size="sm"
+                          >
+                            <Play size={16} className="mr-1" />
+                            Watch Now
+                          </Button>
+                        </div>
+                      </div>
+                      <Badge className="absolute top-2 right-2 bg-black/70 text-white">
+                        Episode {episode.episode_number}
+                      </Badge>
+                    </div>
+                    
+                    <CardHeader className="p-4 pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base font-bold line-clamp-1">
+                          {episode.name || `Episode ${episode.episode_number}`}
+                        </CardTitle>
+                        {episode.vote_average > 0 && (
+                          <div className="flex items-center gap-1 text-sm">
+                            <Star size={14} className="text-yellow-400" />
+                            <span>{episode.vote_average.toFixed(1)}</span>
                           </div>
                         )}
                       </div>
+                      <div className="flex items-center gap-4 mt-1">
+                        <span className="text-xs text-muted-foreground flex items-center">
+                          <CalendarIcon size={12} className="mr-1" />
+                          {episode.air_date || "Unknown"}
+                        </span>
+                        {episode.runtime && (
+                          <span className="text-xs text-muted-foreground flex items-center">
+                            <Clock size={12} className="mr-1" />
+                            {episode.runtime} min
+                          </span>
+                        )}
+                      </div>
+                    </CardHeader>
+                    
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-sm text-muted-foreground line-clamp-3">
+                        {episode.overview || "No overview available for this episode."}
+                      </p>
+                    </CardContent>
+                    
+                    <Collapsible>
+                      <div className="px-4 pb-0">
+                        <Separator className="my-1" />
+                        <CollapsibleTrigger className="w-full flex items-center justify-center text-xs text-muted-foreground py-2 hover:text-primary transition-colors">
+                          <span>Show more</span>
+                          <ChevronDown size={14} className="ml-1" />
+                        </CollapsibleTrigger>
+                      </div>
                       
-                      <div className="ml-4 flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-xs text-muted-foreground">
-                              Episode {episode.episode_number}
-                            </div>
-                            <h3 className="font-medium">{episode.name || `Episode ${episode.episode_number}`}</h3>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
+                      <CollapsibleContent>
+                        <CardContent className="p-4 pt-0">
+                          <p className="text-sm">
+                            {episode.overview || "No overview available for this episode."}
+                          </p>
+                          <div className="flex justify-end mt-2">
                             <Button
-                              size="sm"
-                              className="bg-primary hover:bg-primary/90 gap-1"
                               onClick={() => handleWatchClick(episode.episode_number)}
+                              size="sm"
+                              className="gap-1"
                             >
                               <Play size={14} />
                               Watch
                             </Button>
-                            
-                            <CollapsibleTrigger className="p-2 hover:bg-muted/30 rounded-full transition-colors">
-                              <ChevronDown size={16} />
-                            </CollapsibleTrigger>
                           </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <CollapsibleContent>
-                      <div className="px-4 pb-4 pt-2 border-t border-border/50 ml-20">
-                        <p className="text-sm text-muted-foreground">{episode.overview || "No overview available."}</p>
-                        
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          <span>Air date: {episode.air_date || "Unknown"}</span>
-                          {episode.vote_average > 0 && (
-                            <>
-                              <span className="mx-2">·</span>
-                              <span className="flex items-center gap-1 inline-flex">
-                                <Star size={12} className="text-yellow-400" />
-                                <span>{episode.vote_average.toFixed(1)}/10</span>
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </Card>
                 ))}
               </div>
             ) : (
@@ -393,7 +439,6 @@ const TVShowDetail = () => {
         )}
       </div>
 
-      {/* Cast section */}
       {topCast.length > 0 && (
         <div className="container mx-auto px-4 py-8">
           <h2 className="text-2xl font-bold mb-6">Top Cast</h2>
@@ -426,7 +471,6 @@ const TVShowDetail = () => {
         </div>
       )}
 
-      {/* Similar TV shows */}
       {tvShow.similar?.results?.length > 0 && (
         <div className="py-8">
           <CategoryRow

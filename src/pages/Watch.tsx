@@ -3,7 +3,9 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getMovieDetails, getTVShowDetails } from "@/lib/api";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -15,8 +17,13 @@ const Watch = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [title, setTitle] = useState("");
-  const [embedUrl, setEmbedUrl] = useState("");
+  const [embedUrls, setEmbedUrls] = useState<{server1: string, server2: string}>({
+    server1: "",
+    server2: ""
+  });
   const [isLoading, setIsLoading] = useState(true);
+  const [activeServer, setActiveServer] = useState<"server1" | "server2">("server1");
+  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2">("server1");
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -30,12 +37,18 @@ const Watch = () => {
           // Fetch movie details
           const movieData = await getMovieDetails(itemId);
           setTitle(movieData.title);
-          setEmbedUrl(`https://embed.su/embed/movie/${itemId}`);
+          setEmbedUrls({
+            server1: `https://embed.su/embed/movie/${itemId}`,
+            server2: `https://www.2embed.cc/embed/${itemId}`
+          });
         } else if (type === "tv" && season && episode) {
           // Fetch TV show details
           const tvData = await getTVShowDetails(itemId);
           setTitle(`${tvData.name} - S${season} E${episode}`);
-          setEmbedUrl(`https://embed.su/embed/tv/${itemId}/${season}/${episode}`);
+          setEmbedUrls({
+            server1: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`,
+            server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`
+          });
         } else {
           // Invalid parameters for TV show
           throw new Error("Invalid parameters for TV show");
@@ -57,6 +70,28 @@ const Watch = () => {
     fetchDetails();
   }, [id, type, season, episode, navigate, toast]);
 
+  const handleServerSwitch = (server: "server1" | "server2") => {
+    setActiveServer(server);
+    setLastWorkingServer(server);
+    toast({
+      title: `Switched to Server ${server === "server1" ? "1" : "2"}`,
+      description: "If video doesn't load, try another server",
+    });
+  };
+
+  const handleIframeError = () => {
+    // If current server fails, try the other one
+    if (activeServer === lastWorkingServer) {
+      const otherServer = activeServer === "server1" ? "server2" : "server1";
+      toast({
+        title: "Playback Issue",
+        description: `Trying Server ${otherServer === "server1" ? "1" : "2"}...`,
+        variant: "destructive",
+      });
+      setActiveServer(otherServer);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black">
       <div className="container mx-auto px-4 py-4 flex flex-col h-screen">
@@ -69,7 +104,29 @@ const Watch = () => {
             <ArrowLeft size={20} className="mr-2" />
             Back
           </button>
-          <h1 className="text-xl font-medium text-white ml-4">{title}</h1>
+          <h1 className="text-xl font-medium text-white ml-4 truncate">{title}</h1>
+          
+          {/* Server selection */}
+          <div className="ml-auto flex space-x-2">
+            <Button 
+              size="sm" 
+              variant={activeServer === "server1" ? "default" : "outline"} 
+              className="gap-2"
+              onClick={() => handleServerSwitch("server1")}
+            >
+              <MonitorPlay size={16} />
+              Server 1
+            </Button>
+            <Button 
+              size="sm" 
+              variant={activeServer === "server2" ? "default" : "outline"} 
+              className="gap-2"
+              onClick={() => handleServerSwitch("server2")}
+            >
+              <MonitorPlay size={16} />
+              Server 2
+            </Button>
+          </div>
         </div>
         
         {isLoading ? (
@@ -79,13 +136,53 @@ const Watch = () => {
         ) : (
           <div className="flex-1 flex flex-col">
             <div className="w-full h-full relative rounded-lg overflow-hidden bg-muted animate-fade-in">
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none" id="loading-overlay">
+                <div className="flex flex-col items-center">
+                  <RotateCw className="h-10 w-10 text-primary animate-spin" />
+                  <p className="mt-4 text-sm">Loading video...</p>
+                </div>
+              </div>
+              
               <iframe
-                src={embedUrl}
+                key={activeServer} // Force iframe refresh when server changes
+                src={embedUrls[activeServer]}
                 title={title}
                 frameBorder="0"
                 allowFullScreen
                 className="absolute inset-0 w-full h-full"
+                onError={handleIframeError}
               ></iframe>
+            </div>
+            
+            {/* Video controls */}
+            <div className="flex justify-center mt-4 space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
+                onClick={() => {
+                  toast({
+                    title: "Thanks for the feedback!",
+                    description: "We'll improve our video sources.",
+                  });
+                }}
+              >
+                <ThumbsUp size={14} />
+                Working well
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
+                onClick={() => {
+                  // Switch to the next server
+                  const nextServer = activeServer === "server1" ? "server2" : "server1";
+                  handleServerSwitch(nextServer);
+                }}
+              >
+                <RotateCw size={14} />
+                Try another server
+              </Button>
             </div>
           </div>
         )}
