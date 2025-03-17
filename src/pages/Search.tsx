@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { searchMulti } from "@/lib/api";
-import { MediaItem } from "@/types";
+import { MediaItem, Movie, TVShow } from "@/types";
 import MovieCard from "@/components/MovieCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [results, setResults] = useState<MediaItem[]>([]);
+  const [results, setResults] = useState<(Movie | TVShow)[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -36,9 +36,43 @@ const Search = () => {
       setIsLoading(true);
       
       const data = await searchMulti(query, page);
-      const filteredResults = data.results.filter(
-        (item: any) => item.media_type === "movie" || item.media_type === "tv"
-      );
+      // Transform MediaItem results to Movie or TVShow
+      const filteredResults = data.results
+        .filter((item: any) => item.media_type === "movie" || item.media_type === "tv")
+        .map((item: any): Movie | TVShow => {
+          if (item.media_type === "movie") {
+            return {
+              id: item.id,
+              title: item.title,
+              poster_path: item.poster_path,
+              backdrop_path: item.backdrop_path,
+              overview: item.overview,
+              release_date: item.release_date || "",
+              vote_average: item.vote_average || 0,
+              vote_count: item.vote_count || 0,
+              popularity: item.popularity || 0,
+              adult: item.adult || false,
+              video: item.video || false,
+              original_language: item.original_language || "",
+              media_type: "movie",
+            } as Movie;
+          } else {
+            return {
+              id: item.id,
+              name: item.name,
+              poster_path: item.poster_path,
+              backdrop_path: item.backdrop_path,
+              overview: item.overview,
+              first_air_date: item.first_air_date || "",
+              vote_average: item.vote_average || 0,
+              vote_count: item.vote_count || 0,
+              popularity: item.popularity || 0,
+              original_language: item.original_language || "",
+              origin_country: item.origin_country || [],
+              media_type: "tv",
+            } as TVShow;
+          }
+        });
       
       setResults(filteredResults);
       setTotalPages(Math.min(data.total_pages, 20)); // Limit to 20 pages
@@ -105,9 +139,9 @@ const Search = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
             {results.map((item, index) => (
               <MovieCard
-                key={`${item.id}-${item.media_type}`}
+                key={`${item.id}-${(item as any).media_type}`}
                 item={item}
-                type={item.media_type === "movie" ? "movie" : "tv"}
+                type={(item as any).media_type === "movie" ? "movie" : "tv"}
                 priority={index < 12}
               />
             ))}
