@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Movies from "./pages/Movies";
@@ -13,6 +14,7 @@ import TVShowDetail from "./pages/TVShowDetail";
 import Watch from "./pages/Watch";
 import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
+import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,25 +28,28 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Index />} />
-            <Route path="movies" element={<Movies />} />
-            <Route path="tv-shows" element={<TVShows />} />
-            <Route path="movie/:id" element={<MovieDetail />} />
-            <Route path="tv/:id" element={<TVShowDetail />} />
-            <Route path="search" element={<Search />} />
-          </Route>
-          <Route path="/watch/:type/:id" element={<Watch />} />
-          <Route path="/watch/:type/:id/:season/:episode" element={<Watch />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Index />} />
+              <Route path="movies" element={<Movies />} />
+              <Route path="tv-shows" element={<TVShows />} />
+              <Route path="movie/:id" element={<MovieDetail />} />
+              <Route path="tv/:id" element={<TVShowDetail />} />
+              <Route path="search" element={<Search />} />
+              <Route path="profile" element={<UserProfile />} />
+            </Route>
+            <Route path="/watch/:type/:id" element={<Watch />} />
+            <Route path="/watch/:type/:id/:season/:episode" element={<Watch />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

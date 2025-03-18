@@ -1,11 +1,14 @@
-
 import React, { useState, useEffect } from "react";
-import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { Film, Tv, Home, Menu, X } from "lucide-react";
+import { Outlet, NavLink, useLocation, Link } from "react-router-dom";
+import { Film, Tv, Home, Menu, X, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "./ui/logo";
 import SearchBar from "./SearchBar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import AuthModal from "./AuthModal";
 
 const Layout = () => {
   const location = useLocation();
@@ -14,6 +17,8 @@ const Layout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
   const isMobile = useIsMobile();
+  const { currentUser } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Handle navbar hide on scroll
   useEffect(() => {
@@ -132,10 +137,37 @@ const Layout = () => {
 
           <div className="flex items-center gap-4">
             <SearchBar />
-            {isMobile && (
+            
+            {/* User profile or login button */}
+            {!searchExpanded && (
+              <div className={`transition-opacity duration-300 ${searchExpanded ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>
+                {currentUser ? (
+                  <Link to="/profile">
+                    <Avatar className="h-8 w-8 border border-primary/30 hover:border-primary transition-all">
+                      <AvatarImage src={currentUser.photoURL || ""} alt={currentUser.displayName || "User"} />
+                      <AvatarFallback className="bg-primary/20 text-primary">
+                        {currentUser.displayName?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Link>
+                ) : (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-9 px-2 text-muted-foreground hover:text-white"
+                    onClick={() => setAuthModalOpen(true)}
+                  >
+                    <UserCircle size={20} className="mr-1.5" />
+                    <span className="hidden sm:inline">Sign In</span>
+                  </Button>
+                )}
+              </div>
+            )}
+            
+            {isMobile && !searchExpanded && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={`p-2 text-muted-foreground hover:text-white transition-colors ${searchExpanded ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 animate-fade-in'}`}
+                className="p-2 text-muted-foreground hover:text-white transition-colors"
               >
                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
@@ -148,6 +180,37 @@ const Layout = () => {
           <div className="md:hidden bg-card/95 backdrop-blur-md animate-fade-in">
             <nav className="flex flex-col p-4 gap-2">
               <NavItems />
+              
+              {!currentUser && (
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="mt-2 w-full justify-start gap-2"
+                  onClick={() => {
+                    setAuthModalOpen(true);
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <UserCircle size={18} />
+                  Sign In
+                </Button>
+              )}
+              
+              {currentUser && (
+                <Link 
+                  to="/profile" 
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 text-muted-foreground hover:text-white hover:bg-muted/30 mt-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={currentUser.photoURL || ""} alt={currentUser.displayName || "User"} />
+                    <AvatarFallback className="text-xs bg-primary/20 text-primary">
+                      {currentUser.displayName?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span>My Profile</span>
+                </Link>
+              )}
             </nav>
           </div>
         )}
@@ -193,6 +256,18 @@ const Layout = () => {
               <Tv size={20} />
               <span className="text-xs mt-1">TV Shows</span>
             </NavLink>
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center px-4 py-2 transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )
+              }
+            >
+              <UserCircle size={20} />
+              <span className="text-xs mt-1">Profile</span>
+            </NavLink>
           </div>
         </div>
       )}
@@ -201,6 +276,9 @@ const Layout = () => {
       <main className="flex-1 mt-16 mb-16 md:mb-0">
         <Outlet />
       </main>
+      
+      {/* Auth Modal */}
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </div>
   );
 };

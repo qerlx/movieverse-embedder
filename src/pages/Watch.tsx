@@ -4,6 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getMovieDetails, getTVShowDetails } from "@/lib/api";
 import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { addToWatchHistory } from "@/lib/watchService";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -15,7 +17,9 @@ const Watch = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { currentUser } = useAuth();
   const [title, setTitle] = useState("");
+  const [posterPath, setPosterPath] = useState<string | null>(null);
   const [embedUrls, setEmbedUrls] = useState<{server1: string, server2: string}>({
     server1: "",
     server2: ""
@@ -35,17 +39,54 @@ const Watch = () => {
         if (type === "movie") {
           const movieData = await getMovieDetails(itemId);
           setTitle(movieData.title);
+          setPosterPath(movieData.poster_path);
           setEmbedUrls({
             server1: `https://embed.su/embed/movie/${itemId}`,
             server2: `https://www.2embed.cc/embed/${itemId}`
           });
+          
+          if (currentUser) {
+            await addToWatchHistory(currentUser, {
+              id: itemId,
+              type: "movie",
+              title: movieData.title,
+              posterPath: movieData.poster_path,
+              progress: 0
+            });
+          }
         } else if (type === "tv" && season && episode) {
           const tvData = await getTVShowDetails(itemId);
           setTitle(`${tvData.name} - S${season} E${episode}`);
+          setPosterPath(tvData.poster_path);
           setEmbedUrls({
             server1: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`,
             server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`
           });
+          
+          if (currentUser) {
+            const episodeNum = parseInt(episode);
+            const seasonNum = parseInt(season);
+            
+            let episodeName = `Episode ${episodeNum}`;
+            if (tvData.seasons) {
+              const currentSeason = tvData.seasons.find(s => s.season_number === seasonNum);
+              if (currentSeason) {
+                episodeName = `${currentSeason.name}: Episode ${episodeNum}`;
+              }
+            }
+            
+            await addToWatchHistory(currentUser, {
+              id: itemId,
+              type: "tv",
+              title: tvData.name,
+              posterPath: tvData.poster_path,
+              lastEpisode: {
+                season: seasonNum,
+                episode: episodeNum,
+                name: episodeName
+              }
+            });
+          }
         } else {
           throw new Error("Invalid parameters for TV show");
         }
@@ -63,7 +104,7 @@ const Watch = () => {
     };
 
     fetchDetails();
-  }, [id, type, season, episode, navigate, toast]);
+  }, [id, type, season, episode, navigate, toast, currentUser]);
 
   const handleServerSwitch = (server: "server1" | "server2") => {
     setActiveServer(server);
