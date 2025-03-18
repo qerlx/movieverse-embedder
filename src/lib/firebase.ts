@@ -3,13 +3,15 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBQ6xGgRDSiub6-4mESyVf2lIlGb9tlXds",
-  authDomain: "moviestreamhub-auth.firebaseapp.com",
-  projectId: "moviestreamhub-auth",
-  storageBucket: "moviestreamhub-auth.appspot.com",
-  messagingSenderId: "729538434932",
-  appId: "1:729538434932:web:d21b15b0adbd45e12c2a19"
+  apiKey: "AIzaSyB3kPuTGe3QWEkHQT2UD-OhuJfoIZZXgC4",
+  authDomain: "moviestreamhub-7bbc6.firebaseapp.com",
+  projectId: "moviestreamhub-7bbc6",
+  storageBucket: "moviestreamhub-7bbc6.appspot.com",
+  messagingSenderId: "600172034861",
+  appId: "1:600172034861:web:b8af0073b25c99b516be67"
 };
 
 // Initialize Firebase
