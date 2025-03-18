@@ -1,11 +1,12 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getMovieDetails, getTVShowDetails } from "@/lib/api";
-import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp } from "lucide-react";
+import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { addToWatchHistory } from "@/lib/watchService";
+import { addToWatchHistory, addToFavorites, removeFromFavorites, isFavorite } from "@/lib/watchService";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -20,13 +21,15 @@ const Watch = () => {
   const { currentUser } = useAuth();
   const [title, setTitle] = useState("");
   const [posterPath, setPosterPath] = useState<string | null>(null);
-  const [embedUrls, setEmbedUrls] = useState<{server1: string, server2: string}>({
+  const [embedUrls, setEmbedUrls] = useState<{server1: string, server2: string, server3: string}>({
     server1: "",
-    server2: ""
+    server2: "",
+    server3: ""
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeServer, setActiveServer] = useState<"server1" | "server2">("server1");
-  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2">("server1");
+  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3">("server1");
+  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3">("server1");
+  const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -42,7 +45,8 @@ const Watch = () => {
           setPosterPath(movieData.poster_path);
           setEmbedUrls({
             server1: `https://embed.su/embed/movie/${itemId}`,
-            server2: `https://www.2embed.cc/embed/${itemId}`
+            server2: `https://www.2embed.cc/embed/${itemId}`,
+            server3: `https://vidsrc.to/embed/movie/${itemId}`
           });
           
           if (currentUser) {
@@ -53,6 +57,10 @@ const Watch = () => {
               posterPath: movieData.poster_path,
               progress: 0
             });
+            
+            // Check if movie is in favorites
+            const isMovieFavorited = await isFavorite(currentUser, "movie", itemId);
+            setIsFavorited(isMovieFavorited);
           }
         } else if (type === "tv" && season && episode) {
           const tvData = await getTVShowDetails(itemId);
@@ -60,7 +68,8 @@ const Watch = () => {
           setPosterPath(tvData.poster_path);
           setEmbedUrls({
             server1: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`,
-            server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`
+            server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
+            server3: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`
           });
           
           if (currentUser) {
@@ -86,6 +95,10 @@ const Watch = () => {
                 name: episodeName
               }
             });
+            
+            // Check if show is in favorites
+            const isShowFavorited = await isFavorite(currentUser, "tv", itemId);
+            setIsFavorited(isShowFavorited);
           }
         } else {
           throw new Error("Invalid parameters for TV show");
@@ -106,24 +119,33 @@ const Watch = () => {
     fetchDetails();
   }, [id, type, season, episode, navigate, toast, currentUser]);
 
-  const handleServerSwitch = (server: "server1" | "server2") => {
+  const handleServerSwitch = (server: "server1" | "server2" | "server3") => {
     setActiveServer(server);
     setLastWorkingServer(server);
+    const serverNames = {
+      server1: "1 (Embed.su)",
+      server2: "2 (2embed)",
+      server3: "3 (VidSrc)"
+    };
     toast({
-      title: `Switched to Server ${server === "server1" ? "1" : "2"}`,
+      title: `Switched to Server ${serverNames[server]}`,
       description: "If video doesn't load, try another server",
     });
   };
 
   const handleIframeError = () => {
+    console.log("Iframe error detected");
     if (activeServer === lastWorkingServer) {
-      const otherServer = activeServer === "server1" ? "server2" : "server1";
+      const serverOptions: ("server1" | "server2" | "server3")[] = ["server1", "server2", "server3"];
+      const currentIndex = serverOptions.indexOf(activeServer);
+      const nextServer = serverOptions[(currentIndex + 1) % serverOptions.length];
+      
       toast({
         title: "Playback Issue",
-        description: `Trying Server ${otherServer === "server1" ? "1" : "2"}...`,
+        description: `Server error. Trying next server...`,
         variant: "destructive",
       });
-      setActiveServer(otherServer);
+      setActiveServer(nextServer);
     }
   };
 
@@ -138,6 +160,41 @@ const Watch = () => {
       } else {
         navigate('/');
       }
+    }
+  };
+
+  const handleFavoriteToggle = async () => {
+    if (!currentUser || !id || !type) return;
+    
+    const itemId = parseInt(id);
+    try {
+      if (isFavorited) {
+        await removeFromFavorites(currentUser, type as "movie" | "tv", itemId);
+        setIsFavorited(false);
+        toast({
+          title: "Removed from favorites",
+          description: `${title} has been removed from your favorites.`,
+        });
+      } else {
+        await addToFavorites(currentUser, {
+          id: itemId,
+          type: type as "movie" | "tv",
+          title,
+          posterPath
+        });
+        setIsFavorited(true);
+        toast({
+          title: "Added to favorites",
+          description: `${title} has been added to your favorites.`,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update favorites. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -156,25 +213,49 @@ const Watch = () => {
           <h1 className="text-xl font-medium text-white ml-4 truncate">{title}</h1>
           
           <div className="ml-auto flex space-x-2">
-            <Button 
-              size="sm" 
-              variant={activeServer === "server1" ? "default" : "outline"} 
-              className="gap-2"
-              onClick={() => handleServerSwitch("server1")}
-            >
-              <MonitorPlay size={16} />
-              Server 1
-            </Button>
-            <Button 
-              size="sm" 
-              variant={activeServer === "server2" ? "default" : "outline"} 
-              className="gap-2"
-              onClick={() => handleServerSwitch("server2")}
-            >
-              <MonitorPlay size={16} />
-              Server 2
-            </Button>
+            {currentUser && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className={`gap-2 ${isFavorited ? 'text-red-500' : 'text-white'}`}
+                onClick={handleFavoriteToggle}
+                aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Heart size={16} className={isFavorited ? "fill-current" : ""} />
+                {isFavorited ? "Favorited" : "Favorite"}
+              </Button>
+            )}
           </div>
+        </div>
+        
+        <div className="flex space-x-2 mb-4">
+          <Button 
+            size="sm" 
+            variant={activeServer === "server1" ? "default" : "outline"} 
+            className="gap-2"
+            onClick={() => handleServerSwitch("server1")}
+          >
+            <MonitorPlay size={16} />
+            Server 1
+          </Button>
+          <Button 
+            size="sm" 
+            variant={activeServer === "server2" ? "default" : "outline"} 
+            className="gap-2"
+            onClick={() => handleServerSwitch("server2")}
+          >
+            <MonitorPlay size={16} />
+            Server 2
+          </Button>
+          <Button 
+            size="sm" 
+            variant={activeServer === "server3" ? "default" : "outline"} 
+            className="gap-2"
+            onClick={() => handleServerSwitch("server3")}
+          >
+            <MonitorPlay size={16} />
+            Server 3
+          </Button>
         </div>
         
         {isLoading ? (
@@ -222,7 +303,9 @@ const Watch = () => {
                 size="sm" 
                 className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
                 onClick={() => {
-                  const nextServer = activeServer === "server1" ? "server2" : "server1";
+                  const serverOptions: ("server1" | "server2" | "server3")[] = ["server1", "server2", "server3"];
+                  const currentIndex = serverOptions.indexOf(activeServer);
+                  const nextServer = serverOptions[(currentIndex + 1) % serverOptions.length];
                   handleServerSwitch(nextServer);
                 }}
               >

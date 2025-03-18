@@ -1,5 +1,5 @@
 
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { User } from "firebase/auth";
 
@@ -15,6 +15,14 @@ interface WatchProgress {
     name: string;
   };
   lastWatched: number; // timestamp
+}
+
+interface FavoriteItem {
+  id: number;
+  type: "movie" | "tv";
+  title: string;
+  posterPath: string | null;
+  addedAt: number; // timestamp
 }
 
 export const addToWatchHistory = async (user: User, watchData: Omit<WatchProgress, "lastWatched">) => {
@@ -72,6 +80,18 @@ export const getWatchHistory = async (user: User): Promise<WatchProgress[]> => {
   }
 };
 
+export const getRecentlyWatched = async (user: User, limit = 6): Promise<WatchProgress[]> => {
+  if (!user) return [];
+  
+  try {
+    const watchHistory = await getWatchHistory(user);
+    return watchHistory.slice(0, limit); // Return only the most recent items
+  } catch (error) {
+    console.error("Error fetching recently watched:", error);
+    return [];
+  }
+};
+
 export const getWatchProgress = async (user: User, type: "movie" | "tv", id: number) => {
   if (!user) return null;
   
@@ -87,5 +107,76 @@ export const getWatchProgress = async (user: User, type: "movie" | "tv", id: num
   } catch (error) {
     console.error("Error fetching watch progress:", error);
     return null;
+  }
+};
+
+// Favorites functionality
+export const addToFavorites = async (user: User, itemData: Omit<FavoriteItem, "addedAt">) => {
+  if (!user) return;
+  
+  try {
+    const userDocRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userDocRef);
+    
+    if (!userDoc.exists()) {
+      // Create new user document if it doesn't exist
+      await setDoc(userDocRef, {
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+      });
+    }
+    
+    // Add to favorites collection
+    const favoritesRef = doc(db, "users", user.uid, "favorites", `${itemData.type}_${itemData.id}`);
+    
+    await setDoc(favoritesRef, {
+      ...itemData,
+      addedAt: Date.now()
+    });
+  } catch (error) {
+    console.error("Error adding to favorites:", error);
+    throw error;
+  }
+};
+
+export const removeFromFavorites = async (user: User, type: "movie" | "tv", id: number) => {
+  if (!user) return;
+  
+  try {
+    const favoriteRef = doc(db, "users", user.uid, "favorites", `${type}_${id}`);
+    await deleteDoc(favoriteRef);
+  } catch (error) {
+    console.error("Error removing from favorites:", error);
+    throw error;
+  }
+};
+
+export const getFavorites = async (user: User): Promise<FavoriteItem[]> => {
+  if (!user) return [];
+  
+  try {
+    const favoritesRef = collection(db, "users", user.uid, "favorites");
+    const favoritesSnapshot = await getDocs(favoritesRef);
+    
+    return favoritesSnapshot.docs.map(doc => doc.data() as FavoriteItem)
+      .sort((a, b) => b.addedAt - a.addedAt); // Sort by most recently added
+  } catch (error) {
+    console.error("Error fetching favorites:", error);
+    return [];
+  }
+};
+
+export const isFavorite = async (user: User, type: "movie" | "tv", id: number): Promise<boolean> => {
+  if (!user) return false;
+  
+  try {
+    const favoriteRef = doc(db, "users", user.uid, "favorites", `${type}_${id}`);
+    const favoriteDoc = await getDoc(favoriteRef);
+    
+    return favoriteDoc.exists();
+  } catch (error) {
+    console.error("Error checking favorite status:", error);
+    return false;
   }
 };

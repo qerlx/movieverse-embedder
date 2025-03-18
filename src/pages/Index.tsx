@@ -2,130 +2,91 @@
 import React, { useEffect, useState } from "react";
 import HeroSlider from "@/components/HeroSlider";
 import CategoryRow from "@/components/CategoryRow";
-import DnsPopup from "@/components/DnsPopup";
-import { useToast } from "@/hooks/use-toast";
-import { Movie, TVShow } from "@/types";
-import {
-  getNowPlayingMovies,
-  getPopularMovies,
-  getTopRatedMovies,
-  getPopularTVShows,
-  getTrendingMovies,
-  getTrendingTVShows
+import { 
+  getPopularMovies, 
+  getTrendingMovies, 
+  getPopularTVShows, 
+  getTrendingTVShows 
 } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import RecentlyWatched from "@/components/RecentlyWatched";
 
 const Index = () => {
-  const { toast } = useToast();
-  const [heroItems, setHeroItems] = useState<Movie[]>([]);
-  const [trendingMovies, setTrendingMovies] = useState<Movie[]>([]);
-  const [popularMovies, setPopularMovies] = useState<Movie[]>([]);
-  const [nowPlayingMovies, setNowPlayingMovies] = useState<Movie[]>([]);
-  const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([]);
-  const [popularTVShows, setPopularTVShows] = useState<TVShow[]>([]);
-  const [trendingTVShows, setTrendingTVShows] = useState<TVShow[]>([]);
+  const { currentUser } = useAuth();
+  const [heroItems, setHeroItems] = useState([]);
+  const [trendingMovies, setTrendingMovies] = useState([]);
+  const [popularMovies, setPopularMovies] = useState([]);
+  const [trendingTVShows, setTrendingTVShows] = useState([]);
+  const [popularTVShows, setPopularTVShows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         
-        // Fetch now playing movies for hero
-        const nowPlaying = await getNowPlayingMovies();
-        setHeroItems(nowPlaying.results.slice(0, 5));
-        setNowPlayingMovies(nowPlaying.results);
+        // Fetch hero items (trending movies)
+        const trendingMoviesData = await getTrendingMovies();
+        setHeroItems(trendingMoviesData.results.slice(0, 5));
+        setTrendingMovies(trendingMoviesData.results);
         
-        // Fetch other movie categories
-        const [trending, popular, topRated, tvPopular, tvTrending] = await Promise.all([
-          getTrendingMovies(),
+        // Fetch other categories
+        const [popularMoviesData, trendingTVData, popularTVData] = await Promise.all([
           getPopularMovies(),
-          getTopRatedMovies(),
-          getPopularTVShows(),
-          getTrendingTVShows()
+          getTrendingTVShows(),
+          getPopularTVShows()
         ]);
         
-        setTrendingMovies(trending.results);
-        setPopularMovies(popular.results);
-        setTopRatedMovies(topRated.results);
-        setPopularTVShows(tvPopular.results);
-        setTrendingTVShows(tvTrending.results);
-        
+        setPopularMovies(popularMoviesData.results);
+        setTrendingTVShows(trendingTVData.results);
+        setPopularTVShows(popularTVData.results);
       } catch (error) {
-        console.error("Error fetching data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load content. Please try again later.",
-          variant: "destructive",
-        });
+        console.error("Error fetching data for homepage:", error);
       } finally {
         setIsLoading(false);
       }
     };
-
+    
     fetchData();
-  }, [toast]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-          <p className="mt-4 text-lg text-muted-foreground">Loading amazing content...</p>
-        </div>
-      </div>
-    );
-  }
-
+  }, []);
+  
   return (
-    <div className="pb-8 relative">
-      {/* DNS Popup - only shown on home page */}
-      <DnsPopup />
+    <div className="min-h-screen">
+      {/* Hero Slider */}
+      <HeroSlider items={heroItems} isLoading={isLoading} />
       
-      {heroItems.length > 0 && (
-        <HeroSlider items={heroItems} type="movie" />
-      )}
+      {/* Recently Watched (only for logged in users) */}
+      {currentUser && <RecentlyWatched />}
       
-      <div className="space-y-2 mt-4">
+      {/* Movie Categories */}
+      <div className="py-8">
         <CategoryRow 
           title="Trending Movies" 
           items={trendingMovies} 
-          type="movie" 
+          type="movie"
+          isLoading={isLoading}
         />
         
         <CategoryRow 
           title="Popular Movies" 
           items={popularMovies} 
-          type="movie" 
-        />
-        
-        <CategoryRow 
-          title="Now Playing" 
-          items={nowPlayingMovies} 
-          type="movie" 
-        />
-        
-        <CategoryRow 
-          title="Top Rated Movies" 
-          items={topRatedMovies} 
-          type="movie" 
-        />
-        
-        <CategoryRow 
-          title="Popular TV Shows" 
-          items={popularTVShows} 
-          type="tv" 
+          type="movie"
+          isLoading={isLoading}
         />
         
         <CategoryRow 
           title="Trending TV Shows" 
           items={trendingTVShows} 
-          type="tv" 
+          type="tv"
+          isLoading={isLoading}
         />
-      </div>
-      
-      {/* Subtle credit at the bottom */}
-      <div className="text-xs text-muted-foreground/40 text-center mt-12 mb-4">
-        Made by qerlx
+        
+        <CategoryRow 
+          title="Popular TV Shows" 
+          items={popularTVShows} 
+          type="tv"
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );

@@ -137,3 +137,25 @@ export interface MediaItem {
   vote_average: number;
   media_type?: "movie" | "tv";
 }
+
+export interface WatchProgress {
+  id: number;
+  type: "movie" | "tv";
+  title: string;
+  posterPath: string | null;
+  progress?: number; // For movies: percentage watched
+  lastEpisode?: {   // For TV shows
+    season: number;
+    episode: number;
+    name: string;
+  };
+  lastWatched: number; // timestamp
+}
+
+export interface FavoriteItem {
+  id: number;
+  type: "movie" | "tv";
+  title: string;
+  posterPath: string | null;
+  addedAt: number; // timestamp
+}
