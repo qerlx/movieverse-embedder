@@ -54,7 +54,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Slider */}
-      <HeroSlider items={heroItems} />
+      <HeroSlider items={heroItems} type="movie" />
       
       {/* Recently Watched (only for logged in users) */}
       {currentUser && <RecentlyWatched />}

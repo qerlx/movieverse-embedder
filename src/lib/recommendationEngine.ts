@@ -19,6 +19,11 @@ const extractGenres = (watchHistory: WatchProgress[]): number[] => {
   return genres;
 };
 
+// Helper function to determine if an item is a movie
+const isMovie = (item: Movie | TVShow): boolean => {
+  return 'title' in item;
+};
+
 // Score items based on genre preference and recency
 const scoreItems = (items: (Movie | TVShow)[], watchHistory: WatchProgress[]): (Movie | TVShow & { score: number })[] => {
   const preferredGenres = extractGenres(watchHistory);
@@ -42,7 +47,8 @@ const scoreItems = (items: (Movie | TVShow)[], watchHistory: WatchProgress[]): (
     score += genreMatchCount * 2;
     
     // Recently watched bonus
-    const key = `${item.title ? 'movie' : 'tv'}_${item.id}`;
+    const itemType = isMovie(item) ? 'movie' : 'tv';
+    const key = `${itemType}_${item.id}`;
     const lastWatched = watchedMap.get(key);
     if (lastWatched && lastWatched > oneWeekAgo) {
       score += 1; // Bonus for recently watched content type
