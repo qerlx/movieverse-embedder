@@ -1,4 +1,3 @@
-
 // TMDb API Types
 export interface Movie {
   id: number;
@@ -17,6 +16,7 @@ export interface Movie {
   video: boolean;
   original_language: string;
   original_title?: string;
+  score?: number; // For recommendation scoring
 }
 
 export interface TVShow {
@@ -37,6 +37,7 @@ export interface TVShow {
   number_of_seasons?: number;
   number_of_episodes?: number;
   seasons?: Season[];
+  score?: number; // For recommendation scoring
 }
 
 export interface Season {
@@ -150,6 +151,7 @@ export interface WatchProgress {
     name: string;
   };
   lastWatched: number; // timestamp
+  genres?: number[]; // Added for recommendation engine
 }
 
 export interface FavoriteItem {

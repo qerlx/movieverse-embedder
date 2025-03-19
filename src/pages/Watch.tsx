@@ -1,7 +1,8 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { getMovieDetails, getTVShowDetails } from "@/lib/api";
 import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,19 +18,22 @@ const Watch = () => {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const { currentUser } = useAuth();
   const [title, setTitle] = useState("");
   const [posterPath, setPosterPath] = useState<string | null>(null);
-  const [embedUrls, setEmbedUrls] = useState<{server1: string, server2: string, server3: string}>({
+  const [embedUrls, setEmbedUrls] = useState<{server1: string, server2: string, server3: string, server4: string}>({
     server1: "",
     server2: "",
-    server3: ""
+    server3: "",
+    server4: ""
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3">("server1");
-  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3">("server1");
+  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
+  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
   const [isFavorited, setIsFavorited] = useState(false);
+  const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -46,7 +50,8 @@ const Watch = () => {
           setEmbedUrls({
             server1: `https://embed.su/embed/movie/${itemId}`,
             server2: `https://www.2embed.cc/embed/${itemId}`,
-            server3: `https://vidsrc.to/embed/movie/${itemId}`
+            server3: `https://vidsrc.to/embed/movie/${itemId}`,
+            server4: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`
           });
           
           if (currentUser) {
@@ -55,7 +60,8 @@ const Watch = () => {
               type: "movie",
               title: movieData.title,
               posterPath: movieData.poster_path,
-              progress: 0
+              progress: 0,
+              genres: movieData.genre_ids || []
             });
             
             // Check if movie is in favorites
@@ -69,7 +75,8 @@ const Watch = () => {
           setEmbedUrls({
             server1: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`,
             server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
-            server3: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`
+            server3: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
+            server4: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`
           });
           
           if (currentUser) {
@@ -93,7 +100,8 @@ const Watch = () => {
                 season: seasonNum,
                 episode: episodeNum,
                 name: episodeName
-              }
+              },
+              genres: tvData.genre_ids || []
             });
             
             // Check if show is in favorites
@@ -105,7 +113,7 @@ const Watch = () => {
         }
       } catch (error) {
         console.error("Error fetching details:", error);
-        toast({
+        uiToast({
           title: "Error",
           description: "Failed to load media. Please try again later.",
           variant: "destructive",
@@ -117,35 +125,50 @@ const Watch = () => {
     };
 
     fetchDetails();
-  }, [id, type, season, episode, navigate, toast, currentUser]);
+  }, [id, type, season, episode, navigate, uiToast, currentUser]);
 
-  const handleServerSwitch = (server: "server1" | "server2" | "server3") => {
+  // Helper function to try the next server
+  const tryNextServer = () => {
+    const serverOptions: ("server1" | "server2" | "server3" | "server4")[] = ["server1", "server2", "server3", "server4"];
+    const currentIndex = serverOptions.indexOf(activeServer);
+    
+    // Try each server in order, but don't try the same one twice in a row
+    let nextIndex = (currentIndex + 1) % serverOptions.length;
+    const nextServer = serverOptions[nextIndex];
+    
+    // Track server attempts
+    setServerAttempts(prev => ({
+      ...prev,
+      [activeServer]: (prev[activeServer] || 0) + 1
+    }));
+    
+    toast.info(`Switching to Server ${nextIndex + 1}`, {
+      description: "If video doesn't load, try another server",
+      duration: 3000
+    });
+    
+    setActiveServer(nextServer);
+  };
+
+  const handleServerSwitch = (server: "server1" | "server2" | "server3" | "server4") => {
     setActiveServer(server);
     setLastWorkingServer(server);
     const serverNames = {
       server1: "1 (Embed.su)",
       server2: "2 (2embed)",
-      server3: "3 (VidSrc)"
+      server3: "3 (VidSrc)",
+      server4: "4 (MultiEmbed)"
     };
-    toast({
-      title: `Switched to Server ${serverNames[server]}`,
+    toast.info(`Switched to Server ${serverNames[server]}`, {
       description: "If video doesn't load, try another server",
+      duration: 3000
     });
   };
 
   const handleIframeError = () => {
     console.log("Iframe error detected");
     if (activeServer === lastWorkingServer) {
-      const serverOptions: ("server1" | "server2" | "server3")[] = ["server1", "server2", "server3"];
-      const currentIndex = serverOptions.indexOf(activeServer);
-      const nextServer = serverOptions[(currentIndex + 1) % serverOptions.length];
-      
-      toast({
-        title: "Playback Issue",
-        description: `Server error. Trying next server...`,
-        variant: "destructive",
-      });
-      setActiveServer(nextServer);
+      tryNextServer();
     }
   };
 
@@ -171,8 +194,7 @@ const Watch = () => {
       if (isFavorited) {
         await removeFromFavorites(currentUser, type as "movie" | "tv", itemId);
         setIsFavorited(false);
-        toast({
-          title: "Removed from favorites",
+        toast.success("Removed from favorites", {
           description: `${title} has been removed from your favorites.`,
         });
       } else {
@@ -183,20 +205,34 @@ const Watch = () => {
           posterPath
         });
         setIsFavorited(true);
-        toast({
-          title: "Added to favorites",
+        toast.success("Added to favorites", {
           description: `${title} has been added to your favorites.`,
         });
       }
     } catch (error) {
       console.error("Error updating favorites:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update favorites. Please try again.",
-        variant: "destructive",
+      toast.error("Failed to update favorites", {
+        description: "Please try again.",
       });
     }
   };
+
+  // Monitor iframe load
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const handleLoad = () => {
+      console.log(`Server ${activeServer} loaded successfully`);
+      setLastWorkingServer(activeServer);
+    };
+
+    iframe.addEventListener('load', handleLoad);
+    
+    return () => {
+      iframe.removeEventListener('load', handleLoad);
+    };
+  }, [activeServer, iframeRef.current]);
 
   return (
     <div className="min-h-screen bg-black">
@@ -228,7 +264,7 @@ const Watch = () => {
           </div>
         </div>
         
-        <div className="flex space-x-2 mb-4">
+        <div className="flex space-x-2 mb-4 overflow-x-auto pb-2">
           <Button 
             size="sm" 
             variant={activeServer === "server1" ? "default" : "outline"} 
@@ -256,6 +292,15 @@ const Watch = () => {
             <MonitorPlay size={16} />
             Server 3
           </Button>
+          <Button 
+            size="sm" 
+            variant={activeServer === "server4" ? "default" : "outline"} 
+            className="gap-2"
+            onClick={() => handleServerSwitch("server4")}
+          >
+            <MonitorPlay size={16} />
+            Server 4
+          </Button>
         </div>
         
         {isLoading ? (
@@ -273,6 +318,7 @@ const Watch = () => {
               </div>
               
               <iframe
+                ref={iframeRef}
                 key={activeServer}
                 src={embedUrls[activeServer]}
                 title={title}
@@ -289,8 +335,7 @@ const Watch = () => {
                 size="sm" 
                 className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
                 onClick={() => {
-                  toast({
-                    title: "Thanks for the feedback!",
+                  toast.success("Thanks for the feedback!", {
                     description: "We'll improve our video sources.",
                   });
                 }}
@@ -302,12 +347,7 @@ const Watch = () => {
                 variant="outline" 
                 size="sm" 
                 className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
-                onClick={() => {
-                  const serverOptions: ("server1" | "server2" | "server3")[] = ["server1", "server2", "server3"];
-                  const currentIndex = serverOptions.indexOf(activeServer);
-                  const nextServer = serverOptions[(currentIndex + 1) % serverOptions.length];
-                  handleServerSwitch(nextServer);
-                }}
+                onClick={tryNextServer}
               >
                 <RotateCw size={14} />
                 Try another server

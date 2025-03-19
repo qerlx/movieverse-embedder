@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,7 +5,7 @@ import { getWatchHistory } from "@/lib/watchService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, ClockRewind, Heart } from "lucide-react";
+import { LogOut, Clock, Heart } from "lucide-react";
 import RecentlyWatched from "@/components/RecentlyWatched";
 import Favorites from "@/components/Favorites";
 
@@ -89,7 +88,7 @@ const UserProfile = () => {
       <Tabs defaultValue="history" className="space-y-4">
         <TabsList>
           <TabsTrigger value="history" className="gap-2">
-            <ClockRewind size={16} />
+            <Clock size={16} />
             Watch History
           </TabsTrigger>
           <TabsTrigger value="favorites" className="gap-2">

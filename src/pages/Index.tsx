@@ -10,6 +10,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import RecentlyWatched from "@/components/RecentlyWatched";
+import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
 
 const Index = () => {
   const { currentUser } = useAuth();
@@ -53,10 +54,13 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Slider */}
-      <HeroSlider items={heroItems} isLoading={isLoading} />
+      <HeroSlider items={heroItems} />
       
       {/* Recently Watched (only for logged in users) */}
       {currentUser && <RecentlyWatched />}
+      
+      {/* Personalized Recommendations (only for logged in users) */}
+      {currentUser && <PersonalizedRecommendations />}
       
       {/* Movie Categories */}
       <div className="py-8">
@@ -64,28 +68,24 @@ const Index = () => {
           title="Trending Movies" 
           items={trendingMovies} 
           type="movie"
-          isLoading={isLoading}
         />
         
         <CategoryRow 
           title="Popular Movies" 
           items={popularMovies} 
           type="movie"
-          isLoading={isLoading}
         />
         
         <CategoryRow 
           title="Trending TV Shows" 
           items={trendingTVShows} 
           type="tv"
-          isLoading={isLoading}
         />
         
         <CategoryRow 
           title="Popular TV Shows" 
           items={popularTVShows} 
           type="tv"
-          isLoading={isLoading}
         />
       </div>
     </div>

@@ -15,6 +15,7 @@ interface WatchProgress {
     name: string;
   };
   lastWatched: number; // timestamp
+  genres?: number[]; // Added genres for better recommendations
 }
 
 interface FavoriteItem {
