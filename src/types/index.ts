@@ -1,3 +1,4 @@
+
 // TMDb API Types
 export interface Movie {
   id: number;
@@ -137,21 +138,6 @@ export interface MediaItem {
   first_air_date?: string;
   vote_average: number;
   media_type?: "movie" | "tv";
-}
-
-export interface WatchProgress {
-  id: number;
-  type: "movie" | "tv";
-  title: string;
-  posterPath: string | null;
-  progress?: number; // For movies: percentage watched
-  lastEpisode?: {   // For TV shows
-    season: number;
-    episode: number;
-    name: string;
-  };
-  lastWatched: number; // timestamp
-  genres?: number[]; // Added for recommendation engine
 }
 
 export interface FavoriteItem {

@@ -1,137 +1,98 @@
 
-import { Movie, TVShow } from "@/types";
-import { getPopularMovies, getPopularTVShows, getTrendingMovies, getTrendingTVShows } from "./api";
-import { getFavorites } from "./watchService";
+import { Movie, TVShow, FavoriteItem } from "@/types";
+import { getTrendingMovies, getTrendingTVShows, getMoviesByGenre, getTVShowsByGenre } from "@/lib/api";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { User } from "firebase/auth";
 
-// Helper function to determine if an item is a movie
+// Type guard to check if an item is a Movie or TVShow
 export const isMovie = (item: Movie | TVShow): item is Movie => {
   return 'title' in item;
 };
 
-// Get title of an item, handling both Movie and TVShow types
+// Helper function to get the title of a Movie or TVShow
 export const getItemTitle = (item: Movie | TVShow): string => {
   return isMovie(item) ? item.title : item.name;
 };
 
-// Get unique genres from favorites
-const extractGenres = (favorites: any[]): number[] => {
-  const genres: number[] = [];
-  
-  favorites.forEach(item => {
-    if (item.genres) {
-      item.genres.forEach((genreId: number) => {
-        if (!genres.includes(genreId)) {
-          genres.push(genreId);
-        }
-      });
-    }
-  });
-  
-  return genres;
-};
-
-// Score items based on genre preference
-const scoreItems = (items: (Movie | TVShow)[], favorites: any[]): (Movie | TVShow & { score: number })[] => {
-  const preferredGenres = extractGenres(favorites);
-  
-  // Convert favorites to a map for easy lookup
-  const favoritesMap = new Map<string, number>();
-  favorites.forEach(item => {
-    favoritesMap.set(`${item.type}_${item.id}`, 1);
-  });
-  
-  return items.map(item => {
-    let score = 0;
-    
-    // Base score from popularity
-    score += item.popularity / 100;
-    
-    // Genre match score
-    const itemGenres = item.genre_ids || [];
-    const genreMatchCount = itemGenres.filter(g => preferredGenres.includes(g)).length;
-    score += genreMatchCount * 2;
-    
-    // User hasn't favorited this yet (avoid recommending already favorited content)
-    const itemType = isMovie(item) ? 'movie' : 'tv';
-    const key = `${itemType}_${item.id}`;
-    if (!favoritesMap.has(key)) {
-      score += 0.5;
-    }
-    
-    return { ...item, score };
-  });
-};
-
-// Get personalized recommendations for a user
-export const getPersonalizedRecommendations = async (
-  currentUser: User | null,
-  limit = 10
-): Promise<(Movie | TVShow)[]> => {
+// Get the user's favorite items from Firestore
+const getUserFavorites = async (user: User): Promise<FavoriteItem[]> => {
   try {
-    // If no user, return trending content
-    if (!currentUser) {
-      const trending = await getTrendingMovies();
-      return trending.results.slice(0, limit);
-    }
+    const favoritesQuery = query(
+      collection(db, "favorites"),
+      where("userId", "==", user.uid)
+    );
     
-    // Get user's favorites
-    const favorites = await getFavorites(currentUser);
+    const querySnapshot = await getDocs(favoritesQuery);
     
-    // If no favorites, return trending content
-    if (!favorites || favorites.length === 0) {
-      const trending = await getTrendingMovies();
-      return trending.results.slice(0, limit);
-    }
-    
-    // Count movie vs TV show preference
-    const movieCount = favorites.filter(item => item.type === 'movie').length;
-    const tvCount = favorites.filter(item => item.type === 'tv').length;
-    
-    // Fetch content based on user preference (more movies or more TV shows)
-    let items: (Movie | TVShow)[] = [];
-    
-    if (movieCount >= tvCount) {
-      // User prefers movies
-      const [popularMovies, trendingMovies, popularTV] = await Promise.all([
-        getPopularMovies(),
-        getTrendingMovies(),
-        getPopularTVShows(),
-      ]);
-      
-      items = [
-        ...popularMovies.results, 
-        ...trendingMovies.results,
-        ...popularTV.results.slice(0, 5) // Just a few TV shows
-      ];
-    } else {
-      // User prefers TV shows
-      const [popularTV, trendingTV, popularMovies] = await Promise.all([
-        getPopularTVShows(),
-        getTrendingTVShows(),
-        getPopularMovies(),
-      ]);
-      
-      items = [
-        ...popularTV.results, 
-        ...trendingTV.results,
-        ...popularMovies.results.slice(0, 5) // Just a few movies
-      ];
-    }
-    
-    // Score and sort items
-    const scoredItems = scoreItems(items, favorites);
-    const sortedItems = scoredItems.sort((a, b) => b.score - a.score);
-    
-    // Remove duplicates by ID
-    const uniqueIds = new Set();
-    const uniqueItems = sortedItems.filter(item => {
-      if (uniqueIds.has(item.id)) return false;
-      uniqueIds.add(item.id);
-      return true;
+    const favorites: FavoriteItem[] = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: data.itemId,
+        type: data.itemType,
+        title: data.title,
+        posterPath: data.posterPath,
+        addedAt: new Date(data.addedAt).getTime()
+      };
     });
     
-    return uniqueItems.slice(0, limit);
+    return favorites;
+  } catch (error) {
+    console.error("Error fetching user favorites:", error);
+    return [];
+  }
+};
+
+// Extract genre IDs from a list of favorite items
+const extractFavoriteGenres = async (favorites: FavoriteItem[]): Promise<number[]> => {
+  // This would require additional API calls to get genre information for each favorite item
+  // For simplicity, we'll use a predefined set of popular genres
+  return [28, 12, 35, 18, 10749, 80]; // Action, Adventure, Comedy, Drama, Romance, Crime
+};
+
+// Get personalized recommendations based on user's favorite items
+export const getPersonalizedRecommendations = async (
+  user: User,
+  limit: number = 10
+): Promise<(Movie | TVShow)[]> => {
+  try {
+    // Get user's favorite items
+    const favorites = await getUserFavorites(user);
+    
+    if (favorites.length === 0) {
+      // If user has no favorites, return trending content
+      const [trendingMovies, trendingTVShows] = await Promise.all([
+        getTrendingMovies(),
+        getTrendingTVShows()
+      ]);
+      
+      const combinedResults = [
+        ...(trendingMovies?.results || []),
+        ...(trendingTVShows?.results || [])
+      ];
+      
+      return combinedResults.slice(0, limit);
+    }
+    
+    // Extract genre IDs from favorite items
+    const genreIds = await extractFavoriteGenres(favorites);
+    
+    // Get recommendations based on genres
+    const [movieRecommendations, tvRecommendations] = await Promise.all([
+      getMoviesByGenre(genreIds[0] || 28),
+      getTVShowsByGenre(genreIds[1] || 18)
+    ]);
+    
+    // Combine and filter out items the user has already favorited
+    const favoriteIds = favorites.map(fav => fav.id);
+    
+    const combinedResults = [
+      ...(movieRecommendations?.results || []),
+      ...(tvRecommendations?.results || [])
+    ].filter(item => !favoriteIds.includes(item.id));
+    
+    // Return limited number of recommendations
+    return combinedResults.slice(0, limit);
   } catch (error) {
     console.error("Error getting personalized recommendations:", error);
     return [];

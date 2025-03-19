@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
 import Favorites from "@/components/Favorites";
+import { Heart } from "lucide-react";
 
 const Index = () => {
   const { currentUser } = useAuth();

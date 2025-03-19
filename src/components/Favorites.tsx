@@ -1,12 +1,17 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getFavorites } from "@/lib/watchService";
+import { collection, query, where, orderBy, limit as firestoreLimit, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { FavoriteItem } from "@/types";
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 
-const Favorites = ({ limit = 0 }: { limit?: number }) => {
+interface FavoritesProps {
+  limit?: number;
+}
+
+const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
   const { currentUser } = useAuth();
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,8 +26,33 @@ const Favorites = ({ limit = 0 }: { limit?: number }) => {
 
       try {
         setIsLoading(true);
-        const items = await getFavorites(currentUser);
-        setFavoriteItems(limit > 0 ? items.slice(0, limit) : items);
+        
+        // Create a query to get favorites for the current user
+        const favoritesQuery = query(
+          collection(db, "favorites"),
+          where("userId", "==", currentUser.uid),
+          orderBy("addedAt", "desc")
+        );
+        
+        // Add a limit if specified
+        const queryWithLimit = limit > 0 
+          ? query(favoritesQuery, firestoreLimit(limit))
+          : favoritesQuery;
+        
+        const querySnapshot = await getDocs(queryWithLimit);
+        
+        const items: FavoriteItem[] = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: data.itemId,
+            type: data.itemType,
+            title: data.title,
+            posterPath: data.posterPath,
+            addedAt: new Date(data.addedAt).getTime()
+          };
+        });
+        
+        setFavoriteItems(items);
       } catch (error) {
         console.error("Error fetching favorites:", error);
       } finally {
@@ -49,7 +79,7 @@ const Favorites = ({ limit = 0 }: { limit?: number }) => {
     <div>
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, index) => (
+          {[...Array(limit > 0 ? limit : 6)].map((_, index) => (
             <div
               key={index}
               className="aspect-[2/3] rounded-lg bg-muted/20 animate-pulse"
