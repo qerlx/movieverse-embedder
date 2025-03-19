@@ -7,7 +7,7 @@ import { getMovieDetails, getTVShowDetails } from "@/lib/api";
 import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { addToWatchHistory, addToFavorites, removeFromFavorites, isFavorite } from "@/lib/watchService";
+import { addToFavorites, removeFromFavorites, isFavorite } from "@/lib/watchService";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -55,15 +55,6 @@ const Watch = () => {
           });
           
           if (currentUser) {
-            await addToWatchHistory(currentUser, {
-              id: itemId,
-              type: "movie",
-              title: movieData.title,
-              posterPath: movieData.poster_path,
-              progress: 0,
-              genres: movieData.genre_ids || []
-            });
-            
             // Check if movie is in favorites
             const isMovieFavorited = await isFavorite(currentUser, "movie", itemId);
             setIsFavorited(isMovieFavorited);
@@ -80,30 +71,6 @@ const Watch = () => {
           });
           
           if (currentUser) {
-            const episodeNum = parseInt(episode);
-            const seasonNum = parseInt(season);
-            
-            let episodeName = `Episode ${episodeNum}`;
-            if (tvData.seasons) {
-              const currentSeason = tvData.seasons.find(s => s.season_number === seasonNum);
-              if (currentSeason) {
-                episodeName = `${currentSeason.name}: Episode ${episodeNum}`;
-              }
-            }
-            
-            await addToWatchHistory(currentUser, {
-              id: itemId,
-              type: "tv",
-              title: tvData.name,
-              posterPath: tvData.poster_path,
-              lastEpisode: {
-                season: seasonNum,
-                episode: episodeNum,
-                name: episodeName
-              },
-              genres: tvData.genre_ids || []
-            });
-            
             // Check if show is in favorites
             const isShowFavorited = await isFavorite(currentUser, "tv", itemId);
             setIsFavorited(isShowFavorited);
@@ -167,9 +134,7 @@ const Watch = () => {
 
   const handleIframeError = () => {
     console.log("Iframe error detected");
-    if (activeServer === lastWorkingServer) {
-      tryNextServer();
-    }
+    tryNextServer();
   };
 
   const handleBackNavigation = () => {
@@ -326,6 +291,7 @@ const Watch = () => {
                 allowFullScreen
                 className="absolute inset-0 w-full h-full"
                 onError={handleIframeError}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               ></iframe>
             </div>
             

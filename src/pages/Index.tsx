@@ -9,8 +9,8 @@ import {
   getTrendingTVShows 
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import RecentlyWatched from "@/components/RecentlyWatched";
 import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
+import Favorites from "@/components/Favorites";
 
 const Index = () => {
   const { currentUser } = useAuth();
@@ -58,8 +58,16 @@ const Index = () => {
       {/* Hero Slider - Only render when data is loaded */}
       {!isLoading && heroItems.length > 0 && <HeroSlider items={heroItems} type="movie" />}
       
-      {/* Recently Watched (only for logged in users) */}
-      {currentUser && <RecentlyWatched />}
+      {/* User's favorites (only for logged in users) */}
+      {currentUser && (
+        <div className="container mx-auto px-4 mt-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center">
+            <Heart className="mr-2 text-red-500" size={20} />
+            Your Favorites
+          </h2>
+          <Favorites limit={6} />
+        </div>
+      )}
       
       {/* Personalized Recommendations (only for logged in users) */}
       {currentUser && <PersonalizedRecommendations />}

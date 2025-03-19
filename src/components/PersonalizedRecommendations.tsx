@@ -1,13 +1,16 @@
 
 import React, { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { getRecentlyWatched } from "@/lib/watchService";
-import { getPersonalizedRecommendations } from "@/lib/recommendationEngine";
-import { Movie, TVShow } from "@/types";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { getPersonalizedRecommendations, isMovie, getItemTitle } from "@/lib/recommendationEngine";
+import { Movie, TVShow } from "@/types";
 import { Sparkles } from "lucide-react";
 
-const PersonalizedRecommendations = () => {
+interface PersonalizedRecommendationsProps {
+  limit?: number;
+}
+
+const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsProps> = ({ limit = 6 }) => {
   const { currentUser } = useAuth();
   const [recommendations, setRecommendations] = useState<(Movie | TVShow)[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,46 +25,32 @@ const PersonalizedRecommendations = () => {
 
       try {
         setIsLoading(true);
-        // Get user's watch history
-        const watchHistory = await getRecentlyWatched(currentUser, 20); // Use more items for better recommendations
-        
-        // Get personalized recommendations
-        const recs = await getPersonalizedRecommendations(watchHistory);
-        setRecommendations(recs);
+        const items = await getPersonalizedRecommendations(currentUser, limit);
+        setRecommendations(items);
       } catch (error) {
-        console.error("Error fetching recommendations:", error);
+        console.error("Error fetching personalized recommendations:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchRecommendations();
-  }, [currentUser]);
+  }, [currentUser, limit]);
 
   if (!currentUser || (recommendations.length === 0 && !isLoading)) {
     return null;
   }
 
-  // Helper function to get the title of an item, whether it's a movie or TV show
-  const getItemTitle = (item: Movie | TVShow): string => {
-    return 'title' in item ? item.title : (item as TVShow).name;
-  };
-
-  // Helper function to determine if an item is a movie (has 'title' property) or TV show
-  const isMovie = (item: Movie | TVShow): boolean => {
-    return 'title' in item;
-  };
-
   return (
     <div className="container mx-auto px-4 mt-8">
       <div className="flex items-center mb-4">
-        <Sparkles className="mr-2 text-primary" size={20} />
+        <Sparkles className="mr-2 text-yellow-400" size={20} />
         <h2 className="text-xl font-bold">Recommended For You</h2>
       </div>
 
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, index) => (
+          {[...Array(limit)].map((_, index) => (
             <div
               key={index}
               className="aspect-[2/3] rounded-lg bg-muted/20 animate-pulse"
@@ -72,8 +61,8 @@ const PersonalizedRecommendations = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {recommendations.map((item) => (
             <Link
-              key={item.id}
-              to={isMovie(item) ? `/movie/${item.id}` : `/tv/${item.id}`}
+              key={`${isMovie(item) ? 'movie' : 'tv'}_${item.id}`}
+              to={`/${isMovie(item) ? 'movie' : 'tv'}/${item.id}`}
               className="block relative group rounded-lg overflow-hidden bg-muted/20 aspect-[2/3] animate-fade-in"
             >
               <div className="absolute inset-0 w-full h-full">
@@ -90,12 +79,6 @@ const PersonalizedRecommendations = () => {
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-
-              {/* AI recommendation badge */}
-              <div className="absolute top-2 right-2 bg-primary/70 text-primary-foreground text-xs px-2 py-1 rounded-full flex items-center">
-                <Sparkles size={10} className="mr-1" />
-                AI Pick
               </div>
 
               {/* Hover content */}

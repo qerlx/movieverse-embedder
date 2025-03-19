@@ -1,14 +1,26 @@
 
-import { Movie, TVShow, MediaItem, WatchProgress } from "@/types";
+import { Movie, TVShow } from "@/types";
 import { getPopularMovies, getPopularTVShows, getTrendingMovies, getTrendingTVShows } from "./api";
+import { getFavorites } from "./watchService";
+import { User } from "firebase/auth";
 
-// Get unique genres from watch history
-const extractGenres = (watchHistory: WatchProgress[]): number[] => {
+// Helper function to determine if an item is a movie
+export const isMovie = (item: Movie | TVShow): item is Movie => {
+  return 'title' in item;
+};
+
+// Get title of an item, handling both Movie and TVShow types
+export const getItemTitle = (item: Movie | TVShow): string => {
+  return isMovie(item) ? item.title : item.name;
+};
+
+// Get unique genres from favorites
+const extractGenres = (favorites: any[]): number[] => {
   const genres: number[] = [];
   
-  watchHistory.forEach(item => {
+  favorites.forEach(item => {
     if (item.genres) {
-      item.genres.forEach(genreId => {
+      item.genres.forEach((genreId: number) => {
         if (!genres.includes(genreId)) {
           genres.push(genreId);
         }
@@ -19,20 +31,14 @@ const extractGenres = (watchHistory: WatchProgress[]): number[] => {
   return genres;
 };
 
-// Helper function to determine if an item is a movie
-const isMovie = (item: Movie | TVShow): boolean => {
-  return 'title' in item;
-};
-
-// Score items based on genre preference and recency
-const scoreItems = (items: (Movie | TVShow)[], watchHistory: WatchProgress[]): (Movie | TVShow & { score: number })[] => {
-  const preferredGenres = extractGenres(watchHistory);
-  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+// Score items based on genre preference
+const scoreItems = (items: (Movie | TVShow)[], favorites: any[]): (Movie | TVShow & { score: number })[] => {
+  const preferredGenres = extractGenres(favorites);
   
-  // Convert watch history to a map for easy lookup
-  const watchedMap = new Map<string, number>();
-  watchHistory.forEach(item => {
-    watchedMap.set(`${item.type}_${item.id}`, item.lastWatched);
+  // Convert favorites to a map for easy lookup
+  const favoritesMap = new Map<string, number>();
+  favorites.forEach(item => {
+    favoritesMap.set(`${item.type}_${item.id}`, 1);
   });
   
   return items.map(item => {
@@ -46,16 +52,10 @@ const scoreItems = (items: (Movie | TVShow)[], watchHistory: WatchProgress[]): (
     const genreMatchCount = itemGenres.filter(g => preferredGenres.includes(g)).length;
     score += genreMatchCount * 2;
     
-    // Recently watched bonus
+    // User hasn't favorited this yet (avoid recommending already favorited content)
     const itemType = isMovie(item) ? 'movie' : 'tv';
     const key = `${itemType}_${item.id}`;
-    const lastWatched = watchedMap.get(key);
-    if (lastWatched && lastWatched > oneWeekAgo) {
-      score += 1; // Bonus for recently watched content type
-    }
-    
-    // User hasn't watched this yet (avoid recommending already watched content)
-    if (!watchedMap.has(key)) {
+    if (!favoritesMap.has(key)) {
       score += 0.5;
     }
     
@@ -65,19 +65,28 @@ const scoreItems = (items: (Movie | TVShow)[], watchHistory: WatchProgress[]): (
 
 // Get personalized recommendations for a user
 export const getPersonalizedRecommendations = async (
-  watchHistory: WatchProgress[],
+  currentUser: User | null,
   limit = 10
 ): Promise<(Movie | TVShow)[]> => {
   try {
-    // If no watch history, return trending content
-    if (!watchHistory || watchHistory.length === 0) {
+    // If no user, return trending content
+    if (!currentUser) {
+      const trending = await getTrendingMovies();
+      return trending.results.slice(0, limit);
+    }
+    
+    // Get user's favorites
+    const favorites = await getFavorites(currentUser);
+    
+    // If no favorites, return trending content
+    if (!favorites || favorites.length === 0) {
       const trending = await getTrendingMovies();
       return trending.results.slice(0, limit);
     }
     
     // Count movie vs TV show preference
-    const movieCount = watchHistory.filter(item => item.type === 'movie').length;
-    const tvCount = watchHistory.filter(item => item.type === 'tv').length;
+    const movieCount = favorites.filter(item => item.type === 'movie').length;
+    const tvCount = favorites.filter(item => item.type === 'tv').length;
     
     // Fetch content based on user preference (more movies or more TV shows)
     let items: (Movie | TVShow)[] = [];
@@ -111,7 +120,7 @@ export const getPersonalizedRecommendations = async (
     }
     
     // Score and sort items
-    const scoredItems = scoreItems(items, watchHistory);
+    const scoredItems = scoreItems(items, favorites);
     const sortedItems = scoredItems.sort((a, b) => b.score - a.score);
     
     // Remove duplicates by ID

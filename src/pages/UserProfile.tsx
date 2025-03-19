@@ -1,40 +1,16 @@
-import React, { useEffect, useState } from "react";
+
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { getWatchHistory } from "@/lib/watchService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Clock, Heart } from "lucide-react";
-import RecentlyWatched from "@/components/RecentlyWatched";
+import { LogOut, Heart } from "lucide-react";
 import Favorites from "@/components/Favorites";
 
 const UserProfile = () => {
   const { currentUser, signOut } = useAuth();
   const navigate = useNavigate();
-  const [watchHistory, setWatchHistory] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!currentUser) {
-      navigate("/");
-      return;
-    }
-
-    const fetchWatchHistory = async () => {
-      try {
-        setIsLoading(true);
-        const history = await getWatchHistory(currentUser);
-        setWatchHistory(history);
-      } catch (error) {
-        console.error("Error fetching watch history:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchWatchHistory();
-  }, [currentUser, navigate]);
 
   const handleSignOut = async () => {
     try {
@@ -85,25 +61,16 @@ const UserProfile = () => {
       </div>
 
       {/* Content tabs */}
-      <Tabs defaultValue="history" className="space-y-4">
+      <Tabs defaultValue="favorites" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="history" className="gap-2">
-            <Clock size={16} />
-            Watch History
-          </TabsTrigger>
           <TabsTrigger value="favorites" className="gap-2">
             <Heart size={16} />
             Favorites
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="history" className="space-y-4">
-          <h2 className="text-2xl font-bold">Watch History</h2>
-          <RecentlyWatched />
-        </TabsContent>
-        
         <TabsContent value="favorites" className="space-y-4">
-          <h2 className="text-2xl font-bold">Favorites</h2>
+          <h2 className="text-2xl font-bold">Your Favorites</h2>
           <Favorites />
         </TabsContent>
       </Tabs>
