@@ -28,8 +28,10 @@ const Index = () => {
         
         // Fetch hero items (trending movies)
         const trendingMoviesData = await getTrendingMovies();
-        setHeroItems(trendingMoviesData.results.slice(0, 5));
-        setTrendingMovies(trendingMoviesData.results);
+        if (trendingMoviesData && trendingMoviesData.results) {
+          setHeroItems(trendingMoviesData.results.slice(0, 5));
+          setTrendingMovies(trendingMoviesData.results);
+        }
         
         // Fetch other categories
         const [popularMoviesData, trendingTVData, popularTVData] = await Promise.all([
@@ -38,9 +40,9 @@ const Index = () => {
           getPopularTVShows()
         ]);
         
-        setPopularMovies(popularMoviesData.results);
-        setTrendingTVShows(trendingTVData.results);
-        setPopularTVShows(popularTVData.results);
+        if (popularMoviesData?.results) setPopularMovies(popularMoviesData.results);
+        if (trendingTVData?.results) setTrendingTVShows(trendingTVData.results);
+        if (popularTVData?.results) setPopularTVShows(popularTVData.results);
       } catch (error) {
         console.error("Error fetching data for homepage:", error);
       } finally {
@@ -53,8 +55,8 @@ const Index = () => {
   
   return (
     <div className="min-h-screen">
-      {/* Hero Slider */}
-      <HeroSlider items={heroItems} type="movie" />
+      {/* Hero Slider - Only render when data is loaded */}
+      {!isLoading && heroItems.length > 0 && <HeroSlider items={heroItems} type="movie" />}
       
       {/* Recently Watched (only for logged in users) */}
       {currentUser && <RecentlyWatched />}
@@ -62,32 +64,49 @@ const Index = () => {
       {/* Personalized Recommendations (only for logged in users) */}
       {currentUser && <PersonalizedRecommendations />}
       
-      {/* Movie Categories */}
-      <div className="py-8">
-        <CategoryRow 
-          title="Trending Movies" 
-          items={trendingMovies} 
-          type="movie"
-        />
-        
-        <CategoryRow 
-          title="Popular Movies" 
-          items={popularMovies} 
-          type="movie"
-        />
-        
-        <CategoryRow 
-          title="Trending TV Shows" 
-          items={trendingTVShows} 
-          type="tv"
-        />
-        
-        <CategoryRow 
-          title="Popular TV Shows" 
-          items={popularTVShows} 
-          type="tv"
-        />
-      </div>
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="py-20 flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
+      
+      {/* Movie Categories - Only render when data is loaded */}
+      {!isLoading && (
+        <div className="py-8">
+          {trendingMovies.length > 0 && (
+            <CategoryRow 
+              title="Trending Movies" 
+              items={trendingMovies} 
+              type="movie"
+            />
+          )}
+          
+          {popularMovies.length > 0 && (
+            <CategoryRow 
+              title="Popular Movies" 
+              items={popularMovies} 
+              type="movie"
+            />
+          )}
+          
+          {trendingTVShows.length > 0 && (
+            <CategoryRow 
+              title="Trending TV Shows" 
+              items={trendingTVShows} 
+              type="tv"
+            />
+          )}
+          
+          {popularTVShows.length > 0 && (
+            <CategoryRow 
+              title="Popular TV Shows" 
+              items={popularTVShows} 
+              type="tv"
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 };
