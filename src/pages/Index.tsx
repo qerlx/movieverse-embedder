@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
 import Favorites from "@/components/Favorites";
 import { Heart } from "lucide-react";
+import AIBuddy from "@/components/AIBuddy";
 
 const Index = () => {
   const { currentUser } = useAuth();
@@ -57,7 +58,12 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Slider - Only render when data is loaded */}
-      {!isLoading && heroItems.length > 0 && <HeroSlider items={heroItems} type="movie" />}
+      {!isLoading && heroItems && heroItems.length > 0 && <HeroSlider items={heroItems} type="movie" />}
+      
+      {/* AI Buddy Button (for everyone) */}
+      <div className="container mx-auto px-4 mt-8">
+        <AIBuddy />
+      </div>
       
       {/* User's favorites (only for logged in users) */}
       {currentUser && (
@@ -83,7 +89,7 @@ const Index = () => {
       {/* Movie Categories - Only render when data is loaded */}
       {!isLoading && (
         <div className="py-8">
-          {trendingMovies.length > 0 && (
+          {trendingMovies && trendingMovies.length > 0 && (
             <CategoryRow 
               title="Trending Movies" 
               items={trendingMovies} 
@@ -91,7 +97,7 @@ const Index = () => {
             />
           )}
           
-          {popularMovies.length > 0 && (
+          {popularMovies && popularMovies.length > 0 && (
             <CategoryRow 
               title="Popular Movies" 
               items={popularMovies} 
@@ -99,7 +105,7 @@ const Index = () => {
             />
           )}
           
-          {trendingTVShows.length > 0 && (
+          {trendingTVShows && trendingTVShows.length > 0 && (
             <CategoryRow 
               title="Trending TV Shows" 
               items={trendingTVShows} 
@@ -107,7 +113,7 @@ const Index = () => {
             />
           )}
           
-          {popularTVShows.length > 0 && (
+          {popularTVShows && popularTVShows.length > 0 && (
             <CategoryRow 
               title="Popular TV Shows" 
               items={popularTVShows} 
