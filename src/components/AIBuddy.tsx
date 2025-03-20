@@ -74,11 +74,7 @@ const AIBuddy = () => {
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error("Error in AI processing:", error);
-      toast({
-        title: "Error",
-        description: "Failed to get a response. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Failed to get a response. Please try again.");
     } finally {
       setIsProcessing(false);
     }

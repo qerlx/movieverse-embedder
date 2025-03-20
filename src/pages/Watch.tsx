@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +7,7 @@ import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToFavorites, removeFromFavorites, isFavorite } from "@/lib/watchService";
+import FavoriteButton from "@/components/FavoriteButton";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -159,9 +159,7 @@ const Watch = () => {
       if (isFavorited) {
         await removeFromFavorites(currentUser, type as "movie" | "tv", itemId);
         setIsFavorited(false);
-        toast.success("Removed from favorites", {
-          description: `${title} has been removed from your favorites.`,
-        });
+        toast.success("Removed from favorites");
       } else {
         await addToFavorites(currentUser, {
           id: itemId,
@@ -170,15 +168,11 @@ const Watch = () => {
           posterPath
         });
         setIsFavorited(true);
-        toast.success("Added to favorites", {
-          description: `${title} has been added to your favorites.`,
-        });
+        toast.success("Added to favorites");
       }
     } catch (error) {
       console.error("Error updating favorites:", error);
-      toast.error("Failed to update favorites", {
-        description: "Please try again.",
-      });
+      toast.error("Failed to update favorites");
     }
   };
 
@@ -214,7 +208,7 @@ const Watch = () => {
           <h1 className="text-xl font-medium text-white ml-4 truncate">{title}</h1>
           
           <div className="ml-auto flex space-x-2">
-            {currentUser && (
+            {currentUser && type && id && (
               <Button
                 size="sm"
                 variant="ghost"
@@ -301,9 +295,7 @@ const Watch = () => {
                 size="sm" 
                 className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
                 onClick={() => {
-                  toast.success("Thanks for the feedback!", {
-                    description: "We'll improve our video sources.",
-                  });
+                  toast.success("Thanks for the feedback!");
                 }}
               >
                 <ThumbsUp size={14} />
