@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Bot, Send, BotMessageSquare } from "lucide-react";
@@ -8,14 +8,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-// Sample responses for the AI buddy
+// Properly structured responses object
 const aiResponses = {
-  "help": "I can help you discover movies and TV shows! Ask me for recommendations, information about actors, or details about specific titles.",
+  help: "I can help you discover movies and TV shows! Ask me for recommendations, information about actors, or details about specific titles.",
   "movie recommendations": "Based on popular trends, I recommend checking out these movies: \n\n1. Dune: Part Two\n2. Poor Things\n3. Oppenheimer\n4. The Holdovers\n5. Anyone But You",
   "tv recommendations": "Here are some TV shows you might enjoy: \n\n1. The Last of Us\n2. Shogun\n3. The Bear\n4. Slow Horses\n5. Mr. & Mrs. Smith",
   "action movies": "Here are some great action movies to check out: \n\n1. John Wick series\n2. Mad Max: Fury Road\n3. Mission: Impossible series\n4. The Raid\n5. Top Gun: Maverick",
   "comedy shows": "Looking for a good laugh? Try these comedy shows: \n\n1. Ted Lasso\n2. What We Do in the Shadows\n3. The Good Place\n4. Schitt's Creek\n5. Abbott Elementary",
-  "default": "I'm your MovieStreamHub AI assistant! I can help you discover new content, learn about movies and TV shows, or find something based on your preferences. What would you like to know?"
+  default: "I'm your MovieStreamHub AI assistant! I can help you discover new content, learn about movies and TV shows, or find something based on your preferences. What would you like to know?"
 };
 
 const sampleQuestions = [
@@ -38,10 +38,10 @@ const AIBuddy = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
   const { currentUser } = useAuth();
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize chat with a welcome message
-  React.useEffect(() => {
+  useEffect(() => {
     if (messages.length === 0) {
       setMessages([{
         id: "welcome",
@@ -52,7 +52,7 @@ const AIBuddy = () => {
     }
   }, [messages.length]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
@@ -80,16 +80,17 @@ const AIBuddy = () => {
       
       // Check for keywords in the message
       const lowerCaseMessage = currentMessage.toLowerCase();
+      
       if (lowerCaseMessage.includes("help")) {
         responseContent = aiResponses.help;
       } else if (lowerCaseMessage.includes("movie") && lowerCaseMessage.includes("recommend")) {
-        responseContent = aiResponses.movie;
+        responseContent = aiResponses["movie recommendations"];
       } else if (lowerCaseMessage.includes("tv") && lowerCaseMessage.includes("recommend")) {
-        responseContent = aiResponses.tv;
+        responseContent = aiResponses["tv recommendations"];
       } else if (lowerCaseMessage.includes("action")) {
-        responseContent = aiResponses.action;
+        responseContent = aiResponses["action movies"];
       } else if (lowerCaseMessage.includes("comedy")) {
-        responseContent = aiResponses.comedy;
+        responseContent = aiResponses["comedy shows"];
       }
       
       const aiMessage = {
@@ -105,7 +106,10 @@ const AIBuddy = () => {
 
   const handleQuestionClick = (question: string) => {
     setCurrentMessage(question);
-    handleSendMessage();
+    // Use setTimeout to ensure the state is updated before sending
+    setTimeout(() => {
+      handleSendMessage();
+    }, 50);
   };
 
   return (

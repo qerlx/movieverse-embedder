@@ -3,12 +3,12 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getMovieDetails } from "@/lib/api";
-import { Star, Clock, Calendar, Play, Heart } from "lucide-react";
+import { Star, Clock, Calendar, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Movie, Cast } from "@/types";
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
-import { addToFavorites, removeFromFavorites, isFavorite } from "@/lib/watchService";
+import FavoriteButton from "@/components/FavoriteButton";
 
 const MovieDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +17,6 @@ const MovieDetail = () => {
   const { currentUser } = useAuth();
   const [movie, setMovie] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -28,12 +27,6 @@ const MovieDetail = () => {
         const movieId = parseInt(id);
         const data = await getMovieDetails(movieId);
         setMovie(data);
-        
-        // Check if movie is favorited
-        if (currentUser) {
-          const favorited = await isFavorite(currentUser, "movie", movieId);
-          setIsFavorited(favorited);
-        }
       } catch (error) {
         console.error("Error fetching movie details:", error);
         toast({
@@ -47,46 +40,10 @@ const MovieDetail = () => {
     };
 
     fetchMovieDetails();
-  }, [id, toast, currentUser]);
+  }, [id, toast]);
 
   const handleWatchClick = () => {
     navigate(`/watch/movie/${id}`);
-  };
-  
-  const handleFavoriteToggle = async () => {
-    if (!currentUser || !movie) return;
-    
-    try {
-      const movieId = parseInt(id!);
-      
-      if (isFavorited) {
-        await removeFromFavorites(currentUser, "movie", movieId);
-        setIsFavorited(false);
-        toast({
-          title: "Removed from favorites",
-          description: `${movie.title} has been removed from your favorites.`,
-        });
-      } else {
-        await addToFavorites(currentUser, {
-          id: movieId,
-          type: "movie",
-          title: movie.title,
-          posterPath: movie.poster_path
-        });
-        setIsFavorited(true);
-        toast({
-          title: "Added to favorites",
-          description: `${movie.title} has been added to your favorites.`,
-        });
-      }
-    } catch (error) {
-      console.error("Error updating favorites:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update favorites. Please try again.",
-        variant: "destructive",
-      });
-    }
   };
 
   if (isLoading) {
@@ -222,15 +179,14 @@ const MovieDetail = () => {
                 </Button>
                 
                 {currentUser && (
-                  <Button
+                  <FavoriteButton
+                    itemId={parseInt(id!)}
+                    itemType="movie"
+                    title={movie.title}
+                    posterPath={movie.poster_path}
                     size="lg"
                     variant="outline"
-                    className={`gap-2 ${isFavorited ? 'text-red-500 border-red-500' : ''}`}
-                    onClick={handleFavoriteToggle}
-                  >
-                    <Heart size={18} className={isFavorited ? "fill-current" : ""} />
-                    {isFavorited ? "Remove from Favorites" : "Add to Favorites"}
-                  </Button>
+                  />
                 )}
               </div>
             </div>

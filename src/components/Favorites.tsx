@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { FavoriteItem } from "@/types";
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface FavoritesProps {
   limit?: number;
@@ -71,6 +72,9 @@ const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
         <p className="text-muted-foreground">
           Add movies and TV shows to your favorites to see them here
         </p>
+        <Button className="mt-4" asChild>
+          <Link to="/">Browse Content</Link>
+        </Button>
       </div>
     );
   }
