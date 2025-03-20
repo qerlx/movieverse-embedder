@@ -16,7 +16,7 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
         className={cn("flex items-center justify-center", className)}
       >
         <img 
-          src="/lovable-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
+          src="/MSH-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
           alt="MovieStreamHub" 
           className="w-8 h-8 object-contain" 
         />

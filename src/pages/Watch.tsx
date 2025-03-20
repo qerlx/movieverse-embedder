@@ -1,12 +1,12 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { getMovieDetails, getTVShowDetails } from "@/lib/api";
-import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, Heart } from "lucide-react";
+import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { addToFavorites, removeFromFavorites, isFavorite } from "@/lib/watchService";
 import FavoriteButton from "@/components/FavoriteButton";
 
 const Watch = () => {
@@ -31,7 +31,6 @@ const Watch = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
   const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
-  const [isFavorited, setIsFavorited] = useState(false);
   const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -53,12 +52,6 @@ const Watch = () => {
             server3: `https://vidsrc.to/embed/movie/${itemId}`,
             server4: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`
           });
-          
-          if (currentUser) {
-            // Check if movie is in favorites
-            const isMovieFavorited = await isFavorite(currentUser, "movie", itemId);
-            setIsFavorited(isMovieFavorited);
-          }
         } else if (type === "tv" && season && episode) {
           const tvData = await getTVShowDetails(itemId);
           setTitle(`${tvData.name} - S${season} E${episode}`);
@@ -69,12 +62,6 @@ const Watch = () => {
             server3: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
             server4: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`
           });
-          
-          if (currentUser) {
-            // Check if show is in favorites
-            const isShowFavorited = await isFavorite(currentUser, "tv", itemId);
-            setIsFavorited(isShowFavorited);
-          }
         } else {
           throw new Error("Invalid parameters for TV show");
         }
@@ -92,7 +79,7 @@ const Watch = () => {
     };
 
     fetchDetails();
-  }, [id, type, season, episode, navigate, uiToast, currentUser]);
+  }, [id, type, season, episode, navigate, uiToast]);
 
   // Helper function to try the next server
   const tryNextServer = () => {
@@ -151,31 +138,6 @@ const Watch = () => {
     }
   };
 
-  const handleFavoriteToggle = async () => {
-    if (!currentUser || !id || !type) return;
-    
-    const itemId = parseInt(id);
-    try {
-      if (isFavorited) {
-        await removeFromFavorites(currentUser, type as "movie" | "tv", itemId);
-        setIsFavorited(false);
-        toast.success("Removed from favorites");
-      } else {
-        await addToFavorites(currentUser, {
-          id: itemId,
-          type: type as "movie" | "tv",
-          title,
-          posterPath
-        });
-        setIsFavorited(true);
-        toast.success("Added to favorites");
-      }
-    } catch (error) {
-      console.error("Error updating favorites:", error);
-      toast.error("Failed to update favorites");
-    }
-  };
-
   // Monitor iframe load
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -209,16 +171,14 @@ const Watch = () => {
           
           <div className="ml-auto flex space-x-2">
             {currentUser && type && id && (
-              <Button
-                size="sm"
+              <FavoriteButton
+                itemId={parseInt(id)}
+                itemType={type as "movie" | "tv"}
+                title={title}
+                posterPath={posterPath}
+                size="md"
                 variant="ghost"
-                className={`gap-2 ${isFavorited ? 'text-red-500' : 'text-white'}`}
-                onClick={handleFavoriteToggle}
-                aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-              >
-                <Heart size={16} className={isFavorited ? "fill-current" : ""} />
-                {isFavorited ? "Favorited" : "Favorite"}
-              </Button>
+              />
             )}
           </div>
         </div>

@@ -12,7 +12,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
 import Favorites from "@/components/Favorites";
 import { Heart } from "lucide-react";
-import AIBuddy from "@/components/AIBuddy";
 
 const Index = () => {
   const { currentUser } = useAuth();
@@ -59,11 +58,6 @@ const Index = () => {
     <div className="min-h-screen">
       {/* Hero Slider - Only render when data is loaded */}
       {!isLoading && heroItems && heroItems.length > 0 && <HeroSlider items={heroItems} type="movie" />}
-      
-      {/* AI Buddy Button (for everyone) */}
-      <div className="container mx-auto px-4 mt-8">
-        <AIBuddy />
-      </div>
       
       {/* User's favorites (only for logged in users) */}
       {currentUser && (
