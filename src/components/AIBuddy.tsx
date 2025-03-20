@@ -7,36 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
-// Properly structured responses object
-const aiResponses = {
-  help: "I can help you discover movies and TV shows! Ask me for recommendations, information about actors, or details about specific titles.",
-  "movie recommendations": "Based on popular trends, I recommend checking out these movies: \n\n1. Dune: Part Two\n2. Poor Things\n3. Oppenheimer\n4. The Holdovers\n5. Anyone But You",
-  "tv recommendations": "Here are some TV shows you might enjoy: \n\n1. The Last of Us\n2. Shogun\n3. The Bear\n4. Slow Horses\n5. Mr. & Mrs. Smith",
-  "action movies": "Here are some great action movies to check out: \n\n1. John Wick series\n2. Mad Max: Fury Road\n3. Mission: Impossible series\n4. The Raid\n5. Top Gun: Maverick",
-  "comedy shows": "Looking for a good laugh? Try these comedy shows: \n\n1. Ted Lasso\n2. What We Do in the Shadows\n3. The Good Place\n4. Schitt's Creek\n5. Abbott Elementary",
-  default: "I'm your MovieStreamHub AI assistant! I can help you discover new content, learn about movies and TV shows, or find something based on your preferences. What would you like to know?"
-};
+import { processAIQuery, ChatMessage } from "@/utils/aiService";
 
 const sampleQuestions = [
   "What can you help me with?",
-  "Recommend some movies for me",
-  "What are good TV shows to watch?",
-  "Suggest some action movies",
-  "Recommend comedy shows"
+  "Recommend some action movies for me",
+  "What are good comedy TV shows to watch?",
+  "Tell me about Christopher Nolan",
+  "Explain the sci-fi genre"
 ];
-
-interface ChatMessage {
-  id: string;
-  content: string;
-  isUser: boolean;
-  timestamp: Date;
-}
 
 const AIBuddy = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const { currentUser } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +30,7 @@ const AIBuddy = () => {
     if (messages.length === 0) {
       setMessages([{
         id: "welcome",
-        content: "Hi there! I'm your MovieStreamHub assistant. How can I help you today?",
+        content: "Hi there! I'm your MovieStreamHub AI assistant. I can recommend movies and TV shows, tell you about actors, directors, and genres. How can I help you today?",
         isUser: false,
         timestamp: new Date()
       }]);
@@ -58,13 +43,13 @@ const AIBuddy = () => {
     }
   }, [messages]);
 
-  const handleSendMessage = (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    if (!currentMessage.trim()) return;
+    if (!currentMessage.trim() || isProcessing) return;
     
     // Add user message
-    const userMessage = {
+    const userMessage: ChatMessage = {
       id: Date.now().toString(),
       content: currentMessage,
       isUser: true,
@@ -73,35 +58,30 @@ const AIBuddy = () => {
     
     setMessages(prev => [...prev, userMessage]);
     setCurrentMessage("");
+    setIsProcessing(true);
     
-    // Generate AI response with a small delay to simulate thinking
-    setTimeout(() => {
-      let responseContent = aiResponses.default;
+    try {
+      // Process with AI
+      const aiResponse = await processAIQuery(userMessage.content, messages);
       
-      // Check for keywords in the message
-      const lowerCaseMessage = currentMessage.toLowerCase();
-      
-      if (lowerCaseMessage.includes("help")) {
-        responseContent = aiResponses.help;
-      } else if (lowerCaseMessage.includes("movie") && lowerCaseMessage.includes("recommend")) {
-        responseContent = aiResponses["movie recommendations"];
-      } else if (lowerCaseMessage.includes("tv") && lowerCaseMessage.includes("recommend")) {
-        responseContent = aiResponses["tv recommendations"];
-      } else if (lowerCaseMessage.includes("action")) {
-        responseContent = aiResponses["action movies"];
-      } else if (lowerCaseMessage.includes("comedy")) {
-        responseContent = aiResponses["comedy shows"];
-      }
-      
-      const aiMessage = {
-        id: Date.now().toString(),
-        content: responseContent,
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        content: aiResponse,
         isUser: false,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, aiMessage]);
-    }, 1000);
+    } catch (error) {
+      console.error("Error in AI processing:", error);
+      toast({
+        title: "Error",
+        description: "Failed to get a response. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleQuestionClick = (question: string) => {
@@ -193,11 +173,15 @@ const AIBuddy = () => {
                 onChange={(e) => setCurrentMessage(e.target.value)}
                 placeholder="Ask about movies or shows..."
                 className="flex-1"
+                disabled={isProcessing}
               />
-              <Button type="submit" size="icon">
+              <Button type="submit" size="icon" disabled={isProcessing || !currentMessage.trim()}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+            {isProcessing && (
+              <p className="text-xs text-muted-foreground mt-2">Processing your request...</p>
+            )}
           </form>
         </SheetContent>
       </Sheet>
