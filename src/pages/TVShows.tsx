@@ -4,6 +4,7 @@ import { TVShow, Genre } from "@/types";
 import MovieCard from "@/components/MovieCard";
 import { useToast } from "@/hooks/use-toast";
 import { 
+  getPopularTVShows, 
   getTopRatedTVShows, 
   getTVShowsByGenre, 
   getTVGenres 
@@ -25,7 +26,7 @@ const TVShows = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [category, setCategory] = useState<"top_rated" | "genre">("top_rated");
+  const [category, setCategory] = useState<"popular" | "top_rated" | "genre">("popular");
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
 
@@ -52,7 +53,16 @@ const TVShows = () => {
         if (category === "genre" && selectedGenre) {
           response = await getTVShowsByGenre(selectedGenre.id, currentPage);
         } else {
-          response = await getTopRatedTVShows(currentPage);
+          switch (category) {
+            case "popular":
+              response = await getPopularTVShows(currentPage);
+              break;
+            case "top_rated":
+              response = await getTopRatedTVShows(currentPage);
+              break;
+            default:
+              response = await getPopularTVShows(currentPage);
+          }
         }
         
         setTVShows(response.results);
@@ -74,6 +84,12 @@ const TVShows = () => {
     fetchTVShows();
   }, [category, currentPage, selectedGenre, toast]);
 
+  const changeCategory = (newCategory: "popular" | "top_rated") => {
+    setCategory(newCategory);
+    setSelectedGenre(null);
+    setCurrentPage(1);
+  };
+
   const selectGenre = (genre: Genre) => {
     setSelectedGenre(genre);
     setCategory("genre");
@@ -82,7 +98,7 @@ const TVShows = () => {
 
   const clearGenreFilter = () => {
     setSelectedGenre(null);
-    setCategory("top_rated");
+    setCategory("popular");
     setCurrentPage(1);
   };
 
@@ -105,12 +121,15 @@ const TVShows = () => {
         
         <div className="flex flex-wrap gap-2 items-center">
           <Button
+            variant={category === "popular" && !selectedGenre ? "default" : "outline"}
+            onClick={() => changeCategory("popular")}
+            className="transition-all duration-300"
+          >
+            Popular
+          </Button>
+          <Button
             variant={category === "top_rated" ? "default" : "outline"}
-            onClick={() => {
-              setCategory("top_rated");
-              setSelectedGenre(null);
-              setCurrentPage(1);
-            }}
+            onClick={() => changeCategory("top_rated")}
             className="transition-all duration-300"
           >
             Top Rated

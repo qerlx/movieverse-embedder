@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import { collection, query, where, orderBy, limit as firestoreLimit, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { FavoriteItem } from "@/types";
 import { Link } from "react-router-dom";
@@ -29,27 +29,31 @@ const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
         setIsLoading(true);
         
         // Create a query to get favorites for the current user
-        const favoritesRef = collection(db, "users", currentUser.uid, "favorites");
         const favoritesQuery = query(
-          favoritesRef,
+          collection(db, "favorites"),
+          where("userId", "==", currentUser.uid),
           orderBy("addedAt", "desc")
         );
         
-        const querySnapshot = await getDocs(favoritesQuery);
+        // Add a limit if specified
+        const queryWithLimit = limit > 0 
+          ? query(favoritesQuery, firestoreLimit(limit))
+          : favoritesQuery;
         
-        const items: FavoriteItem[] = [];
-        querySnapshot.forEach(doc => {
+        const querySnapshot = await getDocs(queryWithLimit);
+        
+        const items: FavoriteItem[] = querySnapshot.docs.map(doc => {
           const data = doc.data();
-          items.push({
+          return {
             id: data.itemId,
             type: data.itemType,
             title: data.title,
             posterPath: data.posterPath,
-            addedAt: data.addedAt
-          });
+            addedAt: new Date(data.addedAt).getTime()
+          };
         });
         
-        setFavoriteItems(limit > 0 ? items.slice(0, limit) : items);
+        setFavoriteItems(items);
       } catch (error) {
         console.error("Error fetching favorites:", error);
       } finally {

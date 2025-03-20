@@ -1,254 +1,278 @@
+
 import React, { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
-import { ArrowLeft, Maximize, Minimize, Volume2, VolumeX, Settings, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/contexts/AuthContext";
-import { addToWatchHistory } from "@/lib/watchService";
 import { toast } from "sonner";
+import { getMovieDetails, getTVShowDetails } from "@/lib/api";
+import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import FavoriteButton from "@/components/FavoriteButton";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
-    type: "movie" | "tv";
+    type: string;
     id: string;
     season?: string;
     episode?: string;
   }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast: uiToast } = useToast();
   const { currentUser } = useAuth();
   const [title, setTitle] = useState("");
   const [posterPath, setPosterPath] = useState<string | null>(null);
-  const [episodeTitle, setEpisodeTitle] = useState("");
+  const [embedUrls, setEmbedUrls] = useState<{server1: string, server2: string, server3: string, server4: string}>({
+    server1: "",
+    server2: "",
+    server3: "",
+    server4: ""
+  });
   const [isLoading, setIsLoading] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [genres, setGenres] = useState<number[]>([]);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
+  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
+  const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!id) return;
+      if (!id || !type) return;
       
       try {
         setIsLoading(true);
         const itemId = parseInt(id);
         
         if (type === "movie") {
-          const data = await getMovieDetails(itemId);
-          setTitle(data.title);
-          setPosterPath(data.poster_path);
-          setGenres(data.genres?.map((g: any) => g.id) || []);
+          const movieData = await getMovieDetails(itemId);
+          setTitle(movieData.title);
+          setPosterPath(movieData.poster_path);
+          setEmbedUrls({
+            server1: `https://embed.su/embed/movie/${itemId}`,
+            server2: `https://www.2embed.cc/embed/${itemId}`,
+            server3: `https://vidsrc.to/embed/movie/${itemId}`,
+            server4: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`
+          });
         } else if (type === "tv" && season && episode) {
           const tvData = await getTVShowDetails(itemId);
-          setTitle(tvData.name);
+          setTitle(`${tvData.name} - S${season} E${episode}`);
           setPosterPath(tvData.poster_path);
-          setGenres(tvData.genres?.map((g: any) => g.id) || []);
-          
-          try {
-            const seasonData = await getTVShowSeasonDetails(
-              itemId,
-              parseInt(season)
-            );
-            
-            const episodeData = seasonData.episodes?.find(
-              (ep: any) => ep.episode_number === parseInt(episode)
-            );
-            
-            if (episodeData) {
-              setEpisodeTitle(episodeData.name);
-            }
-          } catch (error) {
-            console.error("Error fetching episode details:", error);
-          }
+          setEmbedUrls({
+            server1: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`,
+            server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
+            server3: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
+            server4: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`
+          });
+        } else {
+          throw new Error("Invalid parameters for TV show");
         }
       } catch (error) {
         console.error("Error fetching details:", error);
         uiToast({
           title: "Error",
-          description: "Failed to load content details.",
+          description: "Failed to load media. Please try again later.",
           variant: "destructive",
         });
+        navigate(-1);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchDetails();
-  }, [id, type, season, episode, uiToast]);
+  }, [id, type, season, episode, navigate, uiToast]);
 
-  useEffect(() => {
-    // Add to watch history when the video starts playing
-    const addHistory = async () => {
-      if (!currentUser || !id || isLoading || !title) return;
-      
-      try {
-        if (type === "movie") {
-          await addToWatchHistory(currentUser, {
-            id: parseInt(id),
-            type: "movie",
-            title,
-            posterPath,
-            progress: 0,
-            genres
-          });
-        } else if (type === "tv" && season && episode) {
-          await addToWatchHistory(currentUser, {
-            id: parseInt(id),
-            type: "tv",
-            title,
-            posterPath,
-            lastEpisode: {
-              season: parseInt(season),
-              episode: parseInt(episode),
-              name: episodeTitle || `Episode ${episode}`
-            },
-            genres
-          });
-        }
-      } catch (error) {
-        console.error("Error adding to watch history:", error);
-      }
-    };
-
-    // Add a small delay to ensure all data is loaded
-    const timer = setTimeout(() => {
-      addHistory();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [currentUser, id, type, season, episode, title, posterPath, isLoading, episodeTitle, genres]);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      videoContainerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
+  // Helper function to try the next server
+  const tryNextServer = () => {
+    const serverOptions: ("server1" | "server2" | "server3" | "server4")[] = ["server1", "server2", "server3", "server4"];
+    const currentIndex = serverOptions.indexOf(activeServer);
+    
+    // Try each server in order, but don't try the same one twice in a row
+    let nextIndex = (currentIndex + 1) % serverOptions.length;
+    const nextServer = serverOptions[nextIndex];
+    
+    // Track server attempts
+    setServerAttempts(prev => ({
+      ...prev,
+      [activeServer]: (prev[activeServer] || 0) + 1
+    }));
+    
+    toast.info(`Switching to Server ${nextIndex + 1}`, {
+      description: "If video doesn't load, try another server",
+      duration: 3000
+    });
+    
+    setActiveServer(nextServer);
   };
 
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+  const handleServerSwitch = (server: "server1" | "server2" | "server3" | "server4") => {
+    setActiveServer(server);
+    setLastWorkingServer(server);
+    const serverNames = {
+      server1: "1 (Embed.su)",
+      server2: "2 (2embed)",
+      server3: "3 (VidSrc)",
+      server4: "4 (MultiEmbed)"
     };
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, []);
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
+    toast.info(`Switched to Server ${serverNames[server]}`, {
+      description: "If video doesn't load, try another server",
+      duration: 3000
+    });
   };
 
-  const handleGoBack = () => {
-    if (type === "movie") {
-      navigate(`/movie/${id}`);
-    } else if (type === "tv") {
-      navigate(`/tv/${id}`);
-    } else {
+  const handleIframeError = () => {
+    console.log("Iframe error detected");
+    tryNextServer();
+  };
+
+  const handleBackNavigation = () => {
+    if (location.key !== "default") {
       navigate(-1);
+    } else {
+      if (type === "movie") {
+        navigate(`/movie/${id}`);
+      } else if (type === "tv" && season && episode) {
+        navigate(`/tv/${id}`);
+      } else {
+        navigate('/');
+      }
     }
   };
 
-  const getVideoTitle = () => {
-    if (type === "movie") {
-      return title;
-    } else if (type === "tv") {
-      return `${title} - Season ${season}, Episode ${episode}${
-        episodeTitle ? `: ${episodeTitle}` : ""
-      }`;
-    }
-    return "Loading...";
-  };
+  // Monitor iframe load
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const handleLoad = () => {
+      console.log(`Server ${activeServer} loaded successfully`);
+      setLastWorkingServer(activeServer);
+    };
+
+    iframe.addEventListener('load', handleLoad);
+    
+    return () => {
+      iframe.removeEventListener('load', handleLoad);
+    };
+  }, [activeServer, iframeRef.current]);
 
   return (
-    <div className="bg-black min-h-screen flex flex-col">
-      <div className="relative w-full h-screen" ref={videoContainerRef}>
-        {/* Video player */}
-        <div className="absolute inset-0 bg-black flex items-center justify-center">
-          {isLoading ? (
-            <div className="text-white">
-              <Skeleton className="w-16 h-16 rounded-full bg-gray-800" />
-            </div>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-white text-center">
-                <p className="text-xl mb-4">
-                  This is a demo app. No real video playback is available.
-                </p>
-                <p className="text-gray-400 mb-8">
-                  In a real application, a video player would be integrated here.
-                </p>
-                <div className="w-16 h-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-black">
+      <div className="container mx-auto px-4 py-4 flex flex-col h-screen">
+        <div className="flex items-center mb-4">
+          <button
+            onClick={handleBackNavigation}
+            className="text-white hover:text-primary transition-colors flex items-center"
+            aria-label="Go back"
+          >
+            <ArrowLeft size={20} className="mr-2" />
+            Back
+          </button>
+          <h1 className="text-xl font-medium text-white ml-4 truncate">{title}</h1>
+          
+          <div className="ml-auto flex space-x-2">
+            {currentUser && type && id && (
+              <FavoriteButton
+                itemId={parseInt(id)}
+                itemType={type as "movie" | "tv"}
+                title={title}
+                posterPath={posterPath}
+                size="md"
+                variant="ghost"
+              />
+            )}
+          </div>
+        </div>
+        
+        <div className="flex space-x-2 mb-4 overflow-x-auto pb-2">
+          <Button 
+            size="sm" 
+            variant={activeServer === "server1" ? "default" : "outline"} 
+            className="gap-2"
+            onClick={() => handleServerSwitch("server1")}
+          >
+            <MonitorPlay size={16} />
+            Server 1
+          </Button>
+          <Button 
+            size="sm" 
+            variant={activeServer === "server2" ? "default" : "outline"} 
+            className="gap-2"
+            onClick={() => handleServerSwitch("server2")}
+          >
+            <MonitorPlay size={16} />
+            Server 2
+          </Button>
+          <Button 
+            size="sm" 
+            variant={activeServer === "server3" ? "default" : "outline"} 
+            className="gap-2"
+            onClick={() => handleServerSwitch("server3")}
+          >
+            <MonitorPlay size={16} />
+            Server 3
+          </Button>
+          <Button 
+            size="sm" 
+            variant={activeServer === "server4" ? "default" : "outline"} 
+            className="gap-2"
+            onClick={() => handleServerSwitch("server4")}
+          >
+            <MonitorPlay size={16} />
+            Server 4
+          </Button>
+        </div>
+        
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col">
+            <div className="w-full h-full relative rounded-lg overflow-hidden bg-muted animate-fade-in">
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none" id="loading-overlay">
+                <div className="flex flex-col items-center">
+                  <RotateCw className="h-10 w-10 text-primary animate-spin" />
+                  <p className="mt-4 text-sm">Loading video...</p>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Controls overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/70 opacity-100 transition-opacity duration-300 flex flex-col">
-          {/* Top bar */}
-          <div className="p-4 flex justify-between items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleGoBack}
-              className="text-white hover:bg-white/20"
-            >
-              <ArrowLeft size={24} />
-            </Button>
-            
-            <div className="text-white font-medium truncate max-w-[70%]">
-              {getVideoTitle()}
-            </div>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/")}
-              className="text-white hover:bg-white/20"
-            >
-              <X size={24} />
-            </Button>
-          </div>
-
-          {/* Bottom controls */}
-          <div className="mt-auto p-4 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleMute}
-                className="text-white hover:bg-white/20"
-              >
-                {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-              </Button>
               
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/20"
-              >
-                <Settings size={20} />
-              </Button>
+              <iframe
+                ref={iframeRef}
+                key={activeServer}
+                src={embedUrls[activeServer]}
+                title={title}
+                frameBorder="0"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+                onError={handleIframeError}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              ></iframe>
             </div>
             
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleFullscreen}
-              className="text-white hover:bg-white/20"
-            >
-              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-            </Button>
+            <div className="flex justify-center mt-4 space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
+                onClick={() => {
+                  toast.success("Thanks for the feedback!");
+                }}
+              >
+                <ThumbsUp size={14} />
+                Working well
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
+                onClick={tryNextServer}
+              >
+                <RotateCw size={14} />
+                Try another server
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
