@@ -32,7 +32,10 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
   // Check if already in watch history
   useEffect(() => {
     const checkWatchStatus = async () => {
-      if (!currentUser) return;
+      if (!currentUser) {
+        setIsAdded(false);
+        return;
+      }
       
       try {
         const progress = await getWatchProgress(currentUser, itemType, itemId);
@@ -57,6 +60,7 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
     if (isLoading) return; // Prevent multiple clicks
 
     setIsLoading(true);
+    
     try {
       // Add to watch history
       await addToWatchHistory(currentUser, {
@@ -75,9 +79,9 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
       
       setIsAdded(true);
       toast.success("Added to watch history");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding to watch history:", error);
-      toast.error("Failed to update watch history");
+      toast.error("Failed to update watch history. Please try again.");
     } finally {
       setIsLoading(false);
     }

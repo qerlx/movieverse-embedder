@@ -74,6 +74,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     if (isLoading) return; // Prevent multiple clicks
 
     setIsLoading(true);
+    
     try {
       if (isFavorited) {
         // Remove from favorites
@@ -93,7 +94,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
-      toast.error("Failed to update favorites");
+      toast.error("Failed to update favorites. Please try again.");
     } finally {
       setIsLoading(false);
     }

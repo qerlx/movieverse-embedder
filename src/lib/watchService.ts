@@ -1,4 +1,3 @@
-
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { User } from "firebase/auth";
@@ -28,7 +27,6 @@ interface FavoriteItem {
 
 export const addToWatchHistory = async (user: User, watchData: Omit<WatchProgress, "lastWatched">) => {
   if (!user || !user.uid) {
-    console.error("Invalid user object");
     throw new Error("User not authenticated");
   }
   
@@ -114,10 +112,8 @@ export const getWatchProgress = async (user: User, type: "movie" | "tv", id: num
   }
 };
 
-// Favorites functionality
 export const addToFavorites = async (user: User, itemData: Omit<FavoriteItem, "addedAt">) => {
   if (!user || !user.uid) {
-    console.error("Invalid user object");
     throw new Error("User not authenticated");
   }
   
@@ -153,7 +149,6 @@ export const addToFavorites = async (user: User, itemData: Omit<FavoriteItem, "a
 
 export const removeFromFavorites = async (user: User, type: "movie" | "tv", id: number) => {
   if (!user || !user.uid) {
-    console.error("Invalid user object");
     throw new Error("User not authenticated");
   }
   
