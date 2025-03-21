@@ -1,52 +1,49 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getFavorites } from "@/lib/watchService";
-import { FavoriteItem } from "@/types";
+import { getRecentlyWatched } from "@/lib/watchService";
 import { Link } from "react-router-dom";
-import { Heart } from "lucide-react";
+import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface FavoritesProps {
+interface RecentlyWatchedProps {
   limit?: number;
 }
 
-const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
+const RecentlyWatched: React.FC<RecentlyWatchedProps> = ({ limit = 0 }) => {
   const { currentUser } = useAuth();
-  const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
+  const [watchedItems, setWatchedItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFavorites = async () => {
+    const fetchRecentlyWatched = async () => {
       if (!currentUser) {
-        setFavoriteItems([]);
+        setWatchedItems([]);
         setIsLoading(false);
         return;
       }
 
       try {
         setIsLoading(true);
-        const items = await getFavorites(currentUser);
-        // Apply limit if specified
-        const limitedItems = limit > 0 ? items.slice(0, limit) : items;
-        setFavoriteItems(limitedItems);
+        const items = await getRecentlyWatched(currentUser, limit > 0 ? limit : 6);
+        setWatchedItems(items);
       } catch (error) {
-        console.error("Error fetching favorites:", error);
+        console.error("Error fetching recently watched:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchFavorites();
+    fetchRecentlyWatched();
   }, [currentUser, limit]);
 
-  if (!currentUser || (favoriteItems.length === 0 && !isLoading)) {
+  if (!currentUser || (watchedItems.length === 0 && !isLoading)) {
     return (
       <div className="text-center py-8">
-        <Heart className="mx-auto mb-4 text-muted" size={40} />
-        <h3 className="text-lg font-medium mb-2">No favorites yet</h3>
+        <Clock className="mx-auto mb-4 text-muted" size={40} />
+        <h3 className="text-lg font-medium mb-2">No watch history yet</h3>
         <p className="text-muted-foreground">
-          Add movies and TV shows to your favorites to see them here
+          Start watching movies and TV shows to see them here
         </p>
         <Button className="mt-4" asChild>
           <Link to="/">Browse Content</Link>
@@ -68,7 +65,7 @@ const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {favoriteItems.map((item) => (
+          {watchedItems.map((item) => (
             <Link
               key={`${item.type}_${item.id}`}
               to={`/${item.type}/${item.id}`}
@@ -90,18 +87,30 @@ const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               
-              {/* Favorite badge */}
+              {/* Recently watched badge */}
               <div className="absolute top-2 right-2">
-                <Heart className="text-red-500 fill-current" size={16} />
+                <div className="bg-primary/90 text-primary-foreground rounded-full p-1">
+                  <Clock className="h-3 w-3" />
+                </div>
               </div>
+
+              {/* Episode info for TV shows */}
+              {item.type === "tv" && item.lastEpisode && (
+                <div className="absolute top-2 left-2">
+                  <div className="bg-black/70 text-white text-xs px-2 py-1 rounded-md">
+                    S{item.lastEpisode.season}:E{item.lastEpisode.episode}
+                  </div>
+                </div>
+              )}
 
               {/* Hover content */}
               <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                 <h3 className="text-white font-medium text-sm line-clamp-1">
                   {item.title}
                 </h3>
-                <div className="text-xs text-gray-300 mt-1">
-                  {item.type === "movie" ? "Movie" : "TV Show"}
+                <div className="text-xs text-gray-300 mt-1 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {new Date(item.lastWatched).toLocaleDateString()}
                 </div>
               </div>
             </Link>
@@ -112,4 +121,4 @@ const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
   );
 };
 
-export default Favorites;
+export default RecentlyWatched;

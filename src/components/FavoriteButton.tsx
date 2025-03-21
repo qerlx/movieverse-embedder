@@ -3,8 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { isFavorite, addToFavorites, removeFromFavorites } from "@/lib/watchService";
 import { toast } from "sonner";
 
 interface FavoriteButtonProps {
@@ -25,7 +24,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   variant = "outline"
 }) => {
   const { currentUser } = useAuth();
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -38,7 +37,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 
   // Tooltips based on state
   const getButtonTitle = () => {
-    if (isFavorite) {
+    if (isFavorited) {
       return isHovered ? "Remove from favorites" : "Added to favorites";
     }
     return "Add to favorites";
@@ -48,14 +47,13 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   useEffect(() => {
     const checkFavoriteStatus = async () => {
       if (!currentUser) {
-        setIsFavorite(false);
+        setIsFavorited(false);
         return;
       }
 
       try {
-        const favoriteRef = doc(db, "users", currentUser.uid, "favorites", `${itemType}_${itemId}`);
-        const favoriteDoc = await getDoc(favoriteRef);
-        setIsFavorite(favoriteDoc.exists());
+        const status = await isFavorite(currentUser, itemType, itemId);
+        setIsFavorited(status);
       } catch (error) {
         console.error("Error checking favorite status:", error);
       }
@@ -64,31 +62,33 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     checkFavoriteStatus();
   }, [currentUser, itemId, itemType]);
 
-  const toggleFavorite = async () => {
+  const toggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation if inside a link
+    e.stopPropagation(); // Prevent event bubbling
+
     if (!currentUser) {
       toast.error("Please sign in to add favorites");
       return;
     }
 
+    if (isLoading) return; // Prevent multiple clicks
+
     setIsLoading(true);
     try {
-      const favoriteRef = doc(db, "users", currentUser.uid, "favorites", `${itemType}_${itemId}`);
-
-      if (isFavorite) {
+      if (isFavorited) {
         // Remove from favorites
-        await deleteDoc(favoriteRef);
-        setIsFavorite(false);
+        await removeFromFavorites(currentUser, itemType, itemId);
+        setIsFavorited(false);
         toast.success("Removed from favorites");
       } else {
         // Add to favorites
-        await setDoc(favoriteRef, {
-          itemId,
-          itemType,
+        await addToFavorites(currentUser, {
+          id: itemId,
+          type: itemType,
           title,
-          posterPath,
-          addedAt: Date.now()
+          posterPath
         });
-        setIsFavorite(true);
+        setIsFavorited(true);
         toast.success("Added to favorites");
       }
     } catch (error) {
@@ -104,20 +104,20 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       size="icon"
       variant={variant}
       className={`${sizeClass[size]} rounded-full transition-all duration-300 ${
-        isFavorite 
+        isFavorited 
           ? 'text-red-500 hover:text-red-600 hover:bg-red-100/10' 
           : 'text-muted-foreground hover:text-red-400 hover:bg-red-100/10'
-      } ${isHovered && isFavorite ? 'scale-110' : ''}`}
+      } ${isHovered && isFavorited ? 'scale-110' : ''}`}
       onClick={toggleFavorite}
       disabled={isLoading}
       title={getButtonTitle()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+      aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
     >
       <Heart 
-        className={`${isFavorite ? 'fill-current' : 'fill-none'} ${
-          isHovered ? 'animate-pulse' : ''
+        className={`${isFavorited ? 'fill-current' : 'fill-none'} ${
+          isLoading ? 'animate-pulse' : (isHovered ? 'animate-pulse' : '')
         }`} 
       />
     </Button>

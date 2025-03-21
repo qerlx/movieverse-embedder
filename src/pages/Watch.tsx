@@ -7,7 +7,7 @@ import { getMovieDetails, getTVShowDetails } from "@/lib/api";
 import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import FavoriteButton from "@/components/FavoriteButton";
+import { addToWatchHistory } from "@/lib/watchService";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -52,6 +52,18 @@ const Watch = () => {
             server3: `https://vidsrc.to/embed/movie/${itemId}`,
             server4: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`
           });
+
+          // Add to watch history
+          if (currentUser) {
+            await addToWatchHistory(currentUser, {
+              id: itemId,
+              type: "movie",
+              title: movieData.title,
+              posterPath: movieData.poster_path,
+              progress: 0,
+              genres: movieData.genres?.map((g: any) => g.id)
+            });
+          }
         } else if (type === "tv" && season && episode) {
           const tvData = await getTVShowDetails(itemId);
           setTitle(`${tvData.name} - S${season} E${episode}`);
@@ -62,6 +74,34 @@ const Watch = () => {
             server3: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
             server4: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`
           });
+
+          // Find episode name if available
+          let episodeName = "";
+          if (tvData.seasons) {
+            const seasonData = tvData.seasons.find((s: any) => s.season_number === parseInt(season));
+            if (seasonData && seasonData.episodes) {
+              const episodeData = seasonData.episodes.find((e: any) => e.episode_number === parseInt(episode));
+              if (episodeData) {
+                episodeName = episodeData.name;
+              }
+            }
+          }
+
+          // Add to watch history
+          if (currentUser) {
+            await addToWatchHistory(currentUser, {
+              id: itemId,
+              type: "tv",
+              title: tvData.name,
+              posterPath: tvData.poster_path,
+              lastEpisode: {
+                season: parseInt(season),
+                episode: parseInt(episode),
+                name: episodeName
+              },
+              genres: tvData.genres?.map((g: any) => g.id)
+            });
+          }
         } else {
           throw new Error("Invalid parameters for TV show");
         }
@@ -79,7 +119,7 @@ const Watch = () => {
     };
 
     fetchDetails();
-  }, [id, type, season, episode, navigate, uiToast]);
+  }, [id, type, season, episode, navigate, uiToast, currentUser]);
 
   // Helper function to try the next server
   const tryNextServer = () => {
@@ -168,19 +208,6 @@ const Watch = () => {
             Back
           </button>
           <h1 className="text-xl font-medium text-white ml-4 truncate">{title}</h1>
-          
-          <div className="ml-auto flex space-x-2">
-            {currentUser && type && id && (
-              <FavoriteButton
-                itemId={parseInt(id)}
-                itemType={type as "movie" | "tv"}
-                title={title}
-                posterPath={posterPath}
-                size="md"
-                variant="ghost"
-              />
-            )}
-          </div>
         </div>
         
         <div className="flex space-x-2 mb-4 overflow-x-auto pb-2">

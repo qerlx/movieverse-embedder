@@ -6,6 +6,8 @@ import { Star, Calendar, Play, ChevronDown, AlertTriangle, Tv2, Calendar as Cale
 import { Button } from "@/components/ui/button";
 import { TVShow, Season, Episode, Cast } from "@/types";
 import CategoryRow from "@/components/CategoryRow";
+import FavoriteButton from "@/components/FavoriteButton";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Select,
   SelectContent,
@@ -34,6 +36,7 @@ const TVShowDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { currentUser } = useAuth();
   const [tvShow, setTVShow] = useState<any | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [seasonDetails, setSeasonDetails] = useState<any | null>(null);
@@ -248,6 +251,28 @@ const TVShowDetail = () => {
                   </div>
                 </div>
               )}
+              
+              <div className="flex flex-wrap gap-4 mt-8">
+                <Button
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90 gap-2"
+                  onClick={() => handleWatchClick(1)}
+                >
+                  <Play size={18} />
+                  Watch Now
+                </Button>
+                
+                {currentUser && (
+                  <FavoriteButton
+                    itemId={parseInt(id!)}
+                    itemType="tv"
+                    title={tvShow.name}
+                    posterPath={tvShow.poster_path}
+                    size="lg"
+                    variant="outline"
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -485,3 +510,4 @@ const TVShowDetail = () => {
 };
 
 export default TVShowDetail;
+

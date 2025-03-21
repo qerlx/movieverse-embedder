@@ -129,10 +129,14 @@ export const addToFavorites = async (user: User, itemData: Omit<FavoriteItem, "a
     }
     
     // Add to favorites collection
-    const favoritesRef = doc(db, "users", user.uid, "favorites", `${itemData.type}_${itemData.id}`);
+    const favoritesRef = doc(db, "favorites", `${user.uid}_${itemData.type}_${itemData.id}`);
     
     await setDoc(favoritesRef, {
-      ...itemData,
+      userId: user.uid,
+      itemId: itemData.id,
+      itemType: itemData.type,
+      title: itemData.title,
+      posterPath: itemData.posterPath,
       addedAt: Date.now()
     });
   } catch (error) {
@@ -145,7 +149,7 @@ export const removeFromFavorites = async (user: User, type: "movie" | "tv", id: 
   if (!user) return;
   
   try {
-    const favoriteRef = doc(db, "users", user.uid, "favorites", `${type}_${id}`);
+    const favoriteRef = doc(db, "favorites", `${user.uid}_${type}_${id}`);
     await deleteDoc(favoriteRef);
   } catch (error) {
     console.error("Error removing from favorites:", error);
@@ -157,11 +161,23 @@ export const getFavorites = async (user: User): Promise<FavoriteItem[]> => {
   if (!user) return [];
   
   try {
-    const favoritesRef = collection(db, "users", user.uid, "favorites");
-    const favoritesSnapshot = await getDocs(favoritesRef);
+    const favoritesQuery = query(
+      collection(db, "favorites"),
+      where("userId", "==", user.uid)
+    );
     
-    return favoritesSnapshot.docs.map(doc => doc.data() as FavoriteItem)
-      .sort((a, b) => b.addedAt - a.addedAt); // Sort by most recently added
+    const favoritesSnapshot = await getDocs(favoritesQuery);
+    
+    return favoritesSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: data.itemId,
+        type: data.itemType,
+        title: data.title,
+        posterPath: data.posterPath,
+        addedAt: data.addedAt,
+      } as FavoriteItem;
+    }).sort((a, b) => b.addedAt - a.addedAt); // Sort by most recently added
   } catch (error) {
     console.error("Error fetching favorites:", error);
     return [];
@@ -172,7 +188,7 @@ export const isFavorite = async (user: User, type: "movie" | "tv", id: number): 
   if (!user) return false;
   
   try {
-    const favoriteRef = doc(db, "users", user.uid, "favorites", `${type}_${id}`);
+    const favoriteRef = doc(db, "favorites", `${user.uid}_${type}_${id}`);
     const favoriteDoc = await getDoc(favoriteRef);
     
     return favoriteDoc.exists();
