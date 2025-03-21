@@ -55,16 +55,21 @@ const Watch = () => {
             server4: `https://embed.su/embed/movie/${itemId}`
           });
 
-          // Add to watch history
+          // Add to watch history - only if user is signed in
           if (currentUser) {
-            await addToWatchHistory(currentUser, {
-              id: itemId,
-              type: "movie",
-              title: movieData.title,
-              posterPath: movieData.poster_path,
-              progress: 0,
-              genres: movieData.genres?.map((g: any) => g.id)
-            });
+            try {
+              await addToWatchHistory(currentUser, {
+                id: itemId,
+                type: "movie",
+                title: movieData.title,
+                posterPath: movieData.poster_path,
+                progress: 0,
+                genres: movieData.genres?.map((g: any) => g.id)
+              });
+            } catch (error) {
+              console.error("Error adding to watch history:", error);
+              // Continue even if tracking fails
+            }
           }
         } else if (type === "tv" && season && episode) {
           const tvData = await getTVShowDetails(itemId);
@@ -91,20 +96,25 @@ const Watch = () => {
             }
           }
 
-          // Add to watch history
+          // Add to watch history - only if user is signed in
           if (currentUser) {
-            await addToWatchHistory(currentUser, {
-              id: itemId,
-              type: "tv",
-              title: tvData.name,
-              posterPath: tvData.poster_path,
-              lastEpisode: {
-                season: parseInt(season),
-                episode: parseInt(episode),
-                name: episodeName
-              },
-              genres: tvData.genres?.map((g: any) => g.id)
-            });
+            try {
+              await addToWatchHistory(currentUser, {
+                id: itemId,
+                type: "tv",
+                title: tvData.name,
+                posterPath: tvData.poster_path,
+                lastEpisode: {
+                  season: parseInt(season),
+                  episode: parseInt(episode),
+                  name: episodeName || "Episode " + episode
+                },
+                genres: tvData.genres?.map((g: any) => g.id)
+              });
+            } catch (error) {
+              console.error("Error adding to watch history:", error);
+              // Continue even if tracking fails
+            }
           }
         } else {
           throw new Error("Invalid parameters for TV show");
@@ -151,20 +161,19 @@ const Watch = () => {
   const handleServerSwitch = (server: "server1" | "server2" | "server3" | "server4") => {
     setActiveServer(server);
     setLastWorkingServer(server);
-    const serverNames = {
+    
+    const serverNames: Record<string, string> = {
       server1: "1 (VidSrc)",
       server2: "2 (2embed)",
       server3: "3 (MultiEmbed)",
       server4: "4 (Embed.su)"
     };
+    
     toast.info(`Switched to Server ${serverNames[server]}`, {
       description: "If video doesn't load, try another server",
       duration: 3000
     });
   };
-
-  // Don't use handleIframeError as it can cause false positives
-  // Instead we'll rely on manual server switching
 
   const handleBackNavigation = () => {
     if (location.key !== "default") {
@@ -250,7 +259,7 @@ const Watch = () => {
               
               <iframe
                 ref={iframeRef}
-                key={activeServer}
+                key={`${activeServer}-${id}-${season || ''}-${episode || ''}`}
                 src={embedUrls[activeServer]}
                 title={title}
                 frameBorder="0"

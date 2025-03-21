@@ -36,7 +36,7 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
       
       try {
         const progress = await getWatchProgress(currentUser, itemType, itemId);
-        setIsAdded(!!progress);
+        setIsAdded(progress !== null);
       } catch (error) {
         console.error("Error checking watch status:", error);
       }

@@ -27,7 +27,10 @@ interface FavoriteItem {
 }
 
 export const addToWatchHistory = async (user: User, watchData: Omit<WatchProgress, "lastWatched">) => {
-  if (!user) return;
+  if (!user || !user.uid) {
+    console.error("Invalid user object");
+    throw new Error("User not authenticated");
+  }
   
   try {
     const userDocRef = doc(db, "users", user.uid);
@@ -67,7 +70,7 @@ export const addToWatchHistory = async (user: User, watchData: Omit<WatchProgres
 };
 
 export const getWatchHistory = async (user: User): Promise<WatchProgress[]> => {
-  if (!user) return [];
+  if (!user || !user.uid) return [];
   
   try {
     const watchHistoryRef = collection(db, "users", user.uid, "watchHistory");
@@ -82,7 +85,7 @@ export const getWatchHistory = async (user: User): Promise<WatchProgress[]> => {
 };
 
 export const getRecentlyWatched = async (user: User, limit = 6): Promise<WatchProgress[]> => {
-  if (!user) return [];
+  if (!user || !user.uid) return [];
   
   try {
     const watchHistory = await getWatchHistory(user);
@@ -94,7 +97,7 @@ export const getRecentlyWatched = async (user: User, limit = 6): Promise<WatchPr
 };
 
 export const getWatchProgress = async (user: User, type: "movie" | "tv", id: number) => {
-  if (!user) return null;
+  if (!user || !user.uid) return null;
   
   try {
     const watchHistoryRef = doc(db, "users", user.uid, "watchHistory", `${type}_${id}`);
@@ -113,7 +116,10 @@ export const getWatchProgress = async (user: User, type: "movie" | "tv", id: num
 
 // Favorites functionality
 export const addToFavorites = async (user: User, itemData: Omit<FavoriteItem, "addedAt">) => {
-  if (!user) return;
+  if (!user || !user.uid) {
+    console.error("Invalid user object");
+    throw new Error("User not authenticated");
+  }
   
   try {
     const userDocRef = doc(db, "users", user.uid);
@@ -146,7 +152,10 @@ export const addToFavorites = async (user: User, itemData: Omit<FavoriteItem, "a
 };
 
 export const removeFromFavorites = async (user: User, type: "movie" | "tv", id: number) => {
-  if (!user) return;
+  if (!user || !user.uid) {
+    console.error("Invalid user object");
+    throw new Error("User not authenticated");
+  }
   
   try {
     const favoriteRef = doc(db, "favorites", `${user.uid}_${type}_${id}`);
@@ -158,7 +167,7 @@ export const removeFromFavorites = async (user: User, type: "movie" | "tv", id: 
 };
 
 export const getFavorites = async (user: User): Promise<FavoriteItem[]> => {
-  if (!user) return [];
+  if (!user || !user.uid) return [];
   
   try {
     const favoritesQuery = query(
@@ -185,7 +194,7 @@ export const getFavorites = async (user: User): Promise<FavoriteItem[]> => {
 };
 
 export const isFavorite = async (user: User, type: "movie" | "tv", id: number): Promise<boolean> => {
-  if (!user) return false;
+  if (!user || !user.uid) return false;
   
   try {
     const favoriteRef = doc(db, "favorites", `${user.uid}_${type}_${id}`);
