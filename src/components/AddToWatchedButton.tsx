@@ -1,9 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Eye, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { addToWatchHistory } from "@/lib/watchService";
+import { addToWatchHistory, getWatchProgress } from "@/lib/watchService";
 import { toast } from "sonner";
 
 interface AddToWatchedButtonProps {
@@ -29,12 +29,21 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
   const [isAdded, setIsAdded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Size mapping
-  const sizeClass = {
-    sm: "h-8 w-8",
-    md: "h-10 w-10",
-    lg: "h-12 w-12"
-  };
+  // Check if already in watch history
+  useEffect(() => {
+    const checkWatchStatus = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const progress = await getWatchProgress(currentUser, itemType, itemId);
+        setIsAdded(!!progress);
+      } catch (error) {
+        console.error("Error checking watch status:", error);
+      }
+    };
+    
+    checkWatchStatus();
+  }, [currentUser, itemId, itemType]);
 
   const handleAddToWatched = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation if inside a link
@@ -77,6 +86,7 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
   return (
     <Button
       variant={variant}
+      size="default"
       className="gap-2"
       onClick={handleAddToWatched}
       disabled={isLoading || isAdded}

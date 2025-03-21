@@ -46,11 +46,13 @@ const Watch = () => {
           const movieData = await getMovieDetails(itemId);
           setTitle(movieData.title);
           setPosterPath(movieData.poster_path);
+          
+          // Updated URLs with more reliable streaming sources
           setEmbedUrls({
-            server1: `https://embed.su/embed/movie/${itemId}`,
+            server1: `https://vidsrc.to/embed/movie/${itemId}`,
             server2: `https://www.2embed.cc/embed/${itemId}`,
-            server3: `https://vidsrc.to/embed/movie/${itemId}`,
-            server4: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`
+            server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`,
+            server4: `https://embed.su/embed/movie/${itemId}`
           });
 
           // Add to watch history
@@ -68,11 +70,13 @@ const Watch = () => {
           const tvData = await getTVShowDetails(itemId);
           setTitle(`${tvData.name} - S${season} E${episode}`);
           setPosterPath(tvData.poster_path);
+          
+          // Updated URLs with more reliable streaming sources
           setEmbedUrls({
-            server1: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`,
+            server1: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
             server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
-            server3: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
-            server4: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`
+            server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
+            server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
 
           // Find episode name if available
@@ -148,10 +152,10 @@ const Watch = () => {
     setActiveServer(server);
     setLastWorkingServer(server);
     const serverNames = {
-      server1: "1 (Embed.su)",
+      server1: "1 (VidSrc)",
       server2: "2 (2embed)",
-      server3: "3 (VidSrc)",
-      server4: "4 (MultiEmbed)"
+      server3: "3 (MultiEmbed)",
+      server4: "4 (Embed.su)"
     };
     toast.info(`Switched to Server ${serverNames[server]}`, {
       description: "If video doesn't load, try another server",
@@ -159,10 +163,8 @@ const Watch = () => {
     });
   };
 
-  const handleIframeError = () => {
-    console.log("Iframe error detected");
-    tryNextServer();
-  };
+  // Don't use handleIframeError as it can cause false positives
+  // Instead we'll rely on manual server switching
 
   const handleBackNavigation = () => {
     if (location.key !== "default") {
@@ -177,23 +179,6 @@ const Watch = () => {
       }
     }
   };
-
-  // Monitor iframe load
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-
-    const handleLoad = () => {
-      console.log(`Server ${activeServer} loaded successfully`);
-      setLastWorkingServer(activeServer);
-    };
-
-    iframe.addEventListener('load', handleLoad);
-    
-    return () => {
-      iframe.removeEventListener('load', handleLoad);
-    };
-  }, [activeServer, iframeRef.current]);
 
   return (
     <div className="min-h-screen bg-black">
@@ -271,7 +256,6 @@ const Watch = () => {
                 frameBorder="0"
                 allowFullScreen
                 className="absolute inset-0 w-full h-full"
-                onError={handleIframeError}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               ></iframe>
             </div>
