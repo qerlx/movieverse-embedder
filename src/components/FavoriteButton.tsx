@@ -116,7 +116,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
     >
       <Heart 
-        className={`${isFavorited ? 'fill-current' : 'fill-none'} ${
+        className={`${isFavorited ? 'fill-current' : ''} ${
           isLoading ? 'animate-pulse' : (isHovered ? 'animate-pulse' : '')
         }`} 
       />

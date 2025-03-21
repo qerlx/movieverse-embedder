@@ -1,14 +1,14 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getMovieDetails } from "@/lib/api";
-import { Star, Clock, Calendar, Play } from "lucide-react";
+import { Star, Clock, Calendar, Play, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Movie, Cast } from "@/types";
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
+import AddToWatchedButton from "@/components/AddToWatchedButton";
 
 const MovieDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -179,14 +179,24 @@ const MovieDetail = () => {
                 </Button>
                 
                 {currentUser && (
-                  <FavoriteButton
-                    itemId={parseInt(id!)}
-                    itemType="movie"
-                    title={movie.title}
-                    posterPath={movie.poster_path}
-                    size="lg"
-                    variant="outline"
-                  />
+                  <>
+                    <FavoriteButton
+                      itemId={parseInt(id!)}
+                      itemType="movie"
+                      title={movie.title}
+                      posterPath={movie.poster_path}
+                      size="lg"
+                      variant="outline"
+                    />
+                    <AddToWatchedButton
+                      itemId={parseInt(id!)}
+                      itemType="movie"
+                      title={movie.title}
+                      posterPath={movie.poster_path}
+                      variant="outline"
+                      genres={movie.genres?.map((g: any) => g.id)}
+                    />
+                  </>
                 )}
               </div>
             </div>
