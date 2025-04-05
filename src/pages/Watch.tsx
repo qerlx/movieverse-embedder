@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -29,8 +28,8 @@ const Watch = () => {
     server4: ""
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
-  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
+  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server4");
+  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server4");
   const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -47,15 +46,15 @@ const Watch = () => {
           setTitle(movieData.title);
           setPosterPath(movieData.poster_path);
           
-          // Updated URLs with more reliable streaming sources
+          // Updated URLs with more reliable streaming sources - keep server1 (now 4) as default
           setEmbedUrls({
-            server1: `https://vidsrc.to/embed/movie/${itemId}`,
-            server2: `https://www.2embed.cc/embed/${itemId}`,
-            server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`,
-            server4: `https://embed.su/embed/movie/${itemId}`
+            server4: `https://vidsrc.to/embed/movie/${itemId}`,
+            server3: `https://www.2embed.cc/embed/${itemId}`,
+            server2: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`,
+            server1: `https://embed.su/embed/movie/${itemId}`
           });
 
-          // Add to watch history - only if user is signed in
+          // Add to watch history automatically - only if user is signed in
           if (currentUser) {
             try {
               await addToWatchHistory(currentUser, {
@@ -63,7 +62,7 @@ const Watch = () => {
                 type: "movie",
                 title: movieData.title,
                 posterPath: movieData.poster_path,
-                progress: 0,
+                progress: 0, // Start with 0 progress
                 genres: movieData.genres?.map((g: any) => g.id)
               });
             } catch (error) {
@@ -76,12 +75,12 @@ const Watch = () => {
           setTitle(`${tvData.name} - S${season} E${episode}`);
           setPosterPath(tvData.poster_path);
           
-          // Updated URLs with more reliable streaming sources
+          // Updated URLs with more reliable streaming sources - keep server1 (now 4) as default
           setEmbedUrls({
-            server1: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
-            server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
-            server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
-            server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
+            server4: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
+            server3: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
+            server2: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
+            server1: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
 
           // Find episode name if available
@@ -96,7 +95,7 @@ const Watch = () => {
             }
           }
 
-          // Add to watch history - only if user is signed in
+          // Add to watch history automatically - only if user is signed in
           if (currentUser) {
             try {
               await addToWatchHistory(currentUser, {
@@ -150,7 +149,15 @@ const Watch = () => {
       [activeServer]: (prev[activeServer] || 0) + 1
     }));
     
-    toast.info(`Switching to Server ${nextIndex + 1}`, {
+    // Use server names for better UX
+    const serverNames: Record<string, string> = {
+      server1: "4 (Embed.su)",
+      server2: "3 (MultiEmbed)",
+      server3: "2 (2embed)",
+      server4: "1 (VidSrc)"
+    };
+    
+    toast.info(`Switching to Server ${serverNames[nextServer]}`, {
       description: "If video doesn't load, try another server",
       duration: 3000
     });
@@ -162,11 +169,12 @@ const Watch = () => {
     setActiveServer(server);
     setLastWorkingServer(server);
     
+    // Use server names for better UX
     const serverNames: Record<string, string> = {
-      server1: "1 (VidSrc)",
-      server2: "2 (2embed)",
-      server3: "3 (MultiEmbed)",
-      server4: "4 (Embed.su)"
+      server1: "4 (Embed.su)",
+      server2: "3 (MultiEmbed)",
+      server3: "2 (2embed)",
+      server4: "1 (VidSrc)"
     };
     
     toast.info(`Switched to Server ${serverNames[server]}`, {
@@ -207,21 +215,12 @@ const Watch = () => {
         <div className="flex space-x-2 mb-4 overflow-x-auto pb-2">
           <Button 
             size="sm" 
-            variant={activeServer === "server1" ? "default" : "outline"} 
+            variant={activeServer === "server4" ? "default" : "outline"} 
             className="gap-2"
-            onClick={() => handleServerSwitch("server1")}
+            onClick={() => handleServerSwitch("server4")}
           >
             <MonitorPlay size={16} />
             Server 1
-          </Button>
-          <Button 
-            size="sm" 
-            variant={activeServer === "server2" ? "default" : "outline"} 
-            className="gap-2"
-            onClick={() => handleServerSwitch("server2")}
-          >
-            <MonitorPlay size={16} />
-            Server 2
           </Button>
           <Button 
             size="sm" 
@@ -230,13 +229,22 @@ const Watch = () => {
             onClick={() => handleServerSwitch("server3")}
           >
             <MonitorPlay size={16} />
+            Server 2
+          </Button>
+          <Button 
+            size="sm" 
+            variant={activeServer === "server2" ? "default" : "outline"} 
+            className="gap-2"
+            onClick={() => handleServerSwitch("server2")}
+          >
+            <MonitorPlay size={16} />
             Server 3
           </Button>
           <Button 
             size="sm" 
-            variant={activeServer === "server4" ? "default" : "outline"} 
+            variant={activeServer === "server1" ? "default" : "outline"} 
             className="gap-2"
-            onClick={() => handleServerSwitch("server4")}
+            onClick={() => handleServerSwitch("server1")}
           >
             <MonitorPlay size={16} />
             Server 4

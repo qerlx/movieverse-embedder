@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation, Link } from "react-router-dom";
 import { Film, Tv, Home, Menu, X, UserCircle } from "lucide-react";
@@ -9,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import AuthModal from "./AuthModal";
+import ThemeSwitcher from "./ThemeSwitcher";
 
 const Layout = () => {
   const location = useLocation();
@@ -137,6 +139,13 @@ const Layout = () => {
 
           <div className="flex items-center gap-4">
             <SearchBar />
+            
+            {/* Theme Switcher */}
+            {!searchExpanded && (
+              <div className={`transition-opacity duration-300 ${searchExpanded ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>
+                <ThemeSwitcher />
+              </div>
+            )}
             
             {/* User profile or login button */}
             {!searchExpanded && (

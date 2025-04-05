@@ -1,4 +1,6 @@
 
+import { User } from "firebase/auth";
+
 interface WatchProgress {
   id: number;
   type: "movie" | "tv";
