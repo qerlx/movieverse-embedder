@@ -4,67 +4,111 @@ import { NavLink } from 'react-router-dom';
 import { Home, Film, Tv, UserCircle, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
+import { motion } from 'framer-motion';
 
 const MobileNavigation = () => {
   const { theme } = useTheme();
+  const isNetflix = theme === 'netflix';
   
   const getLinkStyle = ({ isActive }: { isActive: boolean }) => {
-    if (theme === 'netflix') {
+    if (isNetflix) {
       return cn(
-        'bottom-nav-item',
-        isActive ? 'text-white' : 'text-gray-400'
-      );
-    }
-    
-    if (theme === 'prime') {
-      return cn(
-        'bottom-nav-item',
-        isActive ? 'text-white' : 'text-gray-400'
+        'bottom-nav-item relative',
+        isActive ? 'text-white' : 'text-gray-500'
       );
     }
     
     return cn(
-      'bottom-nav-item',
+      'bottom-nav-item relative',
       isActive ? 'text-primary' : 'text-muted-foreground'
     );
   };
 
+  const items = [
+    { to: "/", icon: Home, label: "Home" },
+    { to: "/search", icon: Search, label: "Search" },
+    { to: "/movies", icon: Film, label: "Movies" },
+    { to: "/tv-shows", icon: Tv, label: "TV" },
+    { to: "/profile", icon: UserCircle, label: "Profile" }
+  ];
+
   return (
-    <div className={cn(
-      "bottom-nav",
-      theme === "netflix" && "bg-black/90 border-gray-900/50",
-      theme === "prime" && "bg-[#1a242f]/95 border-[#273340]/50"
-    )}>
-      <NavLink to="/" className={getLinkStyle}>
-        <Home className="bottom-nav-icon" size={20} />
-        <span className="bottom-nav-text">Home</span>
-      </NavLink>
-      
-      <NavLink to="/search" className={getLinkStyle}>
-        <Search className="bottom-nav-icon" size={20} />
-        <span className="bottom-nav-text">Search</span>
-      </NavLink>
-      
-      {theme === 'netflix' && (
-        <div className="flex justify-center -mt-5 relative z-10">
-          <img 
-            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0U1MDkxNCI+PHBhdGggZD0iTTcuNTI3IDAgTDcuNTIxIDI0IDEyLjA0OSAxOS43MzIgMTYuNTc2IDI0IDE2LjU4IDAgWiIgLz48L3N2Zz4=" 
-            alt="N logo" 
-            className="w-10 h-10"
-          />
-        </div>
+    <motion.div 
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className={cn(
+        "bottom-nav",
+        isNetflix && "bg-black/95 border-t border-gray-900/50"
       )}
-      
-      <NavLink to="/movies" className={getLinkStyle}>
-        <Film className="bottom-nav-icon" size={20} />
-        <span className="bottom-nav-text">Movies</span>
-      </NavLink>
-      
-      <NavLink to="/profile" className={getLinkStyle}>
-        <UserCircle className="bottom-nav-icon" size={20} />
-        <span className="bottom-nav-text">Profile</span>
-      </NavLink>
-    </div>
+    >
+      {items.map((item, index) => {
+        const Icon = item.icon;
+        
+        // Special case for Netflix logo in the middle
+        if (isNetflix && index === 2) {
+          return (
+            <div key="netflix-logo" className="relative z-10">
+              <motion.div 
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute -top-6 p-2 bg-black rounded-full border border-gray-900"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#E50914" className="w-6 h-6">
+                  <path d="M7.52 21.48C7.52 21.48 7.52 21.48 7.52 21.48L7.52 2.52C7.52 2.52 7.52 2.52 7.52 2.52V1.98H16.52V2.52V21.48V22.02H7.52V21.48Z" />
+                </svg>
+              </motion.div>
+            </div>
+          );
+        }
+        
+        // For Netflix theme, reorder to have 2 items on each side
+        let itemToRender = item;
+        if (isNetflix) {
+          // Adjust the indices for 2-1-2 layout
+          if (index > 2) {
+            itemToRender = items[index-1];
+          } else if (index === 2) {
+            return null; // Skip middle position as it's replaced by Netflix logo
+          }
+        }
+        
+        const Icon = itemToRender.icon;
+        
+        return (
+          <NavLink 
+            key={itemToRender.to} 
+            to={itemToRender.to} 
+            className={getLinkStyle}
+          >
+            {({ isActive }) => (
+              <>
+                <Icon 
+                  className={cn(
+                    "bottom-nav-icon", 
+                    isActive 
+                      ? isNetflix ? "text-white" : "text-primary" 
+                      : "text-muted-foreground"
+                  )} 
+                  size={20} 
+                />
+                <span className="bottom-nav-text">{itemToRender.label}</span>
+                
+                {isActive && (
+                  <motion.div 
+                    className={cn(
+                      "absolute -top-1 left-1/2 transform -translate-x-1/2 h-0.5 w-5",
+                      isNetflix ? "bg-red-600" : "bg-primary"
+                    )}
+                    layoutId="activeIndicator"
+                  />
+                )}
+              </>
+            )}
+          </NavLink>
+        );
+      })}
+    </motion.div>
   );
 };
 

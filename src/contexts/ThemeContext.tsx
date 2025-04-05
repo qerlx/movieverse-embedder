@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Theme = 'default' | 'netflix' | 'prime';
+type Theme = 'default' | 'netflix';
 
 interface ThemeContextType {
   theme: Theme;
@@ -29,7 +29,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('app-theme', newTheme);
     
     // Apply theme class to the document body
-    document.body.classList.remove('theme-default', 'theme-netflix', 'theme-prime');
+    document.body.classList.remove('theme-default', 'theme-netflix');
     document.body.classList.add(`theme-${newTheme}`);
   };
 

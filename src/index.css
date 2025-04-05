@@ -65,29 +65,6 @@
     
     --border: 0 0% 20%;
   }
-  
-  /* Prime Video Theme - Enhanced to match Prime Video more closely */
-  .theme-prime {
-    --background: 215 32% 8%;
-    --foreground: 0 0% 98%;
-    
-    --card: 215 30% 12%;
-    --card-foreground: 0 0% 98%;
- 
-    --primary: 196 100% 50%; /* Prime Blue */
-    --primary-foreground: 215 32% 8%;
- 
-    --secondary: 215 25% 18%;
-    --secondary-foreground: 0 0% 98%;
- 
-    --muted: 215 20% 25%;
-    --muted-foreground: 0 0% 70%;
- 
-    --accent: 196 100% 50%; /* Prime Blue */
-    --accent-foreground: 215 32% 8%;
-    
-    --border: 215 25% 18%;
-  }
 
   * {
     @apply border-border;
@@ -122,6 +99,40 @@
     from { transform: scale(0.95); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
   }
+  
+  @keyframes slide-up {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  @keyframes slide-right {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  @keyframes bounce-in {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.1); }
+    70% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
 
   .animate-fade-in {
     animation: fade-in 0.4s ease-out forwards;
@@ -129,6 +140,32 @@
 
   .animate-scale-in {
     animation: scale-in 0.3s ease-out forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.5s ease-out forwards;
+  }
+  
+  .animate-slide-right {
+    animation: slide-right 0.5s ease-out forwards;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s infinite ease-in-out;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  .animate-bounce-in {
+    animation: bounce-in 0.5s ease-out forwards;
   }
 
   /* Netflix specific UI adjustments */
@@ -151,26 +188,6 @@
     scrollbar-width: none;
   }
   
-  /* Prime Video specific UI adjustments */
-  .theme-prime .stream-card {
-    @apply rounded hover:brightness-110 transition-all duration-300;
-    box-shadow: 0 5px 15px -5px rgba(0, 0, 0, 0.2);
-  }
-  
-  .theme-prime .section-header {
-    @apply text-lg font-medium uppercase tracking-wider mb-3 opacity-90;
-  }
-  
-  .theme-prime .nav-blur {
-    @apply bg-[#1a242f]/95 backdrop-blur-md border-b border-[#273340];
-  }
-  
-  /* Prime style row layout */
-  .theme-prime .prime-row {
-    @apply -mx-4 px-4 py-2;
-    scrollbar-width: none;
-  }
-  
   /* Recently added badges for both themes */
   .recently-added-badge {
     @apply absolute top-2 left-2 text-xs px-2 py-1 rounded;
@@ -178,10 +195,6 @@
   
   .theme-netflix .recently-added-badge {
     @apply bg-red-600 text-white font-medium;
-  }
-  
-  .theme-prime .recently-added-badge {
-    @apply bg-blue-500 text-white font-medium;
   }
   
   /* Play button overlay */
@@ -193,10 +206,6 @@
     @apply bg-white/80 text-black rounded-full p-3 transform transition-transform hover:scale-110;
   }
   
-  .theme-prime .play-overlay .play-button {
-    @apply bg-blue-400/80 text-white rounded-full p-3 transform transition-transform hover:scale-110;
-  }
-  
   /* Bottom navigation for mobile */
   .bottom-nav {
     @apply fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around py-2;
@@ -204,10 +213,6 @@
   
   .theme-netflix .bottom-nav {
     @apply bg-black border-t border-gray-900;
-  }
-  
-  .theme-prime .bottom-nav {
-    @apply bg-[#1a242f] border-t border-[#273340];
   }
   
   .bottom-nav-item {

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AnimatePresence } from "framer-motion";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Movies from "./pages/Movies";
@@ -16,6 +17,7 @@ import Watch from "./pages/Watch";
 import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
 import UserProfile from "./pages/UserProfile";
+import DnsPopup from "./components/DnsPopup";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,20 +37,23 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Index />} />
-                <Route path="movies" element={<Movies />} />
-                <Route path="tv-shows" element={<TVShows />} />
-                <Route path="movie/:id" element={<MovieDetail />} />
-                <Route path="tv/:id" element={<TVShowDetail />} />
-                <Route path="search" element={<Search />} />
-                <Route path="profile" element={<UserProfile />} />
-              </Route>
-              <Route path="/watch/:type/:id" element={<Watch />} />
-              <Route path="/watch/:type/:id/:season/:episode" element={<Watch />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Index />} />
+                  <Route path="movies" element={<Movies />} />
+                  <Route path="tv-shows" element={<TVShows />} />
+                  <Route path="movie/:id" element={<MovieDetail />} />
+                  <Route path="tv/:id" element={<TVShowDetail />} />
+                  <Route path="search" element={<Search />} />
+                  <Route path="profile" element={<UserProfile />} />
+                </Route>
+                <Route path="/watch/:type/:id" element={<Watch />} />
+                <Route path="/watch/:type/:id/:season/:episode" element={<Watch />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AnimatePresence>
+            <DnsPopup />
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +8,8 @@ import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -28,10 +31,12 @@ const Watch = () => {
     server4: ""
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server2");
-  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server2");
+  const [activeServer, setActiveServer] = useState<"server2" | "server1" | "server3" | "server4">("server2");
+  const [lastWorkingServer, setLastWorkingServer] = useState<"server2" | "server1" | "server3" | "server4">("server2");
   const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { theme } = useTheme();
+  const isNetflix = theme === 'netflix';
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -47,8 +52,8 @@ const Watch = () => {
           setPosterPath(movieData.poster_path);
           
           setEmbedUrls({
-            server1: `https://vidsrc.to/embed/movie/${itemId}`,
             server2: `https://www.2embed.cc/embed/${itemId}`,
+            server1: `https://vidsrc.to/embed/movie/${itemId}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`,
             server4: `https://embed.su/embed/movie/${itemId}`
           });
@@ -73,8 +78,8 @@ const Watch = () => {
           setPosterPath(tvData.poster_path);
           
           setEmbedUrls({
-            server1: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
             server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
+            server1: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
             server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
@@ -128,7 +133,7 @@ const Watch = () => {
   }, [id, type, season, episode, navigate, uiToast, currentUser]);
 
   const tryNextServer = () => {
-    const serverOptions: ("server1" | "server2" | "server3" | "server4")[] = ["server1", "server2", "server3", "server4"];
+    const serverOptions: ("server2" | "server1" | "server3" | "server4")[] = ["server2", "server1", "server3", "server4"];
     const currentIndex = serverOptions.indexOf(activeServer);
     
     let nextIndex = (currentIndex + 1) % serverOptions.length;
@@ -140,8 +145,8 @@ const Watch = () => {
     }));
     
     const serverNames: Record<string, string> = {
-      server1: "1 (VidSrc)",
       server2: "2 (2embed)",
+      server1: "1 (VidSrc)",
       server3: "3 (MultiEmbed)",
       server4: "4 (Embed.su)"
     };
@@ -154,13 +159,13 @@ const Watch = () => {
     setActiveServer(nextServer);
   };
 
-  const handleServerSwitch = (server: "server1" | "server2" | "server3" | "server4") => {
+  const handleServerSwitch = (server: "server2" | "server1" | "server3" | "server4") => {
     setActiveServer(server);
     setLastWorkingServer(server);
     
     const serverNames: Record<string, string> = {
-      server1: "1 (VidSrc)",
       server2: "2 (2embed)",
+      server1: "1 (VidSrc)",
       server3: "3 (MultiEmbed)",
       server4: "4 (Embed.su)"
     };
@@ -186,109 +191,153 @@ const Watch = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className={cn(
+      "min-h-screen",
+      isNetflix ? "bg-black" : "bg-background"
+    )}>
       <div className="container mx-auto px-4 py-4 flex flex-col h-screen">
-        <div className="flex items-center mb-4">
-          <button
+        <motion.div 
+          className="flex items-center mb-4" 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleBackNavigation}
-            className="text-white hover:text-primary transition-colors flex items-center"
+            className={cn(
+              "flex items-center",
+              isNetflix 
+                ? "text-white hover:text-red-600 transition-colors" 
+                : "text-white hover:text-primary transition-colors"
+            )}
             aria-label="Go back"
           >
             <ArrowLeft size={20} className="mr-2" />
             Back
-          </button>
+          </motion.button>
           <h1 className="text-xl font-medium text-white ml-4 truncate">{title}</h1>
-        </div>
+        </motion.div>
         
-        <div className="flex space-x-2 mb-4 overflow-x-auto pb-2">
-          <Button 
-            size="sm" 
-            variant={activeServer === "server1" ? "default" : "outline"} 
-            className="gap-2"
-            onClick={() => handleServerSwitch("server1")}
-          >
-            <MonitorPlay size={16} />
-            Server 1
-          </Button>
-          <Button 
-            size="sm" 
-            variant={activeServer === "server2" ? "default" : "outline"} 
-            className="gap-2"
-            onClick={() => handleServerSwitch("server2")}
-          >
-            <MonitorPlay size={16} />
-            Server 2
-          </Button>
-          <Button 
-            size="sm" 
-            variant={activeServer === "server3" ? "default" : "outline"} 
-            className="gap-2"
-            onClick={() => handleServerSwitch("server3")}
-          >
-            <MonitorPlay size={16} />
-            Server 3
-          </Button>
-          <Button 
-            size="sm" 
-            variant={activeServer === "server4" ? "default" : "outline"} 
-            className="gap-2"
-            onClick={() => handleServerSwitch("server4")}
-          >
-            <MonitorPlay size={16} />
-            Server 4
-          </Button>
-        </div>
+        <motion.div 
+          className="flex space-x-2 mb-4 overflow-x-auto pb-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          {["server2", "server1", "server3", "server4"].map((server, index) => {
+            const serverNames: Record<string, string> = {
+              server2: "Server 2",
+              server1: "Server 1",
+              server3: "Server 3",
+              server4: "Server 4"
+            };
+            
+            return (
+              <motion.div key={server} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * index }}>
+                <Button 
+                  size="sm" 
+                  variant={activeServer === server ? "default" : "outline"} 
+                  className={cn(
+                    "gap-2",
+                    isNetflix && activeServer === server && "bg-red-600 hover:bg-red-700"
+                  )}
+                  onClick={() => handleServerSwitch(server as "server2" | "server1" | "server3" | "server4")}
+                >
+                  <MonitorPlay size={16} />
+                  {serverNames[server]}
+                </Button>
+              </motion.div>
+            );
+          })}
+        </motion.div>
         
-        {isLoading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col">
-            <div className="w-full h-full relative rounded-lg overflow-hidden bg-muted animate-fade-in">
-              <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none" id="loading-overlay">
-                <div className="flex flex-col items-center">
-                  <RotateCw className="h-10 w-10 text-primary animate-spin" />
-                  <p className="mt-4 text-sm">Loading video...</p>
+        <AnimatePresence>
+          {isLoading ? (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex items-center justify-center"
+            >
+              <motion.div 
+                className={cn(
+                  "inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-r-transparent align-[-0.125em]",
+                  isNetflix ? "border-red-600" : "border-primary"
+                )}
+              ></motion.div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="flex-1 flex flex-col"
+            >
+              <div className="w-full h-full relative rounded-lg overflow-hidden bg-muted">
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none" id="loading-overlay">
+                  <div className="flex flex-col items-center">
+                    <RotateCw className={cn(
+                      "h-10 w-10 animate-spin",
+                      isNetflix ? "text-red-600" : "text-primary"
+                    )} />
+                    <p className="mt-4 text-sm">Loading video...</p>
+                  </div>
                 </div>
+                
+                <iframe
+                  ref={iframeRef}
+                  key={`${activeServer}-${id}-${season || ''}-${episode || ''}`}
+                  src={embedUrls[activeServer]}
+                  title={title}
+                  frameBorder="0"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                ></iframe>
               </div>
               
-              <iframe
-                ref={iframeRef}
-                key={`${activeServer}-${id}-${season || ''}-${episode || ''}`}
-                src={embedUrls[activeServer]}
-                title={title}
-                frameBorder="0"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              ></iframe>
-            </div>
-            
-            <div className="flex justify-center mt-4 space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
-                onClick={() => {
-                  toast.success("Thanks for the feedback!");
-                }}
+              <motion.div 
+                className="flex justify-center mt-4 space-x-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
               >
-                <ThumbsUp size={14} />
-                Working well
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-black/50 border-white/20 text-white hover:bg-white/20 gap-2"
-                onClick={tryNextServer}
-              >
-                <RotateCw size={14} />
-                Try another server
-              </Button>
-            </div>
-          </div>
-        )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={cn(
+                    "gap-2",
+                    isNetflix 
+                      ? "bg-black/50 border-white/20 text-white hover:bg-white/20" 
+                      : "bg-black/50 border-white/20 text-white hover:bg-white/20"
+                  )}
+                  onClick={() => {
+                    toast.success("Thanks for the feedback!");
+                  }}
+                >
+                  <ThumbsUp size={14} />
+                  Working well
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={cn(
+                    "gap-2",
+                    isNetflix 
+                      ? "bg-black/50 border-white/20 text-white hover:bg-white/20" 
+                      : "bg-black/50 border-white/20 text-white hover:bg-white/20"
+                  )}
+                  onClick={tryNextServer}
+                >
+                  <RotateCw size={14} />
+                  Try another server
+                </Button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

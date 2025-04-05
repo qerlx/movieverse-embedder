@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Play, Star, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Info, Star, Clock } from "lucide-react";
 import { Movie, TVShow } from "@/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface HeroSliderProps {
   items: (Movie | TVShow)[];
@@ -16,6 +18,8 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isNetflix = theme === 'netflix';
   
   const filteredItems = items.filter(item => item.backdrop_path);
   const totalSlides = filteredItems.length;
@@ -70,87 +74,144 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Background */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center transition-all duration-700 brightness-[0.7]"
-        style={{ 
-          backgroundImage: `url(${backdrop})`,
-          transform: isAnimating ? 'scale(1.05)' : 'scale(1)',
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+      <AnimatePresence>
+        <motion.div
+          key={currentSlide}
+          initial={{ opacity: 0.4 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0.4 }}
+          transition={{ duration: 0.7 }}
+          className="absolute inset-0"
+        >
+          {/* Background */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center brightness-[0.7]"
+            style={{ backgroundImage: `url(${backdrop})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+        </motion.div>
+      </AnimatePresence>
       
       {/* Content */}
       <div className="absolute inset-0 flex items-center">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-2xl animate-fade-up" style={{ animationDelay: '300ms' }}>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="bg-primary/90 text-white text-xs px-2 py-1 rounded">
+          <motion.div 
+            className="max-w-2xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <motion.div 
+              className="flex items-center space-x-2 mb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <div className={cn(
+                "text-xs px-2 py-1 rounded font-medium",
+                isNetflix ? "bg-red-600 text-white" : "bg-primary/90 text-white"
+              )}>
                 {type === "movie" ? "Movie" : "TV Show"}
               </div>
+              
               {currentItem.vote_average > 0 && (
                 <div className="bg-black/40 backdrop-blur-sm text-white text-xs px-2 py-1 rounded flex items-center">
                   <Star size={12} className="text-yellow-400 mr-1" />
                   <span>{currentItem.vote_average.toFixed(1)}</span>
                 </div>
               )}
+              
               {year && (
                 <div className="bg-black/40 backdrop-blur-sm text-white text-xs px-2 py-1 rounded flex items-center">
                   <Clock size={12} className="mr-1" />
                   <span>{year}</span>
                 </div>
               )}
-            </div>
+            </motion.div>
             
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
+            <motion.h1 
+              className={cn(
+                "font-bold mb-4 leading-tight",
+                isNetflix 
+                  ? "text-5xl md:text-7xl text-white" 
+                  : "text-4xl md:text-6xl text-white"
+              )}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
+            >
               {title}
-            </h1>
+            </motion.h1>
             
-            <p className="text-gray-200 mb-6 line-clamp-3 md:line-clamp-none">
+            <motion.p 
+              className="text-gray-200 mb-6 line-clamp-3 md:line-clamp-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.9 }}
+            >
               {currentItem.overview}
-            </p>
+            </motion.p>
             
-            <div className="flex flex-wrap gap-4">
+            <motion.div 
+              className="flex flex-wrap gap-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1.1 }}
+            >
               <Button 
                 size="lg" 
-                className="bg-primary hover:bg-primary/90 text-white gap-2"
+                className={cn(
+                  "gap-2 text-white",
+                  isNetflix 
+                    ? "bg-white hover:bg-white/90 text-black" 
+                    : "bg-primary hover:bg-primary/90"
+                )}
                 onClick={navigateToWatch}
               >
                 <Play size={18} />
-                Watch Now
+                {isNetflix ? "Play" : "Watch Now"}
               </Button>
               
               <Button 
                 variant="outline" 
                 size="lg"
-                className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
+                className={cn(
+                  isNetflix 
+                    ? "bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white" 
+                    : "bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
+                )}
                 onClick={navigateToDetail}
               >
-                Details
+                <Info size={18} className="mr-2" />
+                {isNetflix ? "More Info" : "Details"}
               </Button>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
       
       {/* Navigation buttons */}
       <div className="absolute inset-y-0 left-0 flex items-center">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           className="bg-black/30 backdrop-blur-sm hover:bg-black/50 text-white p-2 m-2 rounded-full transition-all"
           onClick={handlePrev}
         >
           <ChevronLeft size={24} />
-        </button>
+        </motion.button>
       </div>
       
       <div className="absolute inset-y-0 right-0 flex items-center">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           className="bg-black/30 backdrop-blur-sm hover:bg-black/50 text-white p-2 m-2 rounded-full transition-all"
           onClick={handleNext}
         >
           <ChevronRight size={24} />
-        </button>
+        </motion.button>
       </div>
       
       {/* Indicators */}
@@ -159,10 +220,14 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
           <button
             key={index}
             className={cn(
-              "w-2 h-2 rounded-full transition-all",
+              "transition-all",
               currentSlide === index 
-                ? "bg-primary w-8" 
-                : "bg-white/30 hover:bg-white/60"
+                ? isNetflix 
+                  ? "bg-red-600 w-8 h-[3px]" 
+                  : "bg-primary w-8 h-2 rounded-full" 
+                : isNetflix 
+                  ? "bg-white/30 hover:bg-white/60 w-8 h-[3px]" 
+                  : "bg-white/30 hover:bg-white/60 h-2 w-2 rounded-full"
             )}
             onClick={() => setCurrentSlide(index)}
           />

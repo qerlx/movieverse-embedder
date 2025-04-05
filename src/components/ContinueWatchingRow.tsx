@@ -1,14 +1,27 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Watch } from "@/types";
 import { Play, Info } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
+interface WatchItem {
+  id: number;
+  type: "movie" | "tv";
+  title: string;
+  posterPath: string | null;
+  progress?: number;
+  lastEpisode?: {
+    season: number;
+    episode: number;
+    name?: string;
+  };
+  lastWatched: string;
+}
+
 interface ContinueWatchingRowProps {
-  items: Watch[];
+  items: WatchItem[];
 }
 
 const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({ items }) => {
@@ -23,8 +36,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({ items }) => {
     <div className="mt-8 animate-fade-in">
       <h2 className={cn(
         "text-2xl font-bold mb-4",
-        theme === "netflix" && "text-white",
-        theme === "prime" && "text-lg uppercase tracking-wide font-medium"
+        theme === "netflix" && "text-white"
       )}>
         Continue Watching for You
       </h2>
@@ -73,12 +85,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({ items }) => {
                   value={item.progress || 5} 
                   className={cn(
                     "h-1.5 w-full",
-                    theme === "netflix" && "bg-gray-800",
-                    theme === "prime" && "bg-gray-700"
-                  )}
-                  indicatorClassName={cn(
-                    theme === "netflix" && "bg-red-600",
-                    theme === "prime" && "bg-blue-400"
+                    theme === "netflix" && "bg-gray-800"
                   )}
                 />
               </div>
@@ -91,8 +98,6 @@ const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({ items }) => {
                 >
                   <Info size={20} className="text-gray-300" />
                 </button>
-                
-                {/* You could add more controls here like add to list, etc. */}
               </div>
             </div>
           );
