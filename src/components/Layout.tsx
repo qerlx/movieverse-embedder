@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import AuthModal from "./AuthModal";
 import ThemeSwitcher from "./ThemeSwitcher";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Layout = () => {
   const location = useLocation();
@@ -21,6 +22,7 @@ const Layout = () => {
   const isMobile = useIsMobile();
   const { currentUser } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { theme } = useTheme();
 
   // Handle navbar hide on scroll
   useEffect(() => {
@@ -59,52 +61,58 @@ const Layout = () => {
     };
   }, []);
 
-  const NavItems = () => (
-    <>
-      <NavLink
-        to="/"
-        className={({ isActive }) =>
-          cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300",
-            isActive
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:text-white hover:bg-muted/30"
-          )
-        }
-      >
-        <Home size={18} />
-        <span>Home</span>
-      </NavLink>
-      <NavLink
-        to="/movies"
-        className={({ isActive }) =>
-          cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300",
-            isActive
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:text-white hover:bg-muted/30"
-          )
-        }
-      >
-        <Film size={18} />
-        <span>Movies</span>
-      </NavLink>
-      <NavLink
-        to="/tv-shows"
-        className={({ isActive }) =>
-          cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300",
-            isActive
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:text-white hover:bg-muted/30"
-          )
-        }
-      >
-        <Tv size={18} />
-        <span>TV Shows</span>
-      </NavLink>
-    </>
-  );
+  const isNetflix = theme === 'netflix';
+  const isPrime = theme === 'prime';
+  
+  const NavItems = () => {
+    // Generate style based on theme
+    const getLinkStyle = ({ isActive }: { isActive: boolean }) => {
+      // Netflix style
+      if (isNetflix) {
+        return cn(
+          "flex items-center gap-2 px-3 py-2 transition-all duration-200 text-sm font-medium",
+          isActive
+            ? "text-white"
+            : "text-gray-300 hover:text-white"
+        );
+      }
+      
+      // Prime Video style
+      if (isPrime) {
+        return cn(
+          "flex items-center gap-2 px-3 py-1.5 transition-all duration-200 text-xs uppercase tracking-wide",
+          isActive
+            ? "text-white"
+            : "text-gray-400 hover:text-white"
+        );
+      }
+      
+      // Default style
+      return cn(
+        "flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300",
+        isActive
+          ? "bg-primary/10 text-primary"
+          : "text-muted-foreground hover:text-white hover:bg-muted/30"
+      );
+    };
+    
+    return (
+      <>
+        <NavLink to="/" className={getLinkStyle}>
+          <Home size={isNetflix || isPrime ? 16 : 18} />
+          <span>Home</span>
+        </NavLink>
+        <NavLink to="/movies" className={getLinkStyle}>
+          <Film size={isNetflix || isPrime ? 16 : 18} />
+          <span>Movies</span>
+        </NavLink>
+        <NavLink to="/tv-shows" className={getLinkStyle}>
+          <Tv size={isNetflix || isPrime ? 16 : 18} />
+          <span>TV Shows</span>
+        </NavLink>
+      </>
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -112,7 +120,9 @@ const Layout = () => {
       <header
         className={cn(
           "fixed top-0 left-0 right-0 z-50 nav-blur transition-transform duration-300",
-          !showNavbar && !mobileMenuOpen && "-translate-y-full"
+          !showNavbar && !mobileMenuOpen && "-translate-y-full",
+          isNetflix && "bg-black/95 border-b border-gray-900/50",
+          isPrime && "bg-[#1a242f]/95 border-b border-[#273340]/50"
         )}
       >
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -161,9 +171,14 @@ const Layout = () => {
                   </Link>
                 ) : (
                   <Button 
-                    variant="ghost" 
+                    variant={isNetflix || isPrime ? "outline" : "ghost"}
                     size="sm"
-                    className="h-9 px-2 text-muted-foreground hover:text-white"
+                    className={cn(
+                      "h-9 px-2",
+                      isNetflix && "border-red-600 text-white hover:bg-red-600/20",
+                      isPrime && "border-blue-400 text-white hover:bg-blue-400/20",
+                      !isNetflix && !isPrime && "text-muted-foreground hover:text-white"
+                    )}
                     onClick={() => setAuthModalOpen(true)}
                   >
                     <UserCircle size={20} className="mr-1.5" />
@@ -227,14 +242,21 @@ const Layout = () => {
 
       {/* Mobile bottom navigation */}
       {isMobile && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border/50">
-          <div className="flex items-center justify-around h-16">
+        <div className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 border-t h-16",
+          isNetflix && "bg-black/95 border-gray-900/50",
+          isPrime && "bg-[#1a242f]/95 border-[#273340]/50",
+          !isNetflix && !isPrime && "bg-card/95 backdrop-blur-md border-border/50"
+        )}>
+          <div className="flex items-center justify-around h-full">
             <NavLink
               to="/"
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center justify-center px-4 py-2 transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  "flex flex-col items-center justify-center px-4 py-1 transition-colors",
+                  isNetflix && (isActive ? "text-white" : "text-gray-400"),
+                  isPrime && (isActive ? "text-white" : "text-gray-400"),
+                  !isNetflix && !isPrime && (isActive ? "text-primary" : "text-muted-foreground")
                 )
               }
             >
@@ -245,8 +267,10 @@ const Layout = () => {
               to="/movies"
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center justify-center px-4 py-2 transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  "flex flex-col items-center justify-center px-4 py-1 transition-colors",
+                  isNetflix && (isActive ? "text-white" : "text-gray-400"),
+                  isPrime && (isActive ? "text-white" : "text-gray-400"),
+                  !isNetflix && !isPrime && (isActive ? "text-primary" : "text-muted-foreground")
                 )
               }
             >
@@ -257,8 +281,10 @@ const Layout = () => {
               to="/tv-shows"
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center justify-center px-4 py-2 transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  "flex flex-col items-center justify-center px-4 py-1 transition-colors",
+                  isNetflix && (isActive ? "text-white" : "text-gray-400"),
+                  isPrime && (isActive ? "text-white" : "text-gray-400"),
+                  !isNetflix && !isPrime && (isActive ? "text-primary" : "text-muted-foreground")
                 )
               }
             >
@@ -269,8 +295,10 @@ const Layout = () => {
               to="/profile"
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center justify-center px-4 py-2 transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground"
+                  "flex flex-col items-center justify-center px-4 py-1 transition-colors",
+                  isNetflix && (isActive ? "text-white" : "text-gray-400"),
+                  isPrime && (isActive ? "text-white" : "text-gray-400"),
+                  !isNetflix && !isPrime && (isActive ? "text-primary" : "text-muted-foreground")
                 )
               }
             >

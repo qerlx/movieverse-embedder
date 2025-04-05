@@ -43,46 +43,50 @@
     --sidebar-ring: 0 0% 15%;
   }
 
-  /* Netflix Theme */
+  /* Netflix Theme - Enhanced to match Netflix more closely */
   .theme-netflix {
-    --background: 0 0% 0%;
+    --background: 0 0% 8%;
     --foreground: 0 0% 98%;
     
-    --card: 0 0% 4%;
+    --card: 0 0% 10%;
     --card-foreground: 0 0% 98%;
  
     --primary: 357 92% 47%; /* Netflix Red */
     --primary-foreground: 0 0% 98%;
  
-    --secondary: 0 0% 10%;
+    --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 98%;
  
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 75%;
  
     --accent: 357 92% 47%; /* Netflix Red */
     --accent-foreground: 0 0% 98%;
+    
+    --border: 0 0% 20%;
   }
   
-  /* Prime Video Theme */
+  /* Prime Video Theme - Enhanced to match Prime Video more closely */
   .theme-prime {
-    --background: 214 23% 7%;
+    --background: 215 32% 8%;
     --foreground: 0 0% 98%;
     
-    --card: 214 23% 12%;
+    --card: 215 30% 12%;
     --card-foreground: 0 0% 98%;
  
     --primary: 196 100% 50%; /* Prime Blue */
-    --primary-foreground: 214 23% 7%;
+    --primary-foreground: 215 32% 8%;
  
-    --secondary: 214 23% 15%;
+    --secondary: 215 25% 18%;
     --secondary-foreground: 0 0% 98%;
  
-    --muted: 214 23% 20%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 215 20% 25%;
+    --muted-foreground: 0 0% 70%;
  
     --accent: 196 100% 50%; /* Prime Blue */
-    --accent-foreground: 214 23% 7%;
+    --accent-foreground: 215 32% 8%;
+    
+    --border: 215 25% 18%;
   }
 
   * {
@@ -127,23 +131,44 @@
     animation: scale-in 0.3s ease-out forwards;
   }
 
-  /* Stream card style for netflix theme */
+  /* Netflix specific UI adjustments */
   .theme-netflix .stream-card {
-    @apply hover:scale-105 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300;
+    @apply rounded hover:scale-105 transition-all duration-300;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
   }
-
-  /* Stream card style for prime theme */
-  .theme-prime .stream-card {
-    @apply hover:brightness-110 transition-all duration-300;
-  }
-
-  /* Section styles based on theme */
+  
   .theme-netflix .section-header {
-    @apply font-bold text-2xl;
+    @apply text-2xl font-bold mb-4 ml-1;
   }
-
+  
+  .theme-netflix .nav-blur {
+    @apply bg-black/90 backdrop-blur-md border-b border-gray-900;
+  }
+  
+  /* Netflix style row layout */
+  .theme-netflix .netflix-row {
+    @apply -mx-4 px-4 py-2;
+    scrollbar-width: none;
+  }
+  
+  /* Prime Video specific UI adjustments */
+  .theme-prime .stream-card {
+    @apply rounded hover:brightness-110 transition-all duration-300;
+    box-shadow: 0 5px 15px -5px rgba(0, 0, 0, 0.2);
+  }
+  
   .theme-prime .section-header {
-    @apply font-semibold text-xl uppercase tracking-wide;
+    @apply text-lg font-medium uppercase tracking-wider mb-3 opacity-90;
+  }
+  
+  .theme-prime .nav-blur {
+    @apply bg-[#1a242f]/95 backdrop-blur-md border-b border-[#273340];
+  }
+  
+  /* Prime style row layout */
+  .theme-prime .prime-row {
+    @apply -mx-4 px-4 py-2;
+    scrollbar-width: none;
   }
 }
 
