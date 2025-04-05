@@ -42,6 +42,7 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
         setIsAdded(progress !== null);
       } catch (error) {
         console.error("Error checking watch status:", error);
+        // Don't show toast for background checks
       }
     };
     

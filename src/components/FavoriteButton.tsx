@@ -56,6 +56,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         setIsFavorited(status);
       } catch (error) {
         console.error("Error checking favorite status:", error);
+        // Don't show toast for background checks
       }
     };
 

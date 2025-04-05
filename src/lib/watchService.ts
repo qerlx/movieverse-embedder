@@ -1,6 +1,3 @@
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
-import { db } from "./firebase";
-import { User } from "firebase/auth";
 
 interface WatchProgress {
   id: number;
@@ -25,42 +22,44 @@ interface FavoriteItem {
   addedAt: number; // timestamp
 }
 
+// Helper functions for localStorage
+const getLocalStorageKey = (userId: string, collection: string) => `user_${userId}_${collection}`;
+
+const getLocalStorageCollection = (userId: string, collection: string): Record<string, any> => {
+  const key = getLocalStorageKey(userId, collection);
+  const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : {};
+};
+
+const setLocalStorageItem = (userId: string, collection: string, itemKey: string, item: any) => {
+  const key = getLocalStorageKey(userId, collection);
+  const collection_data = getLocalStorageCollection(userId, collection);
+  collection_data[itemKey] = item;
+  localStorage.setItem(key, JSON.stringify(collection_data));
+};
+
+const removeLocalStorageItem = (userId: string, collection: string, itemKey: string) => {
+  const key = getLocalStorageKey(userId, collection);
+  const collection_data = getLocalStorageCollection(userId, collection);
+  delete collection_data[itemKey];
+  localStorage.setItem(key, JSON.stringify(collection_data));
+};
+
 export const addToWatchHistory = async (user: User, watchData: Omit<WatchProgress, "lastWatched">) => {
   if (!user || !user.uid) {
     throw new Error("User not authenticated");
   }
   
   try {
-    const userDocRef = doc(db, "users", user.uid);
-    const userDoc = await getDoc(userDocRef);
+    const userId = user.uid;
+    const itemKey = `${watchData.type}_${watchData.id}`;
     
-    if (!userDoc.exists()) {
-      // Create new user document if it doesn't exist
-      await setDoc(userDocRef, {
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        watchHistory: []
-      });
-    }
+    setLocalStorageItem(userId, "watchHistory", itemKey, {
+      ...watchData,
+      lastWatched: Date.now()
+    });
     
-    // Get watch history collection for this user
-    const watchHistoryRef = doc(db, "users", user.uid, "watchHistory", `${watchData.type}_${watchData.id}`);
-    const watchHistoryDoc = await getDoc(watchHistoryRef);
-    
-    if (watchHistoryDoc.exists()) {
-      // Update existing watch history entry
-      await updateDoc(watchHistoryRef, {
-        ...watchData,
-        lastWatched: Date.now()
-      });
-    } else {
-      // Create new watch history entry
-      await setDoc(watchHistoryRef, {
-        ...watchData,
-        lastWatched: Date.now()
-      });
-    }
+    return true;
   } catch (error) {
     console.error("Error updating watch history:", error);
     throw error;
@@ -71,11 +70,11 @@ export const getWatchHistory = async (user: User): Promise<WatchProgress[]> => {
   if (!user || !user.uid) return [];
   
   try {
-    const watchHistoryRef = collection(db, "users", user.uid, "watchHistory");
-    const watchHistorySnapshot = await getDocs(watchHistoryRef);
+    const userId = user.uid;
+    const watchHistoryData = getLocalStorageCollection(userId, "watchHistory");
     
-    return watchHistorySnapshot.docs.map(doc => doc.data() as WatchProgress)
-      .sort((a, b) => b.lastWatched - a.lastWatched); // Sort by most recently watched
+    return Object.values(watchHistoryData)
+      .sort((a: WatchProgress, b: WatchProgress) => b.lastWatched - a.lastWatched);
   } catch (error) {
     console.error("Error fetching watch history:", error);
     return [];
@@ -98,14 +97,11 @@ export const getWatchProgress = async (user: User, type: "movie" | "tv", id: num
   if (!user || !user.uid) return null;
   
   try {
-    const watchHistoryRef = doc(db, "users", user.uid, "watchHistory", `${type}_${id}`);
-    const watchHistoryDoc = await getDoc(watchHistoryRef);
+    const userId = user.uid;
+    const watchHistoryData = getLocalStorageCollection(userId, "watchHistory");
+    const itemKey = `${type}_${id}`;
     
-    if (watchHistoryDoc.exists()) {
-      return watchHistoryDoc.data() as WatchProgress;
-    }
-    
-    return null;
+    return watchHistoryData[itemKey] || null;
   } catch (error) {
     console.error("Error fetching watch progress:", error);
     return null;
@@ -118,29 +114,15 @@ export const addToFavorites = async (user: User, itemData: Omit<FavoriteItem, "a
   }
   
   try {
-    const userDocRef = doc(db, "users", user.uid);
-    const userDoc = await getDoc(userDocRef);
+    const userId = user.uid;
+    const itemKey = `${itemData.type}_${itemData.id}`;
     
-    if (!userDoc.exists()) {
-      // Create new user document if it doesn't exist
-      await setDoc(userDocRef, {
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-      });
-    }
-    
-    // Add to favorites collection
-    const favoritesRef = doc(db, "favorites", `${user.uid}_${itemData.type}_${itemData.id}`);
-    
-    await setDoc(favoritesRef, {
-      userId: user.uid,
-      itemId: itemData.id,
-      itemType: itemData.type,
-      title: itemData.title,
-      posterPath: itemData.posterPath,
+    setLocalStorageItem(userId, "favorites", itemKey, {
+      ...itemData,
       addedAt: Date.now()
     });
+    
+    return true;
   } catch (error) {
     console.error("Error adding to favorites:", error);
     throw error;
@@ -153,8 +135,12 @@ export const removeFromFavorites = async (user: User, type: "movie" | "tv", id: 
   }
   
   try {
-    const favoriteRef = doc(db, "favorites", `${user.uid}_${type}_${id}`);
-    await deleteDoc(favoriteRef);
+    const userId = user.uid;
+    const itemKey = `${type}_${id}`;
+    
+    removeLocalStorageItem(userId, "favorites", itemKey);
+    
+    return true;
   } catch (error) {
     console.error("Error removing from favorites:", error);
     throw error;
@@ -165,23 +151,11 @@ export const getFavorites = async (user: User): Promise<FavoriteItem[]> => {
   if (!user || !user.uid) return [];
   
   try {
-    const favoritesQuery = query(
-      collection(db, "favorites"),
-      where("userId", "==", user.uid)
-    );
+    const userId = user.uid;
+    const favoritesData = getLocalStorageCollection(userId, "favorites");
     
-    const favoritesSnapshot = await getDocs(favoritesQuery);
-    
-    return favoritesSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: data.itemId,
-        type: data.itemType,
-        title: data.title,
-        posterPath: data.posterPath,
-        addedAt: data.addedAt,
-      } as FavoriteItem;
-    }).sort((a, b) => b.addedAt - a.addedAt); // Sort by most recently added
+    return Object.values(favoritesData)
+      .sort((a: FavoriteItem, b: FavoriteItem) => b.addedAt - a.addedAt);
   } catch (error) {
     console.error("Error fetching favorites:", error);
     return [];
@@ -192,10 +166,11 @@ export const isFavorite = async (user: User, type: "movie" | "tv", id: number): 
   if (!user || !user.uid) return false;
   
   try {
-    const favoriteRef = doc(db, "favorites", `${user.uid}_${type}_${id}`);
-    const favoriteDoc = await getDoc(favoriteRef);
+    const userId = user.uid;
+    const favoritesData = getLocalStorageCollection(userId, "favorites");
+    const itemKey = `${type}_${id}`;
     
-    return favoriteDoc.exists();
+    return !!favoritesData[itemKey];
   } catch (error) {
     console.error("Error checking favorite status:", error);
     return false;
