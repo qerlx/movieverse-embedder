@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -29,9 +28,8 @@ const Watch = () => {
     server4: ""
   });
   const [isLoading, setIsLoading] = useState(true);
-  // Changed default server from server4 to server1 (which is the previously server4)
-  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
-  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
+  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server2");
+  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server2");
   const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -48,7 +46,6 @@ const Watch = () => {
           setTitle(movieData.title);
           setPosterPath(movieData.poster_path);
           
-          // Switched order - vidsrc.to is now server1 (was server4)
           setEmbedUrls({
             server1: `https://vidsrc.to/embed/movie/${itemId}`,
             server2: `https://www.2embed.cc/embed/${itemId}`,
@@ -56,7 +53,6 @@ const Watch = () => {
             server4: `https://embed.su/embed/movie/${itemId}`
           });
 
-          // Add to watch history automatically - only if user is signed in
           if (currentUser) {
             try {
               await addToWatchHistory(currentUser, {
@@ -64,12 +60,11 @@ const Watch = () => {
                 type: "movie",
                 title: movieData.title,
                 posterPath: movieData.poster_path,
-                progress: 0, // Start with 0 progress
+                progress: 0,
                 genres: movieData.genres?.map((g: any) => g.id)
               });
             } catch (error) {
               console.error("Error adding to watch history:", error);
-              // Continue even if tracking fails
             }
           }
         } else if (type === "tv" && season && episode) {
@@ -77,7 +72,6 @@ const Watch = () => {
           setTitle(`${tvData.name} - S${season} E${episode}`);
           setPosterPath(tvData.poster_path);
           
-          // Switched order - vidsrc.to is now server1 (was server4)
           setEmbedUrls({
             server1: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
             server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
@@ -85,7 +79,6 @@ const Watch = () => {
             server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
 
-          // Find episode name if available
           let episodeName = "";
           if (tvData.seasons) {
             const seasonData = tvData.seasons.find((s: any) => s.season_number === parseInt(season));
@@ -97,7 +90,6 @@ const Watch = () => {
             }
           }
 
-          // Add to watch history automatically - only if user is signed in
           if (currentUser) {
             try {
               await addToWatchHistory(currentUser, {
@@ -114,7 +106,6 @@ const Watch = () => {
               });
             } catch (error) {
               console.error("Error adding to watch history:", error);
-              // Continue even if tracking fails
             }
           }
         } else {
@@ -136,22 +127,18 @@ const Watch = () => {
     fetchDetails();
   }, [id, type, season, episode, navigate, uiToast, currentUser]);
 
-  // Helper function to try the next server
   const tryNextServer = () => {
     const serverOptions: ("server1" | "server2" | "server3" | "server4")[] = ["server1", "server2", "server3", "server4"];
     const currentIndex = serverOptions.indexOf(activeServer);
     
-    // Try each server in order, but don't try the same one twice in a row
     let nextIndex = (currentIndex + 1) % serverOptions.length;
     const nextServer = serverOptions[nextIndex];
     
-    // Track server attempts
     setServerAttempts(prev => ({
       ...prev,
       [activeServer]: (prev[activeServer] || 0) + 1
     }));
     
-    // Use server names for better UX - updated to match the new order
     const serverNames: Record<string, string> = {
       server1: "1 (VidSrc)",
       server2: "2 (2embed)",
@@ -171,7 +158,6 @@ const Watch = () => {
     setActiveServer(server);
     setLastWorkingServer(server);
     
-    // Use server names for better UX - updated to match the new order
     const serverNames: Record<string, string> = {
       server1: "1 (VidSrc)",
       server2: "2 (2embed)",

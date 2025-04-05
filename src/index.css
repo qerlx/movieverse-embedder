@@ -170,9 +170,59 @@
     @apply -mx-4 px-4 py-2;
     scrollbar-width: none;
   }
+  
+  /* Recently added badges for both themes */
+  .recently-added-badge {
+    @apply absolute top-2 left-2 text-xs px-2 py-1 rounded;
+  }
+  
+  .theme-netflix .recently-added-badge {
+    @apply bg-red-600 text-white font-medium;
+  }
+  
+  .theme-prime .recently-added-badge {
+    @apply bg-blue-500 text-white font-medium;
+  }
+  
+  /* Play button overlay */
+  .play-overlay {
+    @apply absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 bg-black/40 cursor-pointer;
+  }
+  
+  .theme-netflix .play-overlay .play-button {
+    @apply bg-white/80 text-black rounded-full p-3 transform transition-transform hover:scale-110;
+  }
+  
+  .theme-prime .play-overlay .play-button {
+    @apply bg-blue-400/80 text-white rounded-full p-3 transform transition-transform hover:scale-110;
+  }
+  
+  /* Bottom navigation for mobile */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around py-2;
+  }
+  
+  .theme-netflix .bottom-nav {
+    @apply bg-black border-t border-gray-900;
+  }
+  
+  .theme-prime .bottom-nav {
+    @apply bg-[#1a242f] border-t border-[#273340];
+  }
+  
+  .bottom-nav-item {
+    @apply flex flex-col items-center justify-center px-3;
+  }
+  
+  .bottom-nav-icon {
+    @apply mb-1;
+  }
+  
+  .bottom-nav-text {
+    @apply text-xs;
+  }
 }
 
-/* Custom scrollbar utilities */
 @layer utilities {
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
@@ -189,5 +239,34 @@
 
   .scrollbar-track-transparent::-webkit-scrollbar-track {
     @apply bg-transparent;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .netflix-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+  }
+  
+  @media (min-width: 640px) {
+    .netflix-grid {
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 0.75rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .netflix-grid {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
   }
 }

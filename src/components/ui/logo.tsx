@@ -20,11 +20,22 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
         to="/" 
         className={cn("flex items-center justify-center", className)}
       >
-        <img 
-          src="/lovable-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
-          alt="MovieStreamHub" 
-          className="w-8 h-8 object-contain" 
-        />
+        {isNetflix ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fillRule="evenodd" clipRule="evenodd" d="M5 2H19V22L12 18L5 22V2Z" fill="#E50914" />
+          </svg>
+        ) : isPrime ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 5H4V19H20V5Z" fill="#00A8E1" />
+            <path d="M12 8L16 12L12 16L8 12L12 8Z" fill="#0F171E" />
+          </svg>
+        ) : (
+          <img 
+            src="/lovable-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
+            alt="MovieStreamHub" 
+            className="w-8 h-8 object-contain" 
+          />
+        )}
       </Link>
     );
   }
