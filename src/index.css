@@ -87,25 +87,6 @@
 
   * {
     @apply border-border;
-    @apply scrollbar-thin scrollbar-thumb-primary/40 scrollbar-track-transparent hover:scrollbar-thumb-primary/60;
-  }
-
-  /* Custom scrollbar utilities */
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .scrollbar-thumb-primary\/40::-webkit-scrollbar-thumb {
-    @apply bg-primary/40 rounded-full;
-  }
-
-  .hover\:scrollbar-thumb-primary\/60:hover::-webkit-scrollbar-thumb {
-    @apply bg-primary/60 rounded-full;
-  }
-
-  .scrollbar-track-transparent::-webkit-scrollbar-track {
-    @apply bg-transparent;
   }
 
   /* Custom focus styles */
@@ -163,5 +144,25 @@
 
   .theme-prime .section-header {
     @apply font-semibold text-xl uppercase tracking-wide;
+  }
+}
+
+/* Custom scrollbar utilities */
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thumb-primary\/40::-webkit-scrollbar-thumb {
+    @apply bg-primary/40 rounded-full;
+  }
+
+  .hover\:scrollbar-thumb-primary\/60:hover::-webkit-scrollbar-thumb {
+    @apply bg-primary/60 rounded-full;
+  }
+
+  .scrollbar-track-transparent::-webkit-scrollbar-track {
+    @apply bg-transparent;
   }
 }
