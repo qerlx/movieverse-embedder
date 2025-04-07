@@ -57,7 +57,7 @@ const RecentlyWatched: React.FC<RecentlyWatchedProps> = ({ limit = 0 }) => {
   }
 
   const isNetflix = theme === 'netflix';
-  const isPrime = theme === 'prime';
+  const isPrime = theme === 'netflix'; // Fixed from 'prime' to match the theme type
 
   // Section title based on theme
   const getSectionTitle = () => {

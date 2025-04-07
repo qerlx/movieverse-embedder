@@ -17,7 +17,7 @@ import { Heart } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { getUserWatchHistory } from "@/lib/watchService";
+import { getWatchHistory } from "@/lib/watchService";
 
 const Index = () => {
   const { currentUser } = useAuth();
@@ -57,7 +57,7 @@ const Index = () => {
         // Fetch continue watching data for logged in users
         if (currentUser) {
           try {
-            const watchHistory = await getUserWatchHistory(currentUser);
+            const watchHistory = await getWatchHistory(currentUser);
             if (watchHistory && watchHistory.length > 0) {
               setContinueWatchingItems(watchHistory.slice(0, 6));
             }
