@@ -26,7 +26,8 @@ const RecentlyWatched: React.FC = () => {
 
       try {
         setIsLoading(true);
-        const history = await getWatchHistory(currentUser);
+        // Cast the return value to Match Movie or TVShow type
+        const history = await getWatchHistory(currentUser) as unknown as (Movie | TVShow)[];
         setWatchHistory(history);
       } catch (error) {
         console.error("Error fetching watch history:", error);

@@ -12,6 +12,7 @@ interface NetflixCategoryRowProps {
   type: "movie" | "tv";
   className?: string;
   recentlyAdded?: boolean;
+  isRanked?: boolean;
 }
 
 const NetflixCategoryRow: React.FC<NetflixCategoryRowProps> = ({
@@ -20,6 +21,7 @@ const NetflixCategoryRow: React.FC<NetflixCategoryRowProps> = ({
   type,
   className,
   recentlyAdded = false,
+  isRanked = false,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -75,17 +77,23 @@ const NetflixCategoryRow: React.FC<NetflixCategoryRowProps> = ({
           ref={scrollContainerRef}
           className="flex overflow-x-auto py-2 no-scrollbar scroll-smooth"
         >
-          <div className="pl-4"></div>
+          <div className={cn("pl-4", isRanked && "pl-10")}></div> 
           {items.map((item, idx) => (
             <div
               key={`${type}-${item.id}`}
-              className="flex-shrink-0 w-[160px] md:w-[200px] mx-2"
+              className={cn(
+                "flex-shrink-0 mx-2",
+                isRanked 
+                  ? "w-[200px] md:w-[240px]"  // Wider for ranked items
+                  : "w-[160px] md:w-[200px]"  // Standard size
+              )}
             >
               <NetflixMovieCard 
                 item={item} 
                 type={type} 
                 index={idx}
-                recentlyAdded={recentlyAdded && idx < 3} 
+                recentlyAdded={recentlyAdded && idx < 3}
+                isRanked={isRanked}
               />
             </div>
           ))}

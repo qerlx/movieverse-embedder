@@ -150,6 +150,7 @@ const Index = () => {
                 title="Top 10 Movies Today"
                 items={trendingMovies.slice(0, 10)}
                 type="movie"
+                isRanked={true}
               />
             </motion.div>
           )}

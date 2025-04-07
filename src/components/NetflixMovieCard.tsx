@@ -12,6 +12,7 @@ interface NetflixMovieCardProps {
   className?: string;
   recentlyAdded?: boolean;
   index?: number;
+  isRanked?: boolean;
 }
 
 const NetflixMovieCard: React.FC<NetflixMovieCardProps> = ({ 
@@ -19,7 +20,8 @@ const NetflixMovieCard: React.FC<NetflixMovieCardProps> = ({
   type, 
   className,
   recentlyAdded = false,
-  index = 0
+  index = 0,
+  isRanked = false
 }) => {
   const navigate = useNavigate();
   const posterPath = item.poster_path 
@@ -73,6 +75,13 @@ const NetflixMovieCard: React.FC<NetflixMovieCardProps> = ({
       variants={cardVariants}
       animate={isHovered ? 'hover' : 'normal'}
     >
+      {/* Rank number for top movies */}
+      {isRanked && (
+        <div className="absolute -left-5 bottom-0 z-10">
+          <span className="netflix-rank-number text-shadow">{index + 1}</span>
+        </div>
+      )}
+      
       <img 
         src={posterPath} 
         alt={title}

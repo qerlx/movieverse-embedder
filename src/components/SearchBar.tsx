@@ -7,6 +7,9 @@ import { MediaItem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Logo from "@/components/ui/logo";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 const SearchBar = () => {
   const [query, setQuery] = useState("");
@@ -19,6 +22,8 @@ const SearchBar = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { theme } = useTheme();
+  const isNetflix = theme === 'netflix';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -91,8 +96,7 @@ const SearchBar = () => {
       }, 100);
     }
 
-    // Hide logo text when expanded (handled in Layout component by watching isExpanded)
-    // The actual logo change is implemented in the Layout component
+    // Hide logo text when expanded
     document.dispatchEvent(new CustomEvent('searchBarExpandToggle', { 
       detail: { expanded: !isExpanded } 
     }));
@@ -106,109 +110,154 @@ const SearchBar = () => {
           isMobile
             ? isExpanded
               ? "w-full animate-fade-in"
-              : "w-12" // Increased from w-10 to w-12 for larger tap target
+              : "w-12" 
             : "w-full max-w-md"
         }`}
       >
         {isMobile && !isExpanded ? (
           <button
             type="button"
-            className="text-muted-foreground hover:text-white transition-colors p-3" // Increased padding from p-2 to p-3
+            className={cn(
+              "transition-colors p-3",
+              isNetflix ? "text-gray-300 hover:text-white" : "text-muted-foreground hover:text-foreground"
+            )}
             onClick={toggleExpand}
             aria-label="Open search"
           >
-            <Search size={24} /> {/* Increased icon size from 20 to 24 */}
+            <Search size={24} />
           </button>
         ) : (
           <>
             <div className="relative w-full">
-              <input
+              <motion.input
                 ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search movies & shows..."
-                className="w-full py-3 px-5 pr-12 bg-muted/50 border border-border/50 rounded-full text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/70 transition-all"
-                // Increased padding from py-2 to py-3, px-4 to px-5, pr-10 to pr-12, and text-sm to text-base
+                className={cn(
+                  "w-full py-3 px-5 pr-12 border rounded-full text-base placeholder:text-muted-foreground focus:outline-none transition-all",
+                  isNetflix 
+                    ? "bg-black/50 border-gray-700 text-white focus:border-gray-400" 
+                    : "bg-muted/50 border-border/50 focus:ring-2 focus:ring-primary/70"
+                )}
+                initial={{ width: "100%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 0.3 }}
               />
               <button
                 type="submit"
-                className="absolute right-0 top-0 h-full px-4 text-muted-foreground hover:text-white transition-colors"
-                // Increased padding from px-3 to px-4
+                className={cn(
+                  "absolute right-0 top-0 h-full px-4 transition-colors",
+                  isNetflix ? "text-gray-400 hover:text-white" : "text-muted-foreground hover:text-foreground"
+                )}
                 aria-label="Submit search"
               >
-                <Search size={22} /> {/* Increased icon size from 18 to 22 */}
+                <Search size={22} />
               </button>
             </div>
             {isMobile && (
-              <button
+              <motion.button
                 type="button"
-                className="ml-3 p-2 text-muted-foreground hover:text-white text-base animate-fade-in" // Added animation
+                className={cn(
+                  "ml-3 p-2 text-base",
+                  isNetflix ? "text-gray-400 hover:text-white" : "text-muted-foreground hover:text-foreground"
+                )}
                 onClick={toggleExpand}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
               >
                 Cancel
-              </button>
+              </motion.button>
             )}
           </>
         )}
       </form>
 
-      {showResults && results.length > 0 && (
-        <div className="absolute mt-2 w-full max-h-[70vh] overflow-y-auto bg-card rounded-lg shadow-lg animate-fade-in">
-          <div className="p-2">
-            {results.map((item) => (
-              <div
-                key={`${item.id}-${item.media_type || (item.title ? "movie" : "tv")}`}
-                className="p-3 hover:bg-muted rounded cursor-pointer transition-colors" // Increased padding from p-2 to p-3
-                onClick={() => handleResultClick(item)}
-              >
-                <div className="flex items-center">
-                  <div className="w-12 h-16 bg-muted rounded overflow-hidden flex-shrink-0"> {/* Increased size from w-10 h-14 to w-12 h-16 */}
-                    {item.poster_path ? (
-                      <img
-                        src={`https://image.tmdb.org/t/p/w92${item.poster_path}`}
-                        alt={item.title || item.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        No img
-                      </div>
-                    )}
+      <AnimatePresence>
+        {showResults && results.length > 0 && (
+          <motion.div 
+            className={cn(
+              "absolute mt-2 w-full max-h-[70vh] overflow-y-auto rounded-lg shadow-lg",
+              isNetflix ? "bg-black/95 border border-gray-800" : "bg-card"
+            )}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="p-2">
+              {results.map((item) => (
+                <motion.div
+                  key={`${item.id}-${item.media_type || (item.title ? "movie" : "tv")}`}
+                  className={cn(
+                    "p-3 rounded cursor-pointer transition-colors",
+                    isNetflix 
+                      ? "hover:bg-gray-800/50" 
+                      : "hover:bg-muted"
+                  )}
+                  onClick={() => handleResultClick(item)}
+                  whileHover={{ x: 4 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="flex items-center">
+                    <div className="w-12 h-16 rounded overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-800 to-gray-900"> 
+                      {item.poster_path ? (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w92${item.poster_path}`}
+                          alt={item.title || item.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          No img
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <p className={cn(
+                        "font-medium text-base text-balance",
+                        isNetflix && "text-white"
+                      )}>
+                        {item.title || item.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground"> 
+                        {item.media_type === "movie" || item.title
+                          ? `Movie · ${
+                              item.release_date
+                                ? new Date(item.release_date).getFullYear()
+                                : "Unknown"
+                            }`
+                          : `TV Show · ${
+                              item.first_air_date
+                                ? new Date(item.first_air_date).getFullYear()
+                                : "Unknown"
+                            }`}
+                      </p>
+                    </div>
                   </div>
-                  <div className="ml-3">
-                    <p className="font-medium text-base text-balance"> {/* Increased text size from text-sm to text-base */}
-                      {item.title || item.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground"> {/* Increased text size from text-xs to text-sm */}
-                      {item.media_type === "movie" || item.title
-                        ? `Movie · ${
-                            item.release_date
-                              ? new Date(item.release_date).getFullYear()
-                              : "Unknown"
-                          }`
-                        : `TV Show · ${
-                            item.first_air_date
-                              ? new Date(item.first_air_date).getFullYear()
-                              : "Unknown"
-                          }`}
-                    </p>
-                  </div>
-                </div>
+                </motion.div>
+              ))}
+              <div className={cn(
+                "pt-2 pb-1 px-2 mt-1",
+                isNetflix ? "border-t border-gray-800" : "border-t border-border/50"
+              )}>
+                <button
+                  onClick={handleSubmit}
+                  className={cn(
+                    "w-full text-center py-2 text-base",
+                    isNetflix ? "text-red-600 hover:text-red-500" : "text-primary hover:underline"
+                  )}
+                >
+                  See all results
+                </button>
               </div>
-            ))}
-            <div className="pt-2 pb-1 px-2 border-t border-border/50 mt-1">
-              <button
-                onClick={handleSubmit}
-                className="w-full text-center py-2 text-base text-primary hover:underline" // Added py-2 padding and increased text size
-              >
-                See all results
-              </button>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

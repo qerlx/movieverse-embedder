@@ -42,11 +42,16 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
         to="/" 
         className={cn("flex items-center", className)}
       >
-        <img 
-          src="https://images.ctfassets.net/y2ske730sjqp/1aONibCke6niZhgPxuiilC/2c401b05a07288746ddf3bd3943fbc76/BrandAssets_Logos_01-Wordmark.jpg?w=940" 
-          alt="Netflix" 
-          className="h-8 object-contain" 
-        />
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <img 
+            src="https://assets.stickpng.com/images/580b57fcd9996e24bc43c529.png" 
+            alt="Netflix" 
+            className="h-6 md:h-8 object-contain" 
+          />
+        </motion.div>
       </Link>
     );
   }

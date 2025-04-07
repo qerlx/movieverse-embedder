@@ -4,7 +4,6 @@ import { TVShow, Genre } from "@/types";
 import MovieCard from "@/components/MovieCard";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  getPopularTVShows, 
   getTopRatedTVShows, 
   getTVShowsByGenre, 
   getTVGenres 
@@ -19,6 +18,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
+import NetflixMovieCard from "@/components/NetflixMovieCard";
+import { motion } from "framer-motion";
 
 const TVShows = () => {
   const { toast } = useToast();
@@ -26,9 +29,11 @@ const TVShows = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [category, setCategory] = useState<"popular" | "top_rated" | "genre">("popular");
+  const [category, setCategory] = useState<"top_rated" | "genre">("top_rated");
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
+  const { theme } = useTheme();
+  const isNetflix = theme === 'netflix';
 
   // Fetch TV genres
   useEffect(() => {
@@ -53,16 +58,8 @@ const TVShows = () => {
         if (category === "genre" && selectedGenre) {
           response = await getTVShowsByGenre(selectedGenre.id, currentPage);
         } else {
-          switch (category) {
-            case "popular":
-              response = await getPopularTVShows(currentPage);
-              break;
-            case "top_rated":
-              response = await getTopRatedTVShows(currentPage);
-              break;
-            default:
-              response = await getPopularTVShows(currentPage);
-          }
+          // Default to top_rated
+          response = await getTopRatedTVShows(currentPage);
         }
         
         setTVShows(response.results);
@@ -84,12 +81,6 @@ const TVShows = () => {
     fetchTVShows();
   }, [category, currentPage, selectedGenre, toast]);
 
-  const changeCategory = (newCategory: "popular" | "top_rated") => {
-    setCategory(newCategory);
-    setSelectedGenre(null);
-    setCurrentPage(1);
-  };
-
   const selectGenre = (genre: Genre) => {
     setSelectedGenre(genre);
     setCategory("genre");
@@ -98,20 +89,28 @@ const TVShows = () => {
 
   const clearGenreFilter = () => {
     setSelectedGenre(null);
-    setCategory("popular");
+    setCategory("top_rated");
     setCurrentPage(1);
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+      <motion.div 
+        className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold">TV Shows</h1>
+          <h1 className={cn("text-3xl font-bold", isNetflix && "text-white")}>TV Shows</h1>
           
           {selectedGenre && (
             <Badge 
-              variant="secondary" 
-              className="ml-2 cursor-pointer"
+              variant={isNetflix ? "outline" : "secondary"}
+              className={cn(
+                "ml-2 cursor-pointer",
+                isNetflix && "bg-transparent border-gray-600 text-gray-300"
+              )}
               onClick={clearGenreFilter}
             >
               {selectedGenre.name} ×
@@ -121,16 +120,12 @@ const TVShows = () => {
         
         <div className="flex flex-wrap gap-2 items-center">
           <Button
-            variant={category === "popular" && !selectedGenre ? "default" : "outline"}
-            onClick={() => changeCategory("popular")}
-            className="transition-all duration-300"
-          >
-            Popular
-          </Button>
-          <Button
-            variant={category === "top_rated" ? "default" : "outline"}
-            onClick={() => changeCategory("top_rated")}
-            className="transition-all duration-300"
+            variant={isNetflix ? "outline" : "default"}
+            onClick={clearGenreFilter}
+            className={cn(
+              "transition-all duration-300",
+              isNetflix && "border-gray-700 hover:border-gray-600 text-white"
+            )}
           >
             Top Rated
           </Button>
@@ -140,19 +135,31 @@ const TVShows = () => {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="gap-1"
+                  className={cn(
+                    "gap-1",
+                    isNetflix && "border-gray-700 hover:border-gray-600 text-white"
+                  )}
                 >
                   <Filter size={16} />
                   Genres
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 max-h-[70vh] overflow-y-auto">
+              <DropdownMenuContent 
+                align="end" 
+                className={cn(
+                  "w-56 max-h-[70vh] overflow-y-auto",
+                  isNetflix && "bg-black/95 border-gray-800"
+                )}
+              >
                 <DropdownMenuGroup>
                   {genres.map((genre) => (
                     <DropdownMenuItem 
                       key={genre.id} 
                       onClick={() => selectGenre(genre)}
-                      className={selectedGenre?.id === genre.id ? "bg-muted" : ""}
+                      className={cn(
+                        selectedGenre?.id === genre.id && "bg-muted",
+                        isNetflix && "text-gray-300 hover:text-white focus:text-white"
+                      )}
                     >
                       {genre.name}
                     </DropdownMenuItem>
@@ -162,22 +169,43 @@ const TVShows = () => {
             </DropdownMenu>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {isLoading ? (
         <div className="flex justify-center items-center min-h-[50vh]">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <div className={cn(
+            "inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]",
+            isNetflix ? "border-red-600" : "border-primary"
+          )}></div>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+          <div className={cn(
+            isNetflix 
+              ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" 
+              : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
+          )}>
             {tvShows.map((show, index) => (
-              <MovieCard 
-                key={show.id} 
-                item={show} 
-                type="tv" 
-                priority={index < 12}
-              />
+              <motion.div 
+                key={show.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+              >
+                {isNetflix ? (
+                  <NetflixMovieCard 
+                    item={show} 
+                    type="tv" 
+                    index={index}
+                  />
+                ) : (
+                  <MovieCard 
+                    item={show} 
+                    type="tv" 
+                    priority={index < 12}
+                  />
+                )}
+              </motion.div>
             ))}
           </div>
 
@@ -188,13 +216,17 @@ const TVShows = () => {
                 variant="outline"
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
+                className={isNetflix && "border-gray-700 hover:border-gray-600 text-white"}
               >
                 Previous
               </Button>
               
               {/* Show current page and total */}
               <div className="flex items-center px-4 text-sm">
-                <span className="text-muted-foreground">
+                <span className={cn(
+                  "text-muted-foreground",
+                  isNetflix && "text-gray-400"
+                )}>
                   Page {currentPage} of {totalPages}
                 </span>
               </div>
@@ -203,6 +235,7 @@ const TVShows = () => {
                 variant="outline"
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
+                className={isNetflix && "border-gray-700 hover:border-gray-600 text-white"}
               >
                 Next
               </Button>
