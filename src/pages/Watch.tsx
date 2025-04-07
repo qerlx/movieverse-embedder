@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -31,8 +32,8 @@ const Watch = () => {
     server4: ""
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeServer, setActiveServer] = useState<"server2" | "server1" | "server3" | "server4">("server2");
-  const [lastWorkingServer, setLastWorkingServer] = useState<"server2" | "server1" | "server3" | "server4">("server2");
+  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
+  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
   const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { theme } = useTheme();
@@ -52,8 +53,8 @@ const Watch = () => {
           setPosterPath(movieData.poster_path);
           
           setEmbedUrls({
-            server2: `https://www.2embed.cc/embed/${itemId}`,
-            server1: `https://vidsrc.to/embed/movie/${itemId}`,
+            server1: `https://www.2embed.cc/embed/${itemId}`,
+            server2: `https://vidsrc.to/embed/movie/${itemId}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`,
             server4: `https://embed.su/embed/movie/${itemId}`
           });
@@ -78,8 +79,8 @@ const Watch = () => {
           setPosterPath(tvData.poster_path);
           
           setEmbedUrls({
-            server2: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
-            server1: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
+            server1: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
+            server2: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
             server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
@@ -133,7 +134,7 @@ const Watch = () => {
   }, [id, type, season, episode, navigate, uiToast, currentUser]);
 
   const tryNextServer = () => {
-    const serverOptions: ("server2" | "server1" | "server3" | "server4")[] = ["server2", "server1", "server3", "server4"];
+    const serverOptions: ("server1" | "server2" | "server3" | "server4")[] = ["server1", "server2", "server3", "server4"];
     const currentIndex = serverOptions.indexOf(activeServer);
     
     let nextIndex = (currentIndex + 1) % serverOptions.length;
@@ -145,8 +146,8 @@ const Watch = () => {
     }));
     
     const serverNames: Record<string, string> = {
-      server2: "2 (2embed)",
-      server1: "1 (VidSrc)",
+      server1: "1 (2embed)",
+      server2: "2 (VidSrc)",
       server3: "3 (MultiEmbed)",
       server4: "4 (Embed.su)"
     };
@@ -159,13 +160,13 @@ const Watch = () => {
     setActiveServer(nextServer);
   };
 
-  const handleServerSwitch = (server: "server2" | "server1" | "server3" | "server4") => {
+  const handleServerSwitch = (server: "server1" | "server2" | "server3" | "server4") => {
     setActiveServer(server);
     setLastWorkingServer(server);
     
     const serverNames: Record<string, string> = {
-      server2: "2 (2embed)",
-      server1: "1 (VidSrc)",
+      server1: "1 (2embed)",
+      server2: "2 (VidSrc)",
       server3: "3 (MultiEmbed)",
       server4: "4 (Embed.su)"
     };
@@ -226,10 +227,10 @@ const Watch = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          {["server2", "server1", "server3", "server4"].map((server, index) => {
+          {["server1", "server2", "server3", "server4"].map((server, index) => {
             const serverNames: Record<string, string> = {
-              server2: "Server 2",
               server1: "Server 1",
+              server2: "Server 2",
               server3: "Server 3",
               server4: "Server 4"
             };
@@ -243,7 +244,7 @@ const Watch = () => {
                     "gap-2",
                     isNetflix && activeServer === server && "bg-red-600 hover:bg-red-700"
                   )}
-                  onClick={() => handleServerSwitch(server as "server2" | "server1" | "server3" | "server4")}
+                  onClick={() => handleServerSwitch(server as "server1" | "server2" | "server3" | "server4")}
                 >
                   <MonitorPlay size={16} />
                   {serverNames[server]}

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import HeroSlider from "@/components/HeroSlider";
 import CategoryRow from "@/components/CategoryRow";
+import NetflixCategoryRow from "@/components/NetflixCategoryRow";
 import { 
   getPopularMovies, 
   getTrendingMovies, 
@@ -11,7 +12,12 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
 import Favorites from "@/components/Favorites";
+import ContinueWatchingRow from "@/components/ContinueWatchingRow";
 import { Heart } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { getUserWatchHistory } from "@/lib/watchService";
 
 const Index = () => {
   const { currentUser } = useAuth();
@@ -20,7 +26,10 @@ const Index = () => {
   const [popularMovies, setPopularMovies] = useState([]);
   const [trendingTVShows, setTrendingTVShows] = useState([]);
   const [popularTVShows, setPopularTVShows] = useState([]);
+  const [continueWatchingItems, setContinueWatchingItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { theme } = useTheme();
+  const isNetflix = theme === 'netflix';
   
   useEffect(() => {
     const fetchData = async () => {
@@ -44,6 +53,18 @@ const Index = () => {
         if (popularMoviesData?.results) setPopularMovies(popularMoviesData.results);
         if (trendingTVData?.results) setTrendingTVShows(trendingTVData.results);
         if (popularTVData?.results) setPopularTVShows(popularTVData.results);
+        
+        // Fetch continue watching data for logged in users
+        if (currentUser) {
+          try {
+            const watchHistory = await getUserWatchHistory(currentUser);
+            if (watchHistory && watchHistory.length > 0) {
+              setContinueWatchingItems(watchHistory.slice(0, 6));
+            }
+          } catch (error) {
+            console.error("Error fetching watch history:", error);
+          }
+        }
       } catch (error) {
         console.error("Error fetching data for homepage:", error);
       } finally {
@@ -52,69 +73,138 @@ const Index = () => {
     };
     
     fetchData();
-  }, []);
+  }, [currentUser]);
+  
+  // Section staggered animation
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2
+      }
+    }
+  };
+  
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+  
+  const CategoryComponent = isNetflix ? NetflixCategoryRow : CategoryRow;
   
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20">
       {/* Hero Slider - Only render when data is loaded */}
       {!isLoading && heroItems && heroItems.length > 0 && <HeroSlider items={heroItems} type="movie" />}
-      
-      {/* User's favorites (only for logged in users) */}
-      {currentUser && (
-        <div className="container mx-auto px-4 mt-8">
-          <h2 className="text-xl font-bold mb-4 flex items-center">
-            <Heart className="mr-2 text-red-500" size={20} />
-            Your Favorites
-          </h2>
-          <Favorites limit={6} />
-        </div>
-      )}
-      
-      {/* Personalized Recommendations (only for logged in users) */}
-      {currentUser && <PersonalizedRecommendations />}
       
       {/* Loading indicator */}
       {isLoading && (
         <div className="py-20 flex justify-center items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className={cn(
+              "animate-spin rounded-full h-12 w-12 border-b-2", 
+              isNetflix ? "border-red-600" : "border-primary"
+            )}
+          ></motion.div>
         </div>
       )}
       
-      {/* Movie Categories - Only render when data is loaded */}
       {!isLoading && (
-        <div className="py-8">
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className={cn(
+            "py-4",
+            isNetflix && "-mt-32 relative z-10" // Overlap hero for Netflix style
+          )}
+        >
+          {/* Continue Watching Row */}
+          {currentUser && continueWatchingItems.length > 0 && (
+            <motion.div variants={item} className="container mx-auto px-4">
+              <ContinueWatchingRow items={continueWatchingItems} />
+            </motion.div>
+          )}
+          
+          {/* User's favorites (only for logged in users) */}
+          {currentUser && (
+            <motion.div variants={item} className="container mx-auto px-4 mt-8">
+              <h2 className={cn(
+                "text-xl font-bold mb-4 flex items-center",
+                isNetflix && "text-white"
+              )}>
+                <Heart className={cn("mr-2", isNetflix ? "text-red-600" : "text-red-500")} size={20} />
+                Your Favorites
+              </h2>
+              <Favorites limit={6} />
+            </motion.div>
+          )}
+          
+          {/* Top 10 on Netflix Today */}
+          {isNetflix && trendingMovies.length > 0 && (
+            <motion.div variants={item} className="container mx-auto px-4">
+              <CategoryComponent
+                title="Top 10 Movies Today"
+                items={trendingMovies.slice(0, 10)}
+                type="movie"
+              />
+            </motion.div>
+          )}
+          
+          {/* Trending Movies */}
           {trendingMovies && trendingMovies.length > 0 && (
-            <CategoryRow 
-              title="Trending Movies" 
-              items={trendingMovies} 
-              type="movie"
-            />
+            <motion.div variants={item} className="container mx-auto px-4">
+              <CategoryComponent
+                title="Trending Movies" 
+                items={trendingMovies} 
+                type="movie"
+              />
+            </motion.div>
           )}
           
-          {popularMovies && popularMovies.length > 0 && (
-            <CategoryRow 
-              title="Popular Movies" 
-              items={popularMovies} 
-              type="movie"
-            />
-          )}
-          
+          {/* Trending TV Shows */}
           {trendingTVShows && trendingTVShows.length > 0 && (
-            <CategoryRow 
-              title="Trending TV Shows" 
-              items={trendingTVShows} 
-              type="tv"
-            />
+            <motion.div variants={item} className="container mx-auto px-4">
+              <CategoryComponent
+                title="Trending TV Shows" 
+                items={trendingTVShows}
+                type="tv"
+              />
+            </motion.div>
           )}
           
-          {popularTVShows && popularTVShows.length > 0 && (
-            <CategoryRow 
-              title="Popular TV Shows" 
-              items={popularTVShows} 
-              type="tv"
-            />
+          {/* Popular Movies */}
+          {popularMovies && popularMovies.length > 0 && (
+            <motion.div variants={item} className="container mx-auto px-4">
+              <CategoryComponent
+                title="Popular Movies" 
+                items={popularMovies} 
+                type="movie"
+              />
+            </motion.div>
           )}
-        </div>
+          
+          {/* Popular TV Shows */}
+          {popularTVShows && popularTVShows.length > 0 && (
+            <motion.div variants={item} className="container mx-auto px-4">
+              <CategoryComponent
+                title="Popular TV Shows" 
+                items={popularTVShows} 
+                type="tv"
+              />
+            </motion.div>
+          )}
+          
+          {/* Personalized Recommendations (only for logged in users) */}
+          {currentUser && (
+            <motion.div variants={item} className="container mx-auto px-4">
+              <PersonalizedRecommendations />
+            </motion.div>
+          )}
+        </motion.div>
       )}
     </div>
   );

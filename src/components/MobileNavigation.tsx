@@ -43,7 +43,7 @@ const MobileNavigation = () => {
       )}
     >
       {items.map((item, index) => {
-        const Icon = item.icon;
+        const IconComponent = item.icon;
         
         // Special case for Netflix logo in the middle
         if (isNetflix && index === 2) {
@@ -63,27 +63,59 @@ const MobileNavigation = () => {
         }
         
         // For Netflix theme, reorder to have 2 items on each side
-        let itemToRender = item;
         if (isNetflix) {
           // Adjust the indices for 2-1-2 layout
           if (index > 2) {
-            itemToRender = items[index-1];
+            const adjustedItem = items[index-1];
+            return (
+              <NavLink 
+                key={adjustedItem.to} 
+                to={adjustedItem.to} 
+                className={getLinkStyle}
+              >
+                {({ isActive }) => {
+                  const NavIcon = adjustedItem.icon;
+                  return (
+                    <>
+                      <NavIcon 
+                        className={cn(
+                          "bottom-nav-icon", 
+                          isActive 
+                            ? isNetflix ? "text-white" : "text-primary" 
+                            : "text-muted-foreground"
+                        )} 
+                        size={20} 
+                      />
+                      <span className="bottom-nav-text">{adjustedItem.label}</span>
+                      
+                      {isActive && (
+                        <motion.div 
+                          className={cn(
+                            "absolute -top-1 left-1/2 transform -translate-x-1/2 h-0.5 w-5",
+                            isNetflix ? "bg-red-600" : "bg-primary"
+                          )}
+                          layoutId="activeIndicator"
+                        />
+                      )}
+                    </>
+                  );
+                }}
+              </NavLink>
+            );
           } else if (index === 2) {
             return null; // Skip middle position as it's replaced by Netflix logo
           }
         }
         
-        const Icon = itemToRender.icon;
-        
         return (
           <NavLink 
-            key={itemToRender.to} 
-            to={itemToRender.to} 
+            key={item.to} 
+            to={item.to} 
             className={getLinkStyle}
           >
             {({ isActive }) => (
               <>
-                <Icon 
+                <IconComponent 
                   className={cn(
                     "bottom-nav-icon", 
                     isActive 
@@ -92,7 +124,7 @@ const MobileNavigation = () => {
                   )} 
                   size={20} 
                 />
-                <span className="bottom-nav-text">{itemToRender.label}</span>
+                <span className="bottom-nav-text">{item.label}</span>
                 
                 {isActive && (
                   <motion.div 

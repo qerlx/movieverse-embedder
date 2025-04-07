@@ -61,7 +61,7 @@ const NetflixMovieCard: React.FC<NetflixMovieCardProps> = ({
   return (
     <motion.div 
       className={cn(
-        "relative aspect-[2/3] rounded-md overflow-hidden cursor-pointer stream-card",
+        "relative aspect-[2/3] rounded-md overflow-hidden cursor-pointer",
         className
       )}
       initial={{ opacity: 0, y: 20 }}
@@ -81,9 +81,14 @@ const NetflixMovieCard: React.FC<NetflixMovieCardProps> = ({
       />
       
       {recentlyAdded && (
-        <div className="recently-added-badge">
-          Recently added
-        </div>
+        <motion.div 
+          className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          New
+        </motion.div>
       )}
       
       {isHovered && (
@@ -160,11 +165,13 @@ const NetflixMovieCard: React.FC<NetflixMovieCardProps> = ({
         </div>
       )}
       
-      <div className={`play-overlay ${isHovered ? 'hidden' : ''}`}>
-        <div className="play-button" onClick={handlePlay}>
-          <Play size={24} />
+      {!isHovered && (
+        <div className="play-overlay">
+          <div className="play-button" onClick={handlePlay}>
+            <Play size={24} />
+          </div>
         </div>
-      </div>
+      )}
     </motion.div>
   );
 };

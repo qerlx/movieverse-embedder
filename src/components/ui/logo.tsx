@@ -3,6 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
+import { motion } from "framer-motion";
 
 interface LogoProps {
   className?: string;
@@ -12,7 +13,6 @@ interface LogoProps {
 const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
   const { theme } = useTheme();
   const isNetflix = theme === 'netflix';
-  const isPrime = theme === 'prime';
   
   if (iconOnly) {
     return (
@@ -23,11 +23,6 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
         {isNetflix ? (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M5 2H19V22L12 18L5 22V2Z" fill="#E50914" />
-          </svg>
-        ) : isPrime ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 5H4V19H20V5Z" fill="#00A8E1" />
-            <path d="M12 8L16 12L12 16L8 12L12 8Z" fill="#0F171E" />
           </svg>
         ) : (
           <img 
@@ -45,22 +40,15 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
     return (
       <Link 
         to="/" 
-        className={cn("text-2xl font-black tracking-tighter text-[#E50914]", className)}
+        className={cn("text-2xl font-black tracking-tighter", className)}
       >
-        MOVIESTREAM
-      </Link>
-    );
-  }
-  
-  // Prime Video-style logo
-  if (isPrime) {
-    return (
-      <Link 
-        to="/" 
-        className={cn("text-xl font-semibold text-white flex items-center gap-1", className)}
-      >
-        <span className="text-[#00A8E1] font-bold">prime</span>
-        <span className="text-sm font-light uppercase tracking-wider">MovieStream</span>
+        <motion.span 
+          className="text-[#E50914]"
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 500 }}
+        >
+          MOVIESTREAM
+        </motion.span>
       </Link>
     );
   }

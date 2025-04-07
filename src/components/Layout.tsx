@@ -11,6 +11,7 @@ import AuthModal from "./AuthModal";
 import ThemeSwitcher from "./ThemeSwitcher";
 import { useTheme } from "@/contexts/ThemeContext";
 import MobileNavigation from "./MobileNavigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Layout = () => {
   const location = useLocation();
@@ -61,7 +62,6 @@ const Layout = () => {
   }, []);
 
   const isNetflix = theme === 'netflix';
-  const isPrime = theme === 'prime';
   
   const NavItems = () => {
     // Generate style based on theme
@@ -73,16 +73,6 @@ const Layout = () => {
           isActive
             ? "text-white"
             : "text-gray-300 hover:text-white"
-        );
-      }
-      
-      // Prime Video style
-      if (isPrime) {
-        return cn(
-          "flex items-center gap-2 px-3 py-1.5 transition-all duration-200 text-xs uppercase tracking-wide",
-          isActive
-            ? "text-white"
-            : "text-gray-400 hover:text-white"
         );
       }
       
@@ -98,15 +88,15 @@ const Layout = () => {
     return (
       <>
         <NavLink to="/" className={getLinkStyle}>
-          <Home size={isNetflix || isPrime ? 16 : 18} />
+          <Home size={isNetflix ? 16 : 18} />
           <span>Home</span>
         </NavLink>
         <NavLink to="/movies" className={getLinkStyle}>
-          <Film size={isNetflix || isPrime ? 16 : 18} />
+          <Film size={isNetflix ? 16 : 18} />
           <span>Movies</span>
         </NavLink>
         <NavLink to="/tv-shows" className={getLinkStyle}>
-          <Tv size={isNetflix || isPrime ? 16 : 18} />
+          <Tv size={isNetflix ? 16 : 18} />
           <span>TV Shows</span>
         </NavLink>
       </>
@@ -121,12 +111,14 @@ const Layout = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header
+      <motion.header
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
         className={cn(
           "fixed top-0 left-0 right-0 z-50 nav-blur transition-transform duration-300",
           !showNavbar && !mobileMenuOpen && "-translate-y-full",
-          isNetflix && "bg-black/95 border-b border-gray-900/50",
-          isPrime && "bg-[#1a242f]/95 border-b border-[#273340]/50"
+          isNetflix && "bg-black/95 border-b border-gray-900/50"
         )}
       >
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -162,11 +154,21 @@ const Layout = () => {
             )}
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Main content */}
       <main className="flex-1 mt-16 mb-16 md:mb-0">
-        <Outlet />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
       
       {/* Mobile bottom navigation */}
