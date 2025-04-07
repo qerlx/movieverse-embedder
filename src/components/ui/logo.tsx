@@ -21,9 +21,11 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
         className={cn("flex items-center justify-center", className)}
       >
         {isNetflix ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fillRule="evenodd" clipRule="evenodd" d="M5 2H19V22L12 18L5 22V2Z" fill="#E50914" />
-          </svg>
+          <img 
+            src="https://i0.wp.com/png.co.ke/wp-content/uploads/2024/05/CITYPNG.COMNetflix-Vector-Flat-Logo-886x885-1.png?fit=886%2C885&ssl=1" 
+            alt="Netflix"
+            className="h-8 w-8 object-contain" 
+          />
         ) : (
           <img 
             src="/lovable-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
@@ -47,9 +49,9 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
           whileTap={{ scale: 0.95 }}
         >
           <img 
-            src="https://images.ctfassets.net/y2ske730sjqp/1aONibCke6niZhgPxuiilC/2c401b05a07288746ddf3bd3943fbc76/BrandAssets_Logos_01-Wordmark.jpg?w=940" 
+            src="https://i0.wp.com/png.co.ke/wp-content/uploads/2024/05/CITYPNG.COMNetflix-Vector-Flat-Logo-886x885-1.png?fit=886%2C885&ssl=1" 
             alt="Netflix" 
-            className="h-6 md:h-8 object-contain" 
+            className="h-8 md:h-10 object-contain" 
           />
         </motion.div>
       </Link>

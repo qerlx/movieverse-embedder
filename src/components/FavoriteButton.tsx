@@ -29,7 +29,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   
   React.useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (!currentUser) return;
+      if (!currentUser) return setIsLoading(false);
       
       try {
         const status = await checkIsFavorite(currentUser.uid, itemId, itemType);
@@ -95,7 +95,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   // For standard button variants
   return (
     <Button
-      variant={variant as "default" | "outline" | "ghost"}
+      variant={variant === 'netflix' ? 'outline' : (variant as "default" | "outline" | "ghost")}
       size={size}
       disabled={isLoading || !currentUser}
       onClick={handleToggleFavorite}

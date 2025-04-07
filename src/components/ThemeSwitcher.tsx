@@ -96,9 +96,11 @@ const ThemeSwitcher: React.FC = () => {
             active={theme === "netflix"} 
             logo={
               <div className="bg-black p-2 w-full h-full flex items-center justify-center">
-                <svg width="120" height="32" viewBox="0 0 111 30" fill="#e50914" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M105.06 14.28L111 0H105.06V14.28ZM105.06 29.7066V14.28L111 29.7066H105.06ZM100.123 0H94.186V29.7066H100.123V0ZM89.2497 0H83.3135V29.7066H89.2497V0ZM78.3765 0H72.4404V29.7066H78.3765V0ZM67.5033 0H61.5672V29.7066H67.5033V0ZM56.63 14.28L62.5696 0H56.6335V14.28H56.63ZM56.63 29.7066V14.28L62.5696 29.7066H56.63ZM51.6929 0H45.7568V29.7066H51.6929V0ZM40.8197 0H34.8836V29.7066H40.8197V0ZM29.9464 0H24.0103V29.7066H29.9464V0ZM19.073 0H13.1369V29.7066H19.073V0ZM8.20245 0H2.26634V29.7066H8.20245V0ZM0 0V29.7066H2.26634V0H0Z" />
-                </svg>
+                <img 
+                  src="https://i0.wp.com/png.co.ke/wp-content/uploads/2024/05/CITYPNG.COMNetflix-Vector-Flat-Logo-886x885-1.png?fit=886%2C885&ssl=1" 
+                  alt="Netflix Logo"
+                  className="h-16 object-contain"
+                />
               </div>
             } 
           />

@@ -119,16 +119,7 @@ const TVShows = () => {
         </div>
         
         <div className="flex flex-wrap gap-2 items-center">
-          <Button
-            variant={isNetflix ? "outline" : "default"}
-            onClick={clearGenreFilter}
-            className={cn(
-              "transition-all duration-300",
-              isNetflix && "border-gray-700 hover:border-gray-600 text-white"
-            )}
-          >
-            Top Rated
-          </Button>
+          {/* Removed the "Top Rated" button that was here */}
           
           {genres.length > 0 && (
             <DropdownMenu>
@@ -181,9 +172,7 @@ const TVShows = () => {
       ) : (
         <>
           <div className={cn(
-            isNetflix 
-              ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" 
-              : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
+            "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
           )}>
             {tvShows.map((show, index) => (
               <motion.div 
