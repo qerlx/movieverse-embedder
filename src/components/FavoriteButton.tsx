@@ -95,7 +95,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   // For standard button variants
   return (
     <Button
-      variant={variant === 'netflix' ? 'outline' : (variant as "default" | "outline" | "ghost")}
+      variant={variant === 'netflix' ? 'default' : variant as "default" | "outline" | "ghost"}
       size={size}
       disabled={isLoading || !currentUser}
       onClick={handleToggleFavorite}

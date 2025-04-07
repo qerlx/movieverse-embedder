@@ -76,12 +76,6 @@
  
     --ring: 216 34% 17%;
   }
-}
- 
-@layer base {
-  * {
-    @apply border-border;
-  }
   
   body {
     @apply bg-background text-foreground;
@@ -119,22 +113,21 @@
   background: linear-gradient(to top, #000, transparent);
 }
 
-.theme-netflix .netflix-row:hover .netflix-movie-card:not(:hover) {
-  transform: scale(0.95);
-  filter: brightness(0.7);
+.theme-netflix .card {
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 /* Netflix rank number styling */
 .netflix-rank-number {
   font-size: 160px;
   font-weight: 900;
-  line-height: 1;
+  line-height: 0.8;
   background: linear-gradient(to bottom, #e50914 30%, #5c0408);
   color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
-  position: relative;
-  z-index: 10;
+  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.75));
 }
 
 .text-shadow {
@@ -173,4 +166,30 @@
 @keyframes scaleIn {
   from { transform: scale(0); }
   to { transform: scale(1); }
+}
+
+/* Fix mobile navigation styling */
+@media (max-width: 767px) {
+  .mb-16 {
+    margin-bottom: 5rem !important;
+  }
+}
+
+/* Improve title cards display */
+.theme-netflix .netflix-row {
+  margin-bottom: 2rem;
+}
+
+.theme-netflix .netflix-row h2 {
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.theme-netflix .netflix-movie-card {
+  transition: all 0.3s ease;
+}
+
+.theme-netflix .netflix-row:hover .netflix-movie-card:not(:hover) {
+  transform: scale(0.95);
+  filter: brightness(0.7);
 }

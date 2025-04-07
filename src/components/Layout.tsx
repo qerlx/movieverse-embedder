@@ -116,20 +116,30 @@ const Layout = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 nav-blur transition-transform duration-300",
+          "fixed top-0 left-0 right-0 z-50 transition-transform duration-300",
           !showNavbar && !mobileMenuOpen && "-translate-y-full",
-          isNetflix && "bg-black/95 border-b border-gray-900/50"
+          isNetflix 
+            ? "bg-gradient-to-b from-black/90 to-black/60 backdrop-blur-sm" 
+            : "bg-background/80 backdrop-blur-md border-b border-border/40"
         )}
       >
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             {isMobile && searchExpanded ? (
               <div className="w-10 h-10 flex items-center justify-center">
-                <img 
-                  src="/lovable-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
-                  alt="MovieStreamHub" 
-                  className="w-8 h-8 object-contain animate-scale-in" 
-                />
+                {isNetflix ? (
+                  <img 
+                    src="https://i0.wp.com/png.co.ke/wp-content/uploads/2024/05/CITYPNG.COMNetflix-Vector-Flat-Logo-886x885-1.png?fit=886%2C885&ssl=1" 
+                    alt="Netflix" 
+                    className="w-8 h-8 object-contain animate-scale-in" 
+                  />
+                ) : (
+                  <img 
+                    src="/lovable-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
+                    alt="MovieStreamHub" 
+                    className="w-8 h-8 object-contain animate-scale-in" 
+                  />
+                )}
               </div>
             ) : (
               <div className={`transition-all duration-300 ${isMobile && searchExpanded ? 'opacity-0 scale-0 w-0' : 'opacity-100 animate-fade-in'}`}>

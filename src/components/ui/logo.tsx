@@ -10,6 +10,8 @@ interface LogoProps {
   iconOnly?: boolean;
 }
 
+const NETFLIX_LOGO_URL = "https://i0.wp.com/png.co.ke/wp-content/uploads/2024/05/CITYPNG.COMNetflix-Vector-Flat-Logo-886x885-1.png?fit=886%2C885&ssl=1";
+
 const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
   const { theme } = useTheme();
   const isNetflix = theme === 'netflix';
@@ -22,7 +24,7 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
       >
         {isNetflix ? (
           <img 
-            src="https://i0.wp.com/png.co.ke/wp-content/uploads/2024/05/CITYPNG.COMNetflix-Vector-Flat-Logo-886x885-1.png?fit=886%2C885&ssl=1" 
+            src={NETFLIX_LOGO_URL} 
             alt="Netflix"
             className="h-8 w-8 object-contain" 
           />
@@ -49,7 +51,7 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
           whileTap={{ scale: 0.95 }}
         >
           <img 
-            src="https://i0.wp.com/png.co.ke/wp-content/uploads/2024/05/CITYPNG.COMNetflix-Vector-Flat-Logo-886x885-1.png?fit=886%2C885&ssl=1" 
+            src={NETFLIX_LOGO_URL} 
             alt="Netflix" 
             className="h-8 md:h-10 object-contain" 
           />

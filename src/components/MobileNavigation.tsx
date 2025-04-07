@@ -13,13 +13,13 @@ const MobileNavigation = () => {
   const getLinkStyle = ({ isActive }: { isActive: boolean }) => {
     if (isNetflix) {
       return cn(
-        'bottom-nav-item relative',
+        'flex flex-col items-center justify-center py-2 px-2',
         isActive ? 'text-white' : 'text-gray-500'
       );
     }
     
     return cn(
-      'bottom-nav-item relative',
+      'flex flex-col items-center justify-center py-2 px-2',
       isActive ? 'text-primary' : 'text-muted-foreground'
     );
   };
@@ -38,59 +38,31 @@ const MobileNavigation = () => {
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "bottom-nav",
-        isNetflix && "bg-black/95 border-t border-gray-900/50"
+        "fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-50",
+        isNetflix ? "bg-black border-t border-gray-900" : "bg-background/95 backdrop-blur-md border-t border-border"
       )}
     >
       {items.map((item, index) => {
-        // Special case for Netflix logo in the middle
-        if (isNetflix && index === 2) {
-          return (
-            <div key="netflix-logo" className="relative z-10">
-              <motion.div 
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
-                className="absolute -top-6 p-2 bg-black rounded-full border border-gray-900"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#E50914" className="w-6 h-6">
-                  <path d="M7.52 21.48C7.52 21.48 7.52 21.48 7.52 21.48L7.52 2.52C7.52 2.52 7.52 2.52 7.52 2.52V1.98H16.52V2.52V21.48V22.02H7.52V21.48Z" />
-                </svg>
-              </motion.div>
-            </div>
-          );
-        }
-        
-        // For Netflix theme, reorder to have 2 items on each side
-        let itemToRender = item;
-        if (isNetflix) {
-          // Adjust the indices for 2-1-2 layout
-          if (index > 2) {
-            itemToRender = items[index-1];
-          } else if (index === 2) {
-            return null; // Skip middle position as it's replaced by Netflix logo
-          }
-        }
-        
-        const IconComponent = itemToRender.icon;
+        const IconComponent = item.icon;
         
         return (
           <NavLink 
-            key={itemToRender.to} 
-            to={itemToRender.to} 
+            key={item.to} 
+            to={item.to} 
             className={getLinkStyle}
           >
             {({ isActive }) => (
               <>
                 <IconComponent 
                   className={cn(
-                    "bottom-nav-icon", 
+                    "mb-1", 
                     isActive 
                       ? isNetflix ? "text-white" : "text-primary" 
                       : "text-muted-foreground"
                   )} 
                   size={20} 
                 />
-                <span className="bottom-nav-text">{itemToRender.label}</span>
+                <span className="text-xs">{item.label}</span>
                 
                 {isActive && (
                   <motion.div 

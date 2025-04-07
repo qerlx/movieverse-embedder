@@ -7,11 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
+  DialogClose,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { motion } from "framer-motion";
+
+const NETFLIX_LOGO_URL = "https://i0.wp.com/png.co.ke/wp-content/uploads/2024/05/CITYPNG.COMNetflix-Vector-Flat-Logo-886x885-1.png?fit=886%2C885&ssl=1";
 
 const ThemeSwitcher: React.FC = () => {
   const { theme, setTheme } = useTheme();
@@ -74,6 +77,7 @@ const ThemeSwitcher: React.FC = () => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl">Choose a Theme</DialogTitle>
+          <DialogDescription>Select your preferred streaming platform theme</DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 pt-3">
           <ThemeCard 
@@ -97,7 +101,7 @@ const ThemeSwitcher: React.FC = () => {
             logo={
               <div className="bg-black p-2 w-full h-full flex items-center justify-center">
                 <img 
-                  src="https://i0.wp.com/png.co.ke/wp-content/uploads/2024/05/CITYPNG.COMNetflix-Vector-Flat-Logo-886x885-1.png?fit=886%2C885&ssl=1" 
+                  src={NETFLIX_LOGO_URL} 
                   alt="Netflix Logo"
                   className="h-16 object-contain"
                 />
