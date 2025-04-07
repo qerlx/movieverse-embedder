@@ -71,7 +71,6 @@ const MobileNavigation = () => {
           }
         }
         
-        // Use the iconComponent name instead of redefining Icon
         const IconComponent = itemToRender.icon;
         
         return (

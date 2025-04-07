@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +10,9 @@ import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
 import AddToWatchedButton from "@/components/AddToWatchedButton";
+import WatchProviders from "@/components/WatchProviders";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
 
 const MovieDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +21,8 @@ const MovieDetail = () => {
   const { currentUser } = useAuth();
   const [movie, setMovie] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { theme } = useTheme();
+  const isNetflix = theme === 'netflix';
 
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -98,8 +104,18 @@ const MovieDetail = () => {
               className="w-full h-[70vh] bg-cover bg-center bg-no-repeat animate-blur-in"
               style={{ backgroundImage: `url(${backdropUrl})` }}
             ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent"></div>
+            <div className={cn(
+              "absolute inset-0", 
+              isNetflix 
+                ? "bg-gradient-to-r from-black/90 via-black/80 to-black/60" 
+                : "bg-gradient-to-r from-black via-black/80 to-transparent"
+            )}></div>
+            <div className={cn(
+              "absolute inset-0",
+              isNetflix 
+                ? "bg-gradient-to-t from-black via-black/70 to-transparent" 
+                : "bg-gradient-to-t from-background via-background/70 to-transparent"
+            )}></div>
           </div>
         )}
 
@@ -107,24 +123,42 @@ const MovieDetail = () => {
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Poster */}
             <div className="w-full max-w-xs mx-auto md:mx-0 animate-fade-in">
-              <div className="rounded-lg overflow-hidden shadow-xl">
+              <div className={cn(
+                "overflow-hidden shadow-xl",
+                isNetflix ? "rounded-none" : "rounded-lg"
+              )}>
                 <img
                   src={posterUrl}
                   alt={movie.title}
                   className="w-full h-auto object-cover"
                 />
               </div>
+              
+              {/* Watch providers - only shown on non-Netflix theme */}
+              {!isNetflix && id && (
+                <div className="mt-6 p-4 bg-muted/20 backdrop-blur-sm rounded-lg">
+                  <WatchProviders id={parseInt(id)} type="movie" />
+                </div>
+              )}
             </div>
 
             {/* Details */}
             <div className="flex-1 animate-fade-up" style={{ animationDelay: "200ms" }}>
-              <h1 className="text-3xl md:text-5xl font-bold mb-4">{movie.title}</h1>
+              <h1 className={cn(
+                "font-bold mb-4", 
+                isNetflix ? "text-4xl md:text-6xl" : "text-3xl md:text-5xl"
+              )}>
+                {movie.title}
+              </h1>
               
               <div className="flex flex-wrap gap-3 mb-6">
                 {movie.genres?.map((genre: any) => (
                   <span
                     key={genre.id}
-                    className="px-3 py-1 bg-muted/30 rounded-full text-sm"
+                    className={cn(
+                      "px-3 py-1 rounded-full text-sm",
+                      isNetflix ? "bg-white/10" : "bg-muted/30"
+                    )}
                   >
                     {genre.name}
                   </span>
@@ -168,37 +202,46 @@ const MovieDetail = () => {
                 </div>
               )}
               
+              {/* Watch providers - only shown on Netflix theme for smaller screens */}
+              {isNetflix && id && (
+                <div className="mt-6 md:hidden">
+                  <WatchProviders id={parseInt(id)} type="movie" />
+                </div>
+              )}
+              
               <div className="flex flex-wrap gap-4 mt-8">
                 <Button
                   size="lg"
-                  className="bg-primary hover:bg-primary/90 gap-2"
+                  className={cn(
+                    "gap-2",
+                    isNetflix 
+                      ? "bg-white hover:bg-white/90 text-black" 
+                      : "bg-primary hover:bg-primary/90 text-white"
+                  )}
                   onClick={handleWatchClick}
                 >
                   <Play size={18} />
-                  Watch Now
+                  {isNetflix ? "Play" : "Watch Now"}
                 </Button>
                 
                 {currentUser && (
-                  <>
-                    <FavoriteButton
-                      itemId={parseInt(id!)}
-                      itemType="movie"
-                      title={movie.title}
-                      posterPath={movie.poster_path}
-                      size="lg"
-                      variant="outline"
-                    />
-                    <AddToWatchedButton
-                      itemId={parseInt(id!)}
-                      itemType="movie"
-                      title={movie.title}
-                      posterPath={movie.poster_path}
-                      variant="outline"
-                      genres={movie.genres?.map((g: any) => g.id)}
-                    />
-                  </>
+                  <FavoriteButton
+                    itemId={parseInt(id!)}
+                    itemType="movie"
+                    title={movie.title}
+                    posterPath={movie.poster_path}
+                    size="lg"
+                    variant={isNetflix ? "netflix" : "outline"}
+                  />
                 )}
               </div>
+              
+              {/* Watch providers - only shown on Netflix theme for larger screens */}
+              {isNetflix && id && (
+                <div className="mt-12 hidden md:block">
+                  <WatchProviders id={parseInt(id)} type="movie" />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -206,40 +249,56 @@ const MovieDetail = () => {
 
       {/* Cast section */}
       {topCast.length > 0 && (
-        <div className="container mx-auto px-4 py-8">
-          <h2 className="text-2xl font-bold mb-6">Top Cast</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {topCast.map((person: Cast) => (
-              <div key={person.id} className="animate-fade-in">
-                <div className="rounded-lg overflow-hidden bg-muted/20">
-                  {person.profile_path ? (
-                    <img
-                      src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
-                      alt={person.name}
-                      className="w-full h-48 object-cover object-center"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-48 flex items-center justify-center bg-muted/20">
-                      <span className="text-muted-foreground">No Photo</span>
+        <div className={cn(
+          "py-8",
+          isNetflix && "bg-black"
+        )}>
+          <div className="container mx-auto px-4">
+            <h2 className={cn(
+              "font-bold mb-6",
+              isNetflix ? "text-2xl text-white" : "text-2xl"
+            )}>
+              Top Cast
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {topCast.map((person: Cast) => (
+                <div key={person.id} className="animate-fade-in">
+                  <div className={cn(
+                    "overflow-hidden bg-muted/20",
+                    isNetflix ? "rounded-none" : "rounded-lg"
+                  )}>
+                    {person.profile_path ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
+                        alt={person.name}
+                        className="w-full h-48 object-cover object-center"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-48 flex items-center justify-center bg-muted/20">
+                        <span className="text-muted-foreground">No Photo</span>
+                      </div>
+                    )}
+                    <div className="p-3">
+                      <h3 className="font-medium text-sm line-clamp-1">{person.name}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-1">
+                        {person.character}
+                      </p>
                     </div>
-                  )}
-                  <div className="p-3">
-                    <h3 className="font-medium text-sm line-clamp-1">{person.name}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-1">
-                      {person.character}
-                    </p>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
 
       {/* Similar movies */}
       {movie.similar?.results?.length > 0 && (
-        <div className="py-8">
+        <div className={cn(
+          "py-8",
+          isNetflix && "bg-black"
+        )}>
           <CategoryRow
             title="Similar Movies"
             items={movie.similar.results}

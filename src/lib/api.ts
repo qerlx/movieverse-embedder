@@ -239,6 +239,18 @@ export const getTVGenres = async (): Promise<{ genres: Genre[] }> => {
   }
 };
 
+// Get watch providers (JustWatch data)
+export const getWatchProviders = async (type: 'movie' | 'tv', id: number) => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/${type}/${id}/watch/providers`, API_OPTIONS);
+    if (!response.ok) throw new Error(`Failed to fetch watch providers for ${type} ${id}`);
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching watch providers for ${type} ${id}:`, error);
+    throw error;
+  }
+};
+
 // Generate embed URLs
 export const getMovieEmbedUrl = (tmdbId: number): string => {
   return `${EMBED_BASE_URL}/movie/${tmdbId}`;

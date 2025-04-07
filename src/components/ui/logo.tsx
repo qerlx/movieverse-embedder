@@ -40,15 +40,13 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
     return (
       <Link 
         to="/" 
-        className={cn("text-2xl font-black tracking-tighter", className)}
+        className={cn("flex items-center", className)}
       >
-        <motion.span 
-          className="text-[#E50914]"
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 500 }}
-        >
-          MOVIESTREAM
-        </motion.span>
+        <img 
+          src="https://images.ctfassets.net/y2ske730sjqp/1aONibCke6niZhgPxuiilC/2c401b05a07288746ddf3bd3943fbc76/BrandAssets_Logos_01-Wordmark.jpg?w=940" 
+          alt="Netflix" 
+          className="h-8 object-contain" 
+        />
       </Link>
     );
   }

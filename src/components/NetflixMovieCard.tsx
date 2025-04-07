@@ -166,9 +166,12 @@ const NetflixMovieCard: React.FC<NetflixMovieCardProps> = ({
       )}
       
       {!isHovered && (
-        <div className="play-overlay">
-          <div className="play-button" onClick={handlePlay}>
-            <Play size={24} />
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+          <div 
+            className="bg-black/50 backdrop-blur-sm rounded-full p-3"
+            onClick={handlePlay}
+          >
+            <Play size={24} className="text-white" />
           </div>
         </div>
       )}
