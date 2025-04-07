@@ -1,127 +1,112 @@
 
-import React, { useState, useEffect } from "react";
-import { Heart } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { isFavorite, addToFavorites, removeFromFavorites } from "@/lib/watchService";
-import { toast } from "sonner";
+import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Heart } from 'lucide-react';
+import { addToFavorites, removeFromFavorites, checkIsFavorite } from '@/lib/favorites';
+import { cn } from '@/lib/utils';
 
 interface FavoriteButtonProps {
   itemId: number;
-  itemType: "movie" | "tv";
+  itemType: 'movie' | 'tv';
   title: string;
-  posterPath: string | null;
-  size?: "sm" | "md" | "lg";
-  variant?: "default" | "outline" | "ghost";
+  posterPath?: string;
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+  variant?: 'default' | 'outline' | 'ghost' | 'netflix';
 }
 
-const FavoriteButton: React.FC<FavoriteButtonProps> = ({
-  itemId,
-  itemType,
-  title,
+const FavoriteButton: React.FC<FavoriteButtonProps> = ({ 
+  itemId, 
+  itemType, 
+  title, 
   posterPath,
-  size = "md",
-  variant = "outline"
+  size = 'default',
+  variant = 'default'
 }) => {
   const { currentUser } = useAuth();
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-
-  // Size mapping
-  const sizeClass = {
-    sm: "h-8 w-8",
-    md: "h-10 w-10",
-    lg: "h-12 w-12"
-  };
-
-  // Tooltips based on state
-  const getButtonTitle = () => {
-    if (isFavorited) {
-      return isHovered ? "Remove from favorites" : "Added to favorites";
-    }
-    return "Add to favorites";
-  };
-
-  // Check if item is in favorites
-  useEffect(() => {
+  const [isFavorited, setIsFavorited] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  
+  React.useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (!currentUser) {
-        setIsFavorited(false);
-        return;
-      }
-
+      if (!currentUser) return;
+      
       try {
-        const status = await isFavorite(currentUser, itemType, itemId);
+        const status = await checkIsFavorite(currentUser.uid, itemId, itemType);
         setIsFavorited(status);
       } catch (error) {
         console.error("Error checking favorite status:", error);
-        // Don't show toast for background checks
+      } finally {
+        setIsLoading(false);
       }
     };
-
+    
     checkFavoriteStatus();
   }, [currentUser, itemId, itemType]);
-
-  const toggleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation if inside a link
-    e.stopPropagation(); // Prevent event bubbling
-
-    if (!currentUser) {
-      toast.error("Please sign in to add favorites");
-      return;
-    }
-
-    if (isLoading) return; // Prevent multiple clicks
-
-    setIsLoading(true);
+  
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!currentUser) return;
     
     try {
+      setIsLoading(true);
+      
       if (isFavorited) {
-        // Remove from favorites
-        await removeFromFavorites(currentUser, itemType, itemId);
+        await removeFromFavorites(currentUser.uid, itemId, itemType);
         setIsFavorited(false);
-        toast.success("Removed from favorites");
       } else {
-        // Add to favorites
-        await addToFavorites(currentUser, {
-          id: itemId,
-          type: itemType,
-          title,
-          posterPath
-        });
+        await addToFavorites(currentUser.uid, itemId, itemType, title, posterPath);
         setIsFavorited(true);
-        toast.success("Added to favorites");
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
-      toast.error("Failed to update favorites. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // For non-standard variants like netflix, we'll use a custom button instead
+  if (variant === 'netflix') {
+    return (
+      <button
+        disabled={isLoading || !currentUser}
+        onClick={handleToggleFavorite}
+        className={cn(
+          "flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium",
+          "border border-white/30 text-white hover:border-white transition-all",
+          "focus:outline-none",
+          size === 'lg' ? "px-8 h-11" : "px-4 h-10",
+          size === 'sm' ? "px-3 h-9" : "",
+          size === 'icon' ? "w-10 h-10" : "",
+          isFavorited ? "bg-red-600 border-red-600 hover:bg-red-700 hover:border-red-700" : ""
+        )}
+      >
+        <Heart 
+          size={size === 'lg' ? 20 : 16} 
+          className={cn(isFavorited ? "fill-white" : "")} 
+        />
+        {size !== 'icon' && "My List"}
+      </button>
+    );
+  }
+  
+  // For standard button variants
   return (
     <Button
-      size="icon"
-      variant={variant}
-      className={`${sizeClass[size]} rounded-full transition-all duration-300 ${
-        isFavorited 
-          ? 'text-red-500 hover:text-red-600 hover:bg-red-100/10' 
-          : 'text-muted-foreground hover:text-red-400 hover:bg-red-100/10'
-      } ${isHovered && isFavorited ? 'scale-110' : ''}`}
-      onClick={toggleFavorite}
-      disabled={isLoading}
-      title={getButtonTitle()}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+      variant={variant as "default" | "outline" | "ghost"}
+      size={size}
+      disabled={isLoading || !currentUser}
+      onClick={handleToggleFavorite}
+      className={cn(
+        isFavorited && variant === 'outline' ? "bg-primary/10" : "",
+      )}
     >
       <Heart 
-        className={`${isFavorited ? 'fill-current' : ''} ${
-          isLoading ? 'animate-pulse' : (isHovered ? 'animate-pulse' : '')
-        }`} 
+        className={cn(isFavorited ? "fill-primary text-primary" : "")} 
       />
+      {size !== 'icon' && (isFavorited ? "Added to Favorites" : "Add to Favorites")}
     </Button>
   );
 };

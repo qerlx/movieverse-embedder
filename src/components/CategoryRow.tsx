@@ -10,6 +10,7 @@ interface CategoryRowProps {
   items: (Movie | TVShow)[];
   type: "movie" | "tv";
   className?: string;
+  isRanked?: boolean;
 }
 
 const CategoryRow: React.FC<CategoryRowProps> = ({
@@ -17,6 +18,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   items,
   type,
   className,
+  isRanked = false,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -67,14 +69,25 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           ref={scrollContainerRef}
           className="flex overflow-x-auto py-2 no-scrollbar scroll-smooth"
         >
-          <div className="pl-4"></div>
+          <div className={cn("pl-4", isRanked && "pl-10")}></div>
           {items.map((item, idx) => (
             <div
               key={`${type}-${item.id}`}
-              className="flex-shrink-0 w-[160px] md:w-[200px] mx-2"
+              className={cn(
+                "flex-shrink-0 mx-2",
+                isRanked 
+                  ? "w-[200px] md:w-[240px]"  // Wider for ranked items
+                  : "w-[160px] md:w-[200px]"  // Standard size
+              )}
               style={{ animationDelay: `${idx * 50}ms` }}
             >
-              <MovieCard item={item} type={type} priority={idx < 5} />
+              <MovieCard 
+                item={item} 
+                type={type} 
+                priority={idx < 5}
+                index={idx} 
+                isRanked={isRanked}
+              />
             </div>
           ))}
           <div className="pr-4"></div>

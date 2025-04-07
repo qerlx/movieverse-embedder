@@ -1,68 +1,96 @@
 
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Movie, TVShow } from "@/types";
+import { cn } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface MovieCardProps {
   item: Movie | TVShow;
   type: "movie" | "tv";
   className?: string;
   priority?: boolean;
+  isRanked?: boolean;
+  index?: number;
 }
 
-const MovieCard: React.FC<MovieCardProps> = ({
-  item,
-  type,
+const MovieCard: React.FC<MovieCardProps> = ({ 
+  item, 
+  type, 
   className,
   priority = false,
+  isRanked = false,
+  index = 0
 }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const title = "title" in item ? item.title : item.name;
-  const releaseDate = "release_date" in item ? item.release_date : item.first_air_date;
-  const year = releaseDate ? new Date(releaseDate).getFullYear() : null;
+  const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isNetflix = theme === 'netflix';
   
-  const posterUrl = item.poster_path
-    ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
+  const posterPath = item.poster_path 
+    ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
     : "/placeholder.svg";
-
+    
+  const title = "title" in item ? item.title : item.name;
+  
+  const handleClick = () => {
+    navigate(`/${type}/${item.id}`);
+  };
+  
   return (
-    <Link
-      to={`/${type}/${item.id}`}
+    <div 
       className={cn(
-        "movie-card block relative group rounded-lg overflow-hidden bg-muted/20 aspect-[2/3] animate-fade-in",
+        "group relative h-full w-full rounded-lg overflow-hidden shadow-md transition-all duration-300",
+        "cursor-pointer hover:shadow-xl hover:scale-105",
+        isNetflix ? "bg-zinc-900" : "bg-card",
         className
       )}
+      onClick={handleClick}
     >
-      <div className="absolute inset-0 w-full h-full">
-        <img
-          src={posterUrl}
+      {/* Rank indicator for ranked lists */}
+      {isRanked && (
+        <div className="absolute -left-3 bottom-1 z-10">
+          <span className={cn(
+            "text-5xl font-extrabold",
+            isNetflix ? "text-red-600" : "text-primary",
+            "opacity-90 drop-shadow-[0_0_2px_rgba(0,0,0,0.8)]"
+          )}>
+            {index + 1}
+          </span>
+        </div>
+      )}
+      
+      <div className="aspect-[2/3]">
+        <img 
+          src={posterPath} 
           alt={title}
-          className={cn(
-            "w-full h-full object-cover transition-all duration-500 lazy-image",
-            !imageLoaded && "loading"
-          )}
+          className="w-full h-full object-cover"
           loading={priority ? "eager" : "lazy"}
-          onLoad={() => setImageLoaded(true)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
-      
-      {/* Rating badge */}
-      <div className="absolute top-2 left-2 bg-black/70 rounded-full p-1 px-2 flex items-center text-xs font-medium">
-        <Star size={12} className="text-yellow-400 mr-1" />
-        <span>{item.vote_average.toFixed(1)}</span>
-      </div>
-      
-      {/* Hover content */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-        <h3 className="text-white font-medium text-sm line-clamp-1">{title}</h3>
-        <div className="text-xs text-gray-300 mt-1">
-          {year && <span>{year}</span>}
+      <div className="p-2">
+        <h3 className={cn(
+          "font-semibold text-sm line-clamp-1",
+          isNetflix && "text-gray-300"
+        )}>
+          {title}
+        </h3>
+        <div className={cn(
+          "text-xs mt-1",
+          isNetflix ? "text-gray-400" : "text-muted-foreground"
+        )}>
+          {("release_date" in item && item.release_date) && (
+            <time dateTime={item.release_date}>
+              {new Date(item.release_date).getFullYear()}
+            </time>
+          )}
+          {("first_air_date" in item && item.first_air_date) && (
+            <time dateTime={item.first_air_date}>
+              {new Date(item.first_air_date).getFullYear()}
+            </time>
+          )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

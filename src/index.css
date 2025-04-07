@@ -1,320 +1,176 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 98%;
-    
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 98%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
  
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 98%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
  
-    --primary: 252 59% 48%;
-    --primary-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
  
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
  
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
  
-    --accent: 0 0% 12%;
-    --accent-foreground: 0 0% 98%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
  
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
  
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 212.7 26.8% 83.9%;
-  }
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --ring: 215 20.2% 65.1%;
+ 
+    --radius: 0.5rem;
 
-  /* Netflix Theme - Enhanced to match Netflix more closely */
-  .theme-netflix {
-    --background: 0 0% 8%;
-    --foreground: 0 0% 98%;
-    
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 98%;
- 
-    --primary: 357 92% 47%; /* Netflix Red */
-    --primary-foreground: 0 0% 98%;
- 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 98%;
- 
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 75%;
- 
-    --accent: 357 92% 47%; /* Netflix Red */
-    --accent-foreground: 0 0% 98%;
-    
-    --border: 0 0% 20%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222.2 47.4% 11.2%;
+    --sidebar-primary: 222.2 47.4% 11.2%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 215 20.2% 65.1%;
   }
-
+ 
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+ 
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+ 
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
+ 
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+ 
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 1.2%;
+ 
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --ring: 216 34% 17%;
+  }
+}
+ 
+@layer base {
   * {
     @apply border-border;
   }
-
-  /* Custom focus styles */
-  *:focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-1 ring-offset-background;
-  }
-
+  
   body {
-    @apply bg-background text-foreground min-h-screen antialiased font-sans;
-  }
-  
-  /* Nav blur style */
-  .nav-blur {
-    @apply bg-background/80 backdrop-blur-md border-b border-border/50;
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Reusable card styles */
-  .content-card {
-    @apply bg-card border border-border/50 rounded-lg overflow-hidden shadow-md;
-  }
+  .theme-netflix {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 74% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 74% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 74% 42%;
 
-  /* Animations */
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes scale-in {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-  
-  @keyframes slide-up {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  
-  @keyframes slide-right {
-    from { transform: translateX(-20px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-  
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  }
-  
-  @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
-  }
-  
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-  
-  @keyframes bounce-in {
-    0% { transform: scale(0); }
-    50% { transform: scale(1.1); }
-    70% { transform: scale(0.95); }
-    100% { transform: scale(1); }
-  }
-
-  @keyframes reveal {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.4s ease-out forwards;
-  }
-
-  .animate-scale-in {
-    animation: scale-in 0.3s ease-out forwards;
-  }
-  
-  .animate-slide-up {
-    animation: slide-up 0.5s ease-out forwards;
-  }
-  
-  .animate-slide-right {
-    animation: slide-right 0.5s ease-out forwards;
-  }
-  
-  .animate-pulse-slow {
-    animation: pulse 3s infinite ease-in-out;
-  }
-  
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  .animate-shimmer {
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
-  }
-  
-  .animate-bounce-in {
-    animation: bounce-in 0.5s ease-out forwards;
-  }
-
-  .animate-reveal {
-    animation: reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    animation-fill-mode: both;
-  }
-
-  /* Netflix specific UI adjustments */
-  .theme-netflix .stream-card {
-    @apply rounded-md hover:scale-105 transition-all duration-300;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
-  }
-  
-  .theme-netflix .section-header {
-    @apply text-2xl font-bold mb-4 ml-1;
-  }
-  
-  .theme-netflix .nav-blur {
-    @apply bg-black/90 backdrop-blur-md border-b border-gray-900;
-  }
-  
-  /* Netflix style row layout */
-  .theme-netflix .netflix-row {
-    @apply -mx-4 px-4 py-2;
-    scrollbar-width: none;
-  }
-  
-  /* Recently added badges for Netflix theme */
-  .theme-netflix .recently-added-badge {
-    @apply bg-red-600 text-white font-medium text-xs px-2 py-1 rounded absolute top-2 left-2;
-  }
-  
-  /* Play button overlay */
-  .play-overlay {
-    @apply absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 bg-black/40 cursor-pointer;
-  }
-  
-  .theme-netflix .play-overlay .play-button {
-    @apply bg-white/80 text-black rounded-full p-3 transform transition-transform hover:scale-110;
-  }
-  
-  /* Bottom navigation for mobile */
-  .bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around py-2;
-  }
-  
-  .theme-netflix .bottom-nav {
-    @apply bg-black border-t border-gray-900;
-  }
-  
-  .bottom-nav-item {
-    @apply flex flex-col items-center justify-center px-3;
-  }
-  
-  .bottom-nav-icon {
-    @apply mb-1;
-  }
-  
-  .bottom-nav-text {
-    @apply text-xs;
-  }
-
-  /* Netflix style rank numbers */
-  .netflix-rank-number {
-    @apply absolute -left-5 bottom-0 text-7xl font-extrabold;
-    color: #000;
-    -webkit-text-stroke: 2px #E50914;
-    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
-    opacity: 0.9;
-  }
-
-  /* Netflix continue watching row */
-  .theme-netflix .continue-watching-item {
-    @apply relative rounded-md overflow-hidden;
-  }
-
-  .theme-netflix .continue-watching-progress {
-    @apply h-1.5 bg-gray-800;
-  }
-
-  .theme-netflix .continue-watching-progress-fill {
-    @apply h-full bg-red-600;
+    background-color: #000;
+    color: #fff;
   }
 }
 
-@layer utilities {
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
+/* Custom styles for Netflix theme */
+.theme-netflix .hero-content {
+  background: linear-gradient(to top, #000, transparent);
+}
 
-  .scrollbar-thumb-primary\/40::-webkit-scrollbar-thumb {
-    @apply bg-primary/40 rounded-full;
-  }
+.theme-netflix .netflix-row:hover .netflix-movie-card:not(:hover) {
+  transform: scale(0.95);
+  filter: brightness(0.7);
+}
 
-  .hover\:scrollbar-thumb-primary\/60:hover::-webkit-scrollbar-thumb {
-    @apply bg-primary/60 rounded-full;
-  }
+/* Netflix rank number styling */
+.netflix-rank-number {
+  font-size: 160px;
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(to bottom, #e50914 30%, #5c0408);
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  position: relative;
+  z-index: 10;
+}
 
-  .scrollbar-track-transparent::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .netflix-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 0.5rem;
-  }
-  
-  @media (min-width: 640px) {
-    .netflix-grid {
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-      gap: 0.75rem;
-    }
-  }
-  
-  @media (min-width: 1024px) {
-    .netflix-grid {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-  }
+.text-shadow {
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.75);
+}
 
-  /* Netflix-style staggered reveal animations for lists */
-  .netflix-stagger > *:nth-child(1) { animation-delay: 0.1s; }
-  .netflix-stagger > *:nth-child(2) { animation-delay: 0.2s; }
-  .netflix-stagger > *:nth-child(3) { animation-delay: 0.3s; }
-  .netflix-stagger > *:nth-child(4) { animation-delay: 0.4s; }
-  .netflix-stagger > *:nth-child(5) { animation-delay: 0.5s; }
-  .netflix-stagger > *:nth-child(6) { animation-delay: 0.6s; }
+/* Hide scrollbars but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
-  /* Gradient overlays commonly used in Netflix UI */
-  .netflix-poster-overlay {
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, transparent 100%);
-  }
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
-  .netflix-hero-overlay {
-    background: linear-gradient(to top, 
-      rgba(0,0,0,1) 0%, 
-      rgba(0,0,0,0.8) 15%, 
-      rgba(0,0,0,0.6) 30%, 
-      rgba(0,0,0,0.4) 45%, 
-      rgba(0,0,0,0.2) 60%, 
-      rgba(0,0,0,0.1) 75%, 
-      rgba(0,0,0,0) 100%
-    );
-  }
+/* Gradient background for nav */
+.nav-blur {
+  backdrop-filter: blur(10px);
+}
+
+/* Animation classes */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
 }
