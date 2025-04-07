@@ -83,7 +83,7 @@ const NetflixCategoryRow: React.FC<NetflixCategoryRowProps> = ({ title, items, t
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
             >
-              {title.includes('Top') && index < 10 && (
+              {title.includes('Top') && index < 10 ? (
                 <div className="relative">
                   <NetflixMovieCard 
                     item={item} 
