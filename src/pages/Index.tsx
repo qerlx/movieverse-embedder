@@ -91,8 +91,6 @@ const Index = () => {
     show: { opacity: 1, y: 0 }
   };
   
-  const CategoryComponent = isNetflix ? NetflixCategoryRow : CategoryRow;
-  
   return (
     <div className="min-h-screen pb-20">
       {/* Hero Slider - Only render when data is loaded */}
@@ -134,7 +132,7 @@ const Index = () => {
             <motion.div variants={item} className="container mx-auto px-4 mt-8">
               <h2 className={cn(
                 "text-xl font-bold mb-4 flex items-center",
-                isNetflix && "text-white"
+                isNetflix ? "text-white" : ""
               )}>
                 <Heart className={cn("mr-2", isNetflix ? "text-red-600" : "text-red-500")} size={20} />
                 Your Favorites
@@ -143,10 +141,10 @@ const Index = () => {
             </motion.div>
           )}
           
-          {/* Top 10 on Netflix Today */}
+          {/* Top 10 on Netflix Today - Only for Netflix theme */}
           {isNetflix && trendingMovies.length > 0 && (
-            <motion.div variants={item} className="container mx-auto px-4">
-              <CategoryComponent
+            <motion.div variants={item}>
+              <NetflixCategoryRow
                 title="Top 10 Movies Today"
                 items={trendingMovies.slice(0, 10)}
                 type="movie"
@@ -157,45 +155,77 @@ const Index = () => {
           
           {/* Trending Movies */}
           {trendingMovies && trendingMovies.length > 0 && (
-            <motion.div variants={item} className="container mx-auto px-4">
-              <CategoryComponent
-                title="Trending Movies" 
-                items={trendingMovies} 
-                type="movie"
-              />
+            <motion.div variants={item}>
+              {isNetflix ? (
+                <NetflixCategoryRow
+                  title="Trending Movies" 
+                  items={trendingMovies} 
+                  type="movie"
+                />
+              ) : (
+                <CategoryRow
+                  title="Trending Movies" 
+                  items={trendingMovies} 
+                  type="movie"
+                />
+              )}
             </motion.div>
           )}
           
           {/* Trending TV Shows */}
           {trendingTVShows && trendingTVShows.length > 0 && (
-            <motion.div variants={item} className="container mx-auto px-4">
-              <CategoryComponent
-                title="Trending TV Shows" 
-                items={trendingTVShows}
-                type="tv"
-              />
+            <motion.div variants={item}>
+              {isNetflix ? (
+                <NetflixCategoryRow
+                  title="Trending TV Shows" 
+                  items={trendingTVShows}
+                  type="tv"
+                />
+              ) : (
+                <CategoryRow
+                  title="Trending TV Shows" 
+                  items={trendingTVShows}
+                  type="tv"
+                />
+              )}
             </motion.div>
           )}
           
           {/* Popular Movies */}
           {popularMovies && popularMovies.length > 0 && (
-            <motion.div variants={item} className="container mx-auto px-4">
-              <CategoryComponent
-                title="Popular Movies" 
-                items={popularMovies} 
-                type="movie"
-              />
+            <motion.div variants={item}>
+              {isNetflix ? (
+                <NetflixCategoryRow
+                  title="Popular Movies" 
+                  items={popularMovies} 
+                  type="movie"
+                />
+              ) : (
+                <CategoryRow
+                  title="Popular Movies" 
+                  items={popularMovies} 
+                  type="movie"
+                />
+              )}
             </motion.div>
           )}
           
           {/* Popular TV Shows */}
           {popularTVShows && popularTVShows.length > 0 && (
-            <motion.div variants={item} className="container mx-auto px-4">
-              <CategoryComponent
-                title="Popular TV Shows" 
-                items={popularTVShows} 
-                type="tv"
-              />
+            <motion.div variants={item}>
+              {isNetflix ? (
+                <NetflixCategoryRow
+                  title="Popular TV Shows" 
+                  items={popularTVShows} 
+                  type="tv"
+                />
+              ) : (
+                <CategoryRow
+                  title="Popular TV Shows" 
+                  items={popularTVShows} 
+                  type="tv"
+                />
+              )}
             </motion.div>
           )}
           

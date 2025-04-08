@@ -8,7 +8,8 @@ import MovieCard from "./MovieCard";
 import NetflixMovieCard from "./NetflixMovieCard";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Play } from "lucide-react";
+import { Progress } from "./ui/progress";
 
 const RecentlyWatched: React.FC = () => {
   const { currentUser } = useAuth();
@@ -73,6 +74,14 @@ const RecentlyWatched: React.FC = () => {
       : "Recently Watched";
   };
 
+  const handleContinueWatching = (item: any) => {
+    if (item.type === 'tv' && item.lastEpisode) {
+      navigate(`/watch/tv/${item.id}/${item.lastEpisode.season}/${item.lastEpisode.episode}`);
+    } else {
+      navigate(`/watch/${item.media_type || 'movie'}/${item.id}`);
+    }
+  };
+
   return (
     <div className={cn("py-6", isNetflix && "mt-6")}>
       <div className="container mx-auto px-4">
@@ -96,8 +105,8 @@ const RecentlyWatched: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {watchHistory.slice(0, 6).map((item, index) => (
-            <div key={`${(item as any).media_type || "movie"}-${item.id}-${index}`}>
+          {watchHistory.slice(0, 6).map((item: any, index) => (
+            <div key={`${(item as any).media_type || "movie"}-${item.id}-${index}`} className="relative">
               {isNetflix ? (
                 <NetflixMovieCard 
                   item={item} 
@@ -111,6 +120,38 @@ const RecentlyWatched: React.FC = () => {
                   priority={true} 
                 />
               )}
+              
+              {/* Episode info if available */}
+              {item.lastEpisode && (
+                <div className={cn(
+                  "absolute bottom-12 left-0 right-0 bg-black/70 px-2 py-1",
+                  "text-[10px] text-white"
+                )}>
+                  S{item.lastEpisode.season}:E{item.lastEpisode.episode}
+                </div>
+              )}
+              
+              {/* Progress bar */}
+              <Progress 
+                value={item.progress || 10} 
+                className={cn(
+                  "h-1 w-full absolute bottom-0 left-0",
+                  isNetflix ? "bg-gray-800" : "bg-secondary"
+                )}
+              />
+              
+              {/* Play button overlay */}
+              <div 
+                className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                onClick={() => handleContinueWatching(item)}
+              >
+                <div className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center",
+                  isNetflix ? "bg-red-600" : "bg-primary"
+                )}>
+                  <Play size={20} className="text-white ml-1" />
+                </div>
+              </div>
             </div>
           ))}
         </div>

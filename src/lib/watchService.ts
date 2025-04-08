@@ -56,7 +56,11 @@ export const addToWatchHistory = async (user: User, watchData: Omit<WatchProgres
     const userId = user.uid;
     const itemKey = `${watchData.type}_${watchData.id}`;
     
+    // Store the existing item if it exists to preserve any previous data
+    const existingItem = getLocalStorageCollection(userId, "watchHistory")[itemKey] || {};
+    
     setLocalStorageItem(userId, "watchHistory", itemKey, {
+      ...existingItem,
       ...watchData,
       lastWatched: Date.now()
     });
@@ -107,6 +111,27 @@ export const getWatchProgress = async (user: User, type: "movie" | "tv", id: num
   } catch (error) {
     console.error("Error fetching watch progress:", error);
     return null;
+  }
+};
+
+export const updateWatchProgress = async (user: User, type: "movie" | "tv", id: number, progress: number) => {
+  if (!user || !user.uid) return false;
+  
+  try {
+    const userId = user.uid;
+    const itemKey = `${type}_${id}`;
+    const existingData = getLocalStorageCollection(userId, "watchHistory")[itemKey] || {};
+    
+    setLocalStorageItem(userId, "watchHistory", itemKey, {
+      ...existingData,
+      progress,
+      lastWatched: Date.now()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating watch progress:", error);
+    return false;
   }
 };
 
@@ -164,13 +189,12 @@ export const getFavorites = async (user: User): Promise<FavoriteItem[]> => {
   }
 };
 
-export const isFavorite = async (user: User, type: "movie" | "tv", id: number): Promise<boolean> => {
-  if (!user || !user.uid) return false;
+export const checkIsFavorite = async (userId: string, itemId: number, itemType: string): Promise<boolean> => {
+  if (!userId) return false;
   
   try {
-    const userId = user.uid;
     const favoritesData = getLocalStorageCollection(userId, "favorites");
-    const itemKey = `${type}_${id}`;
+    const itemKey = `${itemType}_${itemId}`;
     
     return !!favoritesData[itemKey];
   } catch (error) {

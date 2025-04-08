@@ -175,6 +175,39 @@
   }
 }
 
+/* Play button overlay styling */
+.stream-card .play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stream-card:hover .play-overlay {
+  opacity: 1;
+}
+
+.stream-card .play-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  color: black;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.theme-netflix .stream-card .play-button {
+  background: rgba(229, 9, 20, 0.9);
+  color: white;
+}
+
 /* Improve title cards display */
 .theme-netflix .netflix-row {
   margin-bottom: 2rem;
@@ -192,4 +225,21 @@
 .theme-netflix .netflix-row:hover .netflix-movie-card:not(:hover) {
   transform: scale(0.95);
   filter: brightness(0.7);
+}
+
+/* Default theme styling improvements */
+.theme-default {
+  --primary: 222.2 47.4% 11.2%;
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+}
+
+/* Hover effects for cards */
+.movie-card-hover {
+  transition: all 0.3s ease;
+}
+
+.movie-card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }

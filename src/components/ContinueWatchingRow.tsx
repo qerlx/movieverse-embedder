@@ -44,7 +44,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({ items }) => {
     >
       <h2 className={cn(
         "text-2xl font-bold mb-4",
-        isNetflix && "text-white"
+        isNetflix ? "text-white" : "text-foreground"
       )}>
         Continue Watching for You
       </h2>
@@ -67,6 +67,11 @@ const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({ items }) => {
             e.stopPropagation();
             navigate(`/${item.type}/${item.id}`);
           };
+
+          // Episode info display
+          const episodeInfo = item.type === "tv" && item.lastEpisode ? 
+            `S${item.lastEpisode.season}:E${item.lastEpisode.episode}${item.lastEpisode.name ? ` - ${item.lastEpisode.name}` : ''}` : 
+            '';
           
           return (
             <motion.div 
@@ -77,7 +82,10 @@ const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({ items }) => {
               transition={{ duration: 0.3, delay: index * 0.05 }}
             >
               <div 
-                className="relative aspect-[2/3] rounded-md overflow-hidden cursor-pointer stream-card"
+                className={cn(
+                  "relative aspect-[2/3] rounded-md overflow-hidden cursor-pointer group",
+                  isNetflix ? "hover:scale-105" : "hover:shadow-lg"
+                )}
                 onClick={handleClick}
               >
                 <motion.img 
@@ -89,14 +97,42 @@ const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({ items }) => {
                   transition={{ duration: 0.3 }}
                 />
                 
-                <div className="play-overlay">
-                  <motion.div 
-                    className="play-button"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Play size={24} />
-                  </motion.div>
+                <div className={cn(
+                  "absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end",
+                  "p-3"
+                )}>
+                  <div className="w-full">
+                    {episodeInfo && (
+                      <div className={cn(
+                        "text-xs mb-2 font-medium",
+                        isNetflix ? "text-gray-300" : "text-gray-200"
+                      )}>
+                        {episodeInfo}
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center">
+                      <motion.div 
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center",
+                          isNetflix ? "bg-white text-black" : "bg-primary text-white"
+                        )}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Play size={18} />
+                      </motion.div>
+                      
+                      <motion.div
+                        className="w-8 h-8 rounded-full flex items-center justify-center bg-black/50 text-white"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleInfoClick}
+                      >
+                        <Info size={16} />
+                      </motion.div>
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -105,19 +141,19 @@ const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({ items }) => {
                   value={item.progress || 5} 
                   className={cn(
                     "h-1.5 w-full",
-                    isNetflix && "bg-gray-800"
+                    isNetflix ? "bg-gray-800" : "bg-secondary"
                   )}
+                  indicatorClassName={isNetflix ? "bg-red-600" : undefined}
                 />
               </div>
               
-              <div className="flex justify-between items-center mt-2">
-                <button 
-                  onClick={handleInfoClick}
-                  className="p-2 rounded-full hover:bg-white/10"
-                  aria-label="Info"
-                >
-                  <Info size={20} className="text-gray-300" />
-                </button>
+              <div className="mt-2 px-1">
+                <h3 className={cn(
+                  "text-sm font-medium line-clamp-1",
+                  isNetflix ? "text-gray-300" : "text-foreground"
+                )}>
+                  {item.title}
+                </h3>
               </div>
             </motion.div>
           );

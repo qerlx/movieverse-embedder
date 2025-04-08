@@ -26,7 +26,7 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
           <img 
             src={NETFLIX_LOGO_URL} 
             alt="Netflix"
-            className="h-8 w-8 object-contain" 
+            className="h-8 w-auto object-contain" 
           />
         ) : (
           <img 
@@ -53,7 +53,7 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
           <img 
             src={NETFLIX_LOGO_URL} 
             alt="Netflix" 
-            className="h-8 md:h-10 object-contain" 
+            className="h-8 md:h-10 w-auto object-contain" 
           />
         </motion.div>
       </Link>
@@ -64,7 +64,7 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
   return (
     <Link 
       to="/" 
-      className={cn("text-2xl font-bold text-primary transition-all duration-300 hover:opacity-80", className)}
+      className={cn("text-2xl font-bold transition-all duration-300 hover:opacity-80", className)}
     >
       <span className="text-white">Movie</span>
       <span className="text-primary">Stream</span>

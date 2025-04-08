@@ -38,11 +38,11 @@ const MobileNavigation = () => {
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-50",
+        "fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-50 w-full",
         isNetflix ? "bg-black border-t border-gray-900" : "bg-background/95 backdrop-blur-md border-t border-border"
       )}
     >
-      {items.map((item, index) => {
+      {items.map((item) => {
         const IconComponent = item.icon;
         
         return (
@@ -57,8 +57,8 @@ const MobileNavigation = () => {
                   className={cn(
                     "mb-1", 
                     isActive 
-                      ? isNetflix ? "text-white" : "text-primary" 
-                      : "text-muted-foreground"
+                      ? isNetflix ? "text-red-600" : "text-primary" 
+                      : isNetflix ? "text-gray-400" : "text-muted-foreground"
                   )} 
                   size={20} 
                 />
