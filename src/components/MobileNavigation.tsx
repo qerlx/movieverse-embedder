@@ -26,7 +26,7 @@ const MobileNavigation = () => {
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-50 w-full bg-background/95 backdrop-blur-md border-t border-border"
+      className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-50 w-full bg-background/95 backdrop-blur-md border-t border-border shadow-lg"
     >
       {items.map((item) => {
         const IconComponent = item.icon;

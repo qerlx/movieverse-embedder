@@ -43,7 +43,7 @@ export interface TVShow {
 
 // Extended types for watch history
 export interface WatchHistoryItem extends Movie {
-  type: 'movie' | 'tv';
+  type: 'movie';
   progress?: number;
 }
 
@@ -56,6 +56,8 @@ export interface TVWatchHistoryItem extends TVShow {
     name?: string;
   };
 }
+
+export type CombinedWatchHistoryItem = WatchHistoryItem | TVWatchHistoryItem;
 
 export interface Season {
   id: number;

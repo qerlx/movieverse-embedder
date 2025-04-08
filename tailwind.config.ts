@@ -53,16 +53,6 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
-				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -83,7 +73,7 @@ export default {
 					to: { opacity: '1' }
 				},
 				'fade-up': {
-					from: { opacity: '0', transform: 'translateY(10px)' },
+					from: { opacity: '0', transform: 'translateY(20px)' },
 					to: { opacity: '1', transform: 'translateY(0)' }
 				},
 				'slide-in-right': {
@@ -91,22 +81,35 @@ export default {
 					to: { transform: 'translateX(0)' }
 				},
 				'scale-up': {
-					from: { transform: 'scale(0.95)' },
-					to: { transform: 'scale(1)' }
+					from: { transform: 'scale(0.95)', opacity: '0' },
+					to: { transform: 'scale(1)', opacity: '1' }
 				},
 				'blur-in': {
-					from: { opacity: '0', filter: 'blur(8px)' },
+					from: { opacity: '0', filter: 'blur(16px)' },
 					to: { opacity: '1', filter: 'blur(0)' }
+				},
+				'pulse-glow': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.6' }
 				}
 			},
 			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.5s ease-out',
-				'fade-up': 'fade-up 0.5s ease-out',
+				'accordion-down': 'accordion-down 0.3s ease-out',
+				'accordion-up': 'accordion-up 0.3s ease-out',
+				'fade-in': 'fade-in 0.6s ease-out',
+				'fade-up': 'fade-up 0.8s ease-out',
 				'slide-in-right': 'slide-in-right 0.5s ease-out',
-				'scale-up': 'scale-up 0.3s ease-out',
-				'blur-in': 'blur-in 0.7s ease-out'
+				'scale-up': 'scale-up 0.4s ease-out',
+				'blur-in': 'blur-in 0.7s ease-out',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite'
+			},
+			fontFamily: {
+				sans: ['Inter var', 'sans-serif']
+			},
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+				'gradient-card': 'linear-gradient(to bottom right, var(--tw-gradient-stops))'
 			}
 		}
 	},

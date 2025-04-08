@@ -18,9 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
-import NetflixMovieCard from "@/components/NetflixMovieCard";
 import { motion } from "framer-motion";
 
 const TVShows = () => {
@@ -32,8 +30,6 @@ const TVShows = () => {
   const [category, setCategory] = useState<"top_rated" | "genre">("top_rated");
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
-  const { theme } = useTheme();
-  const isNetflix = theme === 'netflix';
 
   // Fetch TV genres
   useEffect(() => {
@@ -93,24 +89,45 @@ const TVShows = () => {
     setCurrentPage(1);
   };
 
+  // Animation variants for staggered loading
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1 }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className="container mx-auto px-4 py-8"
+    >
       <motion.div 
         className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
         <div className="flex items-center gap-3">
-          <h1 className={cn("text-3xl font-bold", isNetflix && "text-white")}>TV Shows</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            TV Shows
+          </h1>
           
           {selectedGenre && (
             <Badge 
-              variant={isNetflix ? "outline" : "secondary"}
-              className={cn(
-                "ml-2 cursor-pointer",
-                isNetflix && "bg-transparent border-gray-600 text-gray-300"
-              )}
+              variant="secondary"
+              className="ml-2 cursor-pointer bg-gradient-to-r from-primary/80 to-primary/50 hover:from-primary hover:to-primary/70 text-primary-foreground"
               onClick={clearGenreFilter}
             >
               {selectedGenre.name} ×
@@ -119,17 +136,12 @@ const TVShows = () => {
         </div>
         
         <div className="flex flex-wrap gap-2 items-center">
-          {/* Removed the "Top Rated" button that was here */}
-          
           {genres.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className={cn(
-                    "gap-1",
-                    isNetflix && "border-gray-700 hover:border-gray-600 text-white"
-                  )}
+                  className="gap-1 bg-secondary/50 border-secondary/50 hover:bg-secondary/70"
                 >
                   <Filter size={16} />
                   Genres
@@ -137,10 +149,7 @@ const TVShows = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align="end" 
-                className={cn(
-                  "w-56 max-h-[70vh] overflow-y-auto",
-                  isNetflix && "bg-black/95 border-gray-800"
-                )}
+                className="w-56 max-h-[70vh] overflow-y-auto bg-background/95 backdrop-blur-md"
               >
                 <DropdownMenuGroup>
                   {genres.map((genre) => (
@@ -148,8 +157,7 @@ const TVShows = () => {
                       key={genre.id} 
                       onClick={() => selectGenre(genre)}
                       className={cn(
-                        selectedGenre?.id === genre.id && "bg-muted",
-                        isNetflix && "text-gray-300 hover:text-white focus:text-white"
+                        selectedGenre?.id === genre.id && "bg-muted"
                       )}
                     >
                       {genre.name}
@@ -164,39 +172,30 @@ const TVShows = () => {
 
       {isLoading ? (
         <div className="flex justify-center items-center min-h-[50vh]">
-          <div className={cn(
-            "inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]",
-            isNetflix ? "border-red-600" : "border-primary"
-          )}></div>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
         </div>
       ) : (
         <>
-          <div className={cn(
-            "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
-          )}>
+          <motion.div 
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
+            variants={container}
+            initial="hidden"
+            animate="show"
+          >
             {tvShows.map((show, index) => (
               <motion.div 
                 key={show.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
+                variants={item}
+                transition={{ duration: 0.4 }}
               >
-                {isNetflix ? (
-                  <NetflixMovieCard 
-                    item={show} 
-                    type="tv" 
-                    index={index}
-                  />
-                ) : (
-                  <MovieCard 
-                    item={show} 
-                    type="tv" 
-                    priority={index < 12}
-                  />
-                )}
+                <MovieCard 
+                  item={show} 
+                  type="tv" 
+                  priority={index < 12}
+                />
               </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Pagination */}
           <div className="mt-12 flex justify-center">
@@ -205,17 +204,14 @@ const TVShows = () => {
                 variant="outline"
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className={isNetflix && "border-gray-700 hover:border-gray-600 text-white"}
+                className="border-secondary/50 hover:border-primary/70"
               >
                 Previous
               </Button>
               
               {/* Show current page and total */}
               <div className="flex items-center px-4 text-sm">
-                <span className={cn(
-                  "text-muted-foreground",
-                  isNetflix && "text-gray-400"
-                )}>
+                <span className="text-muted-foreground">
                   Page {currentPage} of {totalPages}
                 </span>
               </div>
@@ -224,7 +220,7 @@ const TVShows = () => {
                 variant="outline"
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className={isNetflix && "border-gray-700 hover:border-gray-600 text-white"}
+                className="border-secondary/50 hover:border-primary/70"
               >
                 Next
               </Button>
@@ -232,7 +228,7 @@ const TVShows = () => {
           </div>
         </>
       )}
-    </div>
+    </motion.div>
   );
 };
 

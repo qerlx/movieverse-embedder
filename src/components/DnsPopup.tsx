@@ -3,14 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Shield, ExternalLink } from 'lucide-react';
 import { Button } from './ui/button';
-import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const DnsPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const { theme } = useTheme();
   const isMobile = useIsMobile();
 
   // Check local storage for previous dismissal
