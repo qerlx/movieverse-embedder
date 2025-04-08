@@ -50,7 +50,7 @@ const NetflixCategoryRow: React.FC<NetflixCategoryRowProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="mx-auto px-4">
+      <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl md:text-2xl font-bold text-white">{title}</h2>
           <div className="flex gap-2">

@@ -82,6 +82,28 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  .theme-default {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 142.1 70.6% 45.3%;
+    --primary-foreground: 144.9 80.4% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 142.1 70.6% 45.3%;
+  }
+
   .theme-netflix {
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
@@ -229,9 +251,8 @@
 
 /* Default theme styling improvements */
 .theme-default {
-  --primary: 222.2 47.4% 11.2%;
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
+  background-color: #121212;
+  color: #f0f0f0;
 }
 
 /* Hover effects for cards */
@@ -242,4 +263,29 @@
 .movie-card-hover:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Rank styling for default theme */
+.theme-default .rank-number {
+  font-weight: 800;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* Fix header spacing on mobile */
+.theme-default .mobile-header-spacing {
+  padding-top: 5rem;
+}
+
+/* Added better styling for navigation bar */
+.theme-netflix .nav-highlight {
+  background: rgba(229, 9, 20, 0.15);
+  border-bottom: 2px solid #e50914;
+}
+
+.theme-default .nav-highlight {
+  background: rgba(142, 70, 255, 0.15);
+  border-bottom: 2px solid var(--primary);
 }

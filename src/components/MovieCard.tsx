@@ -66,11 +66,15 @@ const MovieCard: React.FC<MovieCardProps> = ({
     >
       {/* Rank indicator for ranked lists */}
       {isRanked && (
-        <div className="absolute -left-3 bottom-1 z-10">
+        <div className={cn(
+          "absolute z-10",
+          isNetflix ? "-left-3 bottom-1" : "-left-2 -top-4"
+        )}>
           <span className={cn(
-            "text-5xl font-extrabold",
-            isNetflix ? "text-red-600" : "text-primary",
-            "opacity-90 drop-shadow-[0_0_2px_rgba(0,0,0,0.8)]"
+            "font-extrabold drop-shadow-[0_0_2px_rgba(0,0,0,0.8)]",
+            isNetflix 
+              ? "text-5xl text-red-600 netflix-rank-number" 
+              : "text-4xl text-white"
           )}>
             {index + 1}
           </span>
