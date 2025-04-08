@@ -41,6 +41,22 @@ export interface TVShow {
   score?: number; // For recommendation scoring
 }
 
+// Extended types for watch history
+export interface WatchHistoryItem extends Movie {
+  type: 'movie' | 'tv';
+  progress?: number;
+}
+
+export interface TVWatchHistoryItem extends TVShow {
+  type: 'tv';
+  progress?: number;
+  lastEpisode?: {
+    season: number;
+    episode: number;
+    name?: string;
+  };
+}
+
 export interface Season {
   id: number;
   name: string;

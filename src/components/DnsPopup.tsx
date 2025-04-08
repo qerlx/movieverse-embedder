@@ -12,7 +12,6 @@ const DnsPopup = () => {
   const [dismissed, setDismissed] = useState(false);
   const { theme } = useTheme();
   const isMobile = useIsMobile();
-  const isNetflix = theme === 'netflix';
 
   // Check local storage for previous dismissal
   useEffect(() => {
@@ -73,19 +72,11 @@ const DnsPopup = () => {
           variants={popupVariants}
         >
           <motion.div 
-            className={cn(
-              "rounded-lg shadow-lg p-4 sm:p-5 border",
-              isNetflix 
-                ? "bg-black/95 border-gray-800 text-white" 
-                : "bg-card border-border"
-            )}
+            className="rounded-lg shadow-lg p-4 sm:p-5 border bg-card border-border"
           >
             <div className="flex items-start justify-between">
-              <div className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center",
-                isNetflix ? "bg-red-600" : "bg-primary/20"
-              )}>
-                <Shield className={isNetflix ? "text-white" : "text-primary"} size={20} />
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/20">
+                <Shield className="text-primary" size={20} />
               </div>
               <button 
                 onClick={handleDismiss}
@@ -96,27 +87,18 @@ const DnsPopup = () => {
               </button>
             </div>
             
-            <h3 className={cn(
-              "text-lg font-semibold mt-2",
-              isNetflix ? "text-white" : "text-foreground"
-            )}>
+            <h3 className="text-lg font-semibold mt-2 text-foreground">
               Enable Ad Blocking
             </h3>
             
-            <p className={cn(
-              "mt-1 text-xs sm:text-sm",
-              isNetflix ? "text-gray-300" : "text-muted-foreground"
-            )}>
+            <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
               For the best streaming experience, we recommend using an ad-blocking DNS like AdGuard or NextDNS.
             </p>
             
             <div className="mt-3 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
               <Button
-                variant={isNetflix ? "destructive" : "default"}
-                className={cn(
-                  "w-full sm:w-auto text-xs sm:text-sm",
-                  isNetflix && "bg-red-600 hover:bg-red-700"
-                )}
+                variant="default"
+                className="w-full sm:w-auto text-xs sm:text-sm"
                 onClick={() => {
                   window.open('https://adguard-dns.io/en/public-dns.html', '_blank');
                 }}
@@ -127,10 +109,7 @@ const DnsPopup = () => {
               
               <Button
                 variant="outline"
-                className={cn(
-                  "w-full sm:w-auto text-xs sm:text-sm",
-                  isNetflix && "text-white hover:bg-gray-800 border-gray-700"
-                )}
+                className="w-full sm:w-auto text-xs sm:text-sm"
                 onClick={handleDismiss}
                 size="sm"
               >

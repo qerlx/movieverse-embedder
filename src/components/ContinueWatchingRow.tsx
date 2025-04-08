@@ -7,15 +7,23 @@ import { Play, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+// Define a clearer type for the items that can be in Continue Watching
+type ContinueWatchingItem = {
+  id: number;
+  type: 'movie' | 'tv';
+  title?: string;
+  name?: string;
+  poster_path: string | null;
+  progress?: number;
+  lastEpisode?: {
+    season: number;
+    episode: number;
+    name?: string;
+  };
+};
+
 interface ContinueWatchingProps {
-  items: (Movie | TVShow & { 
-    progress?: number; 
-    lastEpisode?: { 
-      season: number; 
-      episode: number;
-      name?: string;
-    } 
-  })[];
+  items: ContinueWatchingItem[];
 }
 
 const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
@@ -25,7 +33,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
     return null;
   }
   
-  const handleContinueWatching = (item: any) => {
+  const handleContinueWatching = (item: ContinueWatchingItem) => {
     if (item.type === 'tv' && item.lastEpisode) {
       navigate(`/watch/tv/${item.id}/${item.lastEpisode.season}/${item.lastEpisode.episode}`);
     } else {
@@ -33,7 +41,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
     }
   };
   
-  const handleGoToDetail = (e: React.MouseEvent, item: any) => {
+  const handleGoToDetail = (e: React.MouseEvent, item: ContinueWatchingItem) => {
     e.stopPropagation();
     navigate(`/${item.type}/${item.id}`);
   };
@@ -49,7 +57,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {items.map((item, idx) => {
-          const title = "title" in item ? item.title : item.name;
+          const title = item.title || item.name || "";
           const posterPath = item.poster_path 
             ? `https://image.tmdb.org/t/p/w500${item.poster_path}` 
             : "/placeholder.svg";

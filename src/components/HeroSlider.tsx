@@ -6,7 +6,6 @@ import { Movie, TVShow } from "@/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "@/contexts/ThemeContext";
 
 interface HeroSliderProps {
   items: (Movie | TVShow)[];
@@ -18,8 +17,6 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const navigate = useNavigate();
-  const { theme } = useTheme();
-  const isNetflix = theme === 'netflix';
   
   const filteredItems = items.filter(item => item.backdrop_path);
   const totalSlides = filteredItems.length;
@@ -108,10 +105,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              <div className={cn(
-                "text-xs px-2 py-1 rounded font-medium",
-                isNetflix ? "bg-red-600 text-white" : "bg-primary/90 text-white"
-              )}>
+              <div className="bg-primary/90 text-white text-xs px-2 py-1 rounded font-medium">
                 {type === "movie" ? "Movie" : "TV Show"}
               </div>
               
@@ -131,12 +125,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
             </motion.div>
             
             <motion.h1 
-              className={cn(
-                "font-bold mb-4 leading-tight",
-                isNetflix 
-                  ? "text-5xl md:text-7xl text-white" 
-                  : "text-4xl md:text-6xl text-white"
-              )}
+              className="text-4xl md:text-6xl text-white font-bold mb-4 leading-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.7 }}
@@ -161,30 +150,21 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
             >
               <Button 
                 size="lg" 
-                className={cn(
-                  "gap-2 text-white",
-                  isNetflix 
-                    ? "bg-white hover:bg-white/90 text-black" 
-                    : "bg-primary hover:bg-primary/90"
-                )}
+                className="gap-2 text-white bg-primary hover:bg-primary/90"
                 onClick={navigateToWatch}
               >
                 <Play size={18} />
-                {isNetflix ? "Play" : "Watch Now"}
+                Watch Now
               </Button>
               
               <Button 
                 variant="outline" 
                 size="lg"
-                className={cn(
-                  isNetflix 
-                    ? "bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white" 
-                    : "bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
-                )}
+                className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
                 onClick={navigateToDetail}
               >
                 <Info size={18} className="mr-2" />
-                {isNetflix ? "More Info" : "Details"}
+                Details
               </Button>
             </motion.div>
           </motion.div>
@@ -222,12 +202,8 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
             className={cn(
               "transition-all",
               currentSlide === index 
-                ? isNetflix 
-                  ? "bg-red-600 w-8 h-[3px]" 
-                  : "bg-primary w-8 h-2 rounded-full" 
-                : isNetflix 
-                  ? "bg-white/30 hover:bg-white/60 w-8 h-[3px]" 
-                  : "bg-white/30 hover:bg-white/60 h-2 w-2 rounded-full"
+                ? "bg-primary w-8 h-2 rounded-full" 
+                : "bg-white/30 hover:bg-white/60 h-2 w-2 rounded-full"
             )}
             onClick={() => setCurrentSlide(index)}
           />

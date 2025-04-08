@@ -3,21 +3,10 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Film, Tv, UserCircle, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTheme } from '@/contexts/ThemeContext';
 import { motion } from 'framer-motion';
 
 const MobileNavigation = () => {
-  const { theme } = useTheme();
-  const isNetflix = theme === 'netflix';
-  
   const getLinkStyle = ({ isActive }: { isActive: boolean }) => {
-    if (isNetflix) {
-      return cn(
-        'flex flex-col items-center justify-center py-2 px-2',
-        isActive ? 'text-white' : 'text-gray-500'
-      );
-    }
-    
     return cn(
       'flex flex-col items-center justify-center py-2 px-2',
       isActive ? 'text-primary' : 'text-muted-foreground'
@@ -37,10 +26,7 @@ const MobileNavigation = () => {
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className={cn(
-        "fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-50 w-full",
-        isNetflix ? "bg-black border-t border-gray-900" : "bg-background/95 backdrop-blur-md border-t border-border"
-      )}
+      className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-50 w-full bg-background/95 backdrop-blur-md border-t border-border"
     >
       {items.map((item) => {
         const IconComponent = item.icon;
@@ -56,9 +42,7 @@ const MobileNavigation = () => {
                 <IconComponent 
                   className={cn(
                     "mb-1", 
-                    isActive 
-                      ? isNetflix ? "text-red-600" : "text-primary" 
-                      : isNetflix ? "text-gray-400" : "text-muted-foreground"
+                    isActive ? "text-primary" : "text-muted-foreground"
                   )} 
                   size={20} 
                 />
@@ -66,10 +50,7 @@ const MobileNavigation = () => {
                 
                 {isActive && (
                   <motion.div 
-                    className={cn(
-                      "absolute -top-1 left-1/2 transform -translate-x-1/2 h-0.5 w-5",
-                      isNetflix ? "bg-red-600" : "bg-primary"
-                    )}
+                    className="absolute -top-1 left-1/2 transform -translate-x-1/2 h-0.5 w-5 bg-primary"
                     layoutId="activeIndicator"
                   />
                 )}
