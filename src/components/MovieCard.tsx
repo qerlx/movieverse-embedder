@@ -149,6 +149,12 @@ const MovieCard: React.FC<MovieCardProps> = ({
               {new Date(item.first_air_date).getFullYear()}
             </time>
           )}
+          
+          {lastEpisode && (
+            <span className="ml-2">
+              • S{lastEpisode.season}:E{lastEpisode.episode}
+            </span>
+          )}
         </div>
       </div>
     </div>

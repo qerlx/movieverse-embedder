@@ -5,11 +5,13 @@ import { X, Shield, ExternalLink } from 'lucide-react';
 import { Button } from './ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const DnsPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const { theme } = useTheme();
+  const isMobile = useIsMobile();
   const isNetflix = theme === 'netflix';
 
   // Check local storage for previous dismissal
@@ -59,7 +61,12 @@ const DnsPopup = () => {
     <AnimatePresence>
       {isOpen && (
         <motion.div 
-          className="fixed bottom-20 md:bottom-10 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-sm"
+          className={cn(
+            "fixed z-50 w-11/12 max-w-sm",
+            isMobile 
+              ? "bottom-20 left-1/2 -translate-x-1/2" 
+              : "bottom-10 right-10 translate-x-0"
+          )}
           initial="hidden"
           animate="visible"
           exit="exit"
@@ -67,7 +74,7 @@ const DnsPopup = () => {
         >
           <motion.div 
             className={cn(
-              "rounded-lg shadow-lg p-5 border",
+              "rounded-lg shadow-lg p-4 sm:p-5 border",
               isNetflix 
                 ? "bg-black/95 border-gray-800 text-white" 
                 : "bg-card border-border"
@@ -78,7 +85,7 @@ const DnsPopup = () => {
                 "w-10 h-10 rounded-full flex items-center justify-center",
                 isNetflix ? "bg-red-600" : "bg-primary/20"
               )}>
-                <Shield className={isNetflix ? "text-white" : "text-primary"} size={24} />
+                <Shield className={isNetflix ? "text-white" : "text-primary"} size={20} />
               </div>
               <button 
                 onClick={handleDismiss}
@@ -90,36 +97,39 @@ const DnsPopup = () => {
             </div>
             
             <h3 className={cn(
-              "text-lg font-semibold mt-3",
+              "text-lg font-semibold mt-2",
               isNetflix ? "text-white" : "text-foreground"
             )}>
               Enable Ad Blocking
             </h3>
             
             <p className={cn(
-              "mt-2 text-sm",
+              "mt-1 text-xs sm:text-sm",
               isNetflix ? "text-gray-300" : "text-muted-foreground"
             )}>
-              For the best streaming experience, we recommend using an ad-blocking DNS like AdGuard or NextDNS to prevent interruptions.
+              For the best streaming experience, we recommend using an ad-blocking DNS like AdGuard or NextDNS.
             </p>
             
-            <div className="mt-4 flex space-x-3">
+            <div className="mt-3 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
               <Button
                 variant={isNetflix ? "destructive" : "default"}
-                className={isNetflix && "bg-red-600 hover:bg-red-700"}
+                className={cn(
+                  "w-full sm:w-auto text-xs sm:text-sm",
+                  isNetflix && "bg-red-600 hover:bg-red-700"
+                )}
                 onClick={() => {
                   window.open('https://adguard-dns.io/en/public-dns.html', '_blank');
                 }}
                 size="sm"
               >
-                <ExternalLink size={14} className="mr-2" /> AdGuard DNS
+                <ExternalLink size={12} className="mr-1.5" /> AdGuard DNS
               </Button>
               
               <Button
                 variant="outline"
                 className={cn(
-                  "border-gray-700",
-                  isNetflix && "text-white hover:bg-gray-800"
+                  "w-full sm:w-auto text-xs sm:text-sm",
+                  isNetflix && "text-white hover:bg-gray-800 border-gray-700"
                 )}
                 onClick={handleDismiss}
                 size="sm"
