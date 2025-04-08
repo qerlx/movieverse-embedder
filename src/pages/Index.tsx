@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import HeroSlider from "@/components/HeroSlider";
 import CategoryRow from "@/components/CategoryRow";
-import NetflixCategoryRow from "@/components/NetflixCategoryRow";
 import { 
   getPopularMovies, 
   getTrendingMovies, 
@@ -14,7 +13,6 @@ import PersonalizedRecommendations from "@/components/PersonalizedRecommendation
 import Favorites from "@/components/Favorites";
 import ContinueWatchingRow from "@/components/ContinueWatchingRow";
 import { Heart } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { getWatchHistory } from "@/lib/watchService";
@@ -28,8 +26,6 @@ const Index = () => {
   const [popularTVShows, setPopularTVShows] = useState([]);
   const [continueWatchingItems, setContinueWatchingItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { theme } = useTheme();
-  const isNetflix = theme === 'netflix';
   
   useEffect(() => {
     const fetchData = async () => {
@@ -102,10 +98,7 @@ const Index = () => {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className={cn(
-              "animate-spin rounded-full h-12 w-12 border-b-2", 
-              isNetflix ? "border-red-600" : "border-primary"
-            )}
+            className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"
           ></motion.div>
         </div>
       )}
@@ -115,123 +108,78 @@ const Index = () => {
           variants={container}
           initial="hidden"
           animate="show"
-          className={cn(
-            "py-4",
-            isNetflix && "-mt-32 relative z-10" // Overlap hero for Netflix style
-          )}
+          className="py-4 container mx-auto px-4"
         >
           {/* Continue Watching Row */}
           {currentUser && continueWatchingItems.length > 0 && (
-            <motion.div variants={item} className="container mx-auto px-4">
+            <motion.div variants={item}>
               <ContinueWatchingRow items={continueWatchingItems} />
             </motion.div>
           )}
           
           {/* User's favorites (only for logged in users) */}
           {currentUser && (
-            <motion.div variants={item} className="container mx-auto px-4 mt-8">
-              <h2 className={cn(
-                "text-xl font-bold mb-4 flex items-center",
-                isNetflix ? "text-white" : ""
-              )}>
-                <Heart className={cn("mr-2", isNetflix ? "text-red-600" : "text-red-500")} size={20} />
-                Your Favorites
+            <motion.div variants={item} className="mt-6">
+              <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center">
+                <Heart className="mr-2 text-red-500" size={20} />
+                <span className="bg-gradient-to-r from-red-500 to-red-300 bg-clip-text text-transparent">Your Favorites</span>
               </h2>
               <Favorites limit={6} />
             </motion.div>
           )}
           
-          {/* Top 10 on Netflix Today - Only for Netflix theme */}
-          {isNetflix && trendingMovies.length > 0 && (
+          {/* Top 10 Trending Movies Today */}
+          {trendingMovies.length > 0 && (
             <motion.div variants={item}>
-              <NetflixCategoryRow
+              <CategoryRow
                 title="Top 10 Movies Today"
                 items={trendingMovies.slice(0, 10)}
                 type="movie"
                 isRanked={true}
+                className="my-8"
               />
-            </motion.div>
-          )}
-          
-          {/* Trending Movies */}
-          {trendingMovies && trendingMovies.length > 0 && (
-            <motion.div variants={item}>
-              {isNetflix ? (
-                <NetflixCategoryRow
-                  title="Trending Movies" 
-                  items={trendingMovies} 
-                  type="movie"
-                />
-              ) : (
-                <CategoryRow
-                  title="Trending Movies" 
-                  items={trendingMovies} 
-                  type="movie"
-                />
-              )}
             </motion.div>
           )}
           
           {/* Trending TV Shows */}
           {trendingTVShows && trendingTVShows.length > 0 && (
             <motion.div variants={item}>
-              {isNetflix ? (
-                <NetflixCategoryRow
-                  title="Trending TV Shows" 
-                  items={trendingTVShows}
-                  type="tv"
-                />
-              ) : (
-                <CategoryRow
-                  title="Trending TV Shows" 
-                  items={trendingTVShows}
-                  type="tv"
-                />
-              )}
+              <CategoryRow
+                title="Trending TV Shows" 
+                items={trendingTVShows}
+                type="tv"
+                className="my-8"
+              />
             </motion.div>
           )}
           
           {/* Popular Movies */}
           {popularMovies && popularMovies.length > 0 && (
             <motion.div variants={item}>
-              {isNetflix ? (
-                <NetflixCategoryRow
-                  title="Popular Movies" 
-                  items={popularMovies} 
-                  type="movie"
-                />
-              ) : (
-                <CategoryRow
-                  title="Popular Movies" 
-                  items={popularMovies} 
-                  type="movie"
-                />
-              )}
+              <CategoryRow
+                title="Popular Movies" 
+                items={popularMovies} 
+                type="movie"
+                className="my-8"
+              />
             </motion.div>
           )}
           
           {/* Popular TV Shows */}
           {popularTVShows && popularTVShows.length > 0 && (
             <motion.div variants={item}>
-              {isNetflix ? (
-                <NetflixCategoryRow
-                  title="Popular TV Shows" 
-                  items={popularTVShows} 
-                  type="tv"
-                />
-              ) : (
-                <CategoryRow
-                  title="Popular TV Shows" 
-                  items={popularTVShows} 
-                  type="tv"
-                />
-              )}
+              <CategoryRow
+                title="Popular TV Shows" 
+                items={popularTVShows} 
+                type="tv"
+                className="my-8"
+              />
             </motion.div>
           )}
           
           {/* Personalized Recommendations (only for logged in users) */}
           {currentUser && (
-            <motion.div variants={item} className="container mx-auto px-4">
+            <motion.div variants={item}>
               <PersonalizedRecommendations />
             </motion.div>
           )}

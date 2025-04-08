@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 
 const Watch = () => {
@@ -36,8 +35,6 @@ const Watch = () => {
   const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
   const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { theme } = useTheme();
-  const isNetflix = theme === 'netflix';
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -192,10 +189,7 @@ const Watch = () => {
   };
 
   return (
-    <div className={cn(
-      "min-h-screen",
-      isNetflix ? "bg-black" : "bg-background"
-    )}>
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-4 flex flex-col h-screen">
         <motion.div 
           className="flex items-center mb-4" 
@@ -207,12 +201,7 @@ const Watch = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleBackNavigation}
-            className={cn(
-              "flex items-center",
-              isNetflix 
-                ? "text-white hover:text-red-600 transition-colors" 
-                : "text-white hover:text-primary transition-colors"
-            )}
+            className="flex items-center text-white hover:text-primary transition-colors"
             aria-label="Go back"
           >
             <ArrowLeft size={20} className="mr-2" />
@@ -240,10 +229,7 @@ const Watch = () => {
                 <Button 
                   size="sm" 
                   variant={activeServer === server ? "default" : "outline"} 
-                  className={cn(
-                    "gap-2",
-                    isNetflix && activeServer === server && "bg-red-600 hover:bg-red-700"
-                  )}
+                  className="gap-2"
                   onClick={() => handleServerSwitch(server as "server1" | "server2" | "server3" | "server4")}
                 >
                   <MonitorPlay size={16} />
@@ -262,12 +248,7 @@ const Watch = () => {
               exit={{ opacity: 0 }}
               className="flex-1 flex items-center justify-center"
             >
-              <motion.div 
-                className={cn(
-                  "inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-r-transparent align-[-0.125em]",
-                  isNetflix ? "border-red-600" : "border-primary"
-                )}
-              ></motion.div>
+              <motion.div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em]"></motion.div>
             </motion.div>
           ) : (
             <motion.div 
@@ -279,10 +260,7 @@ const Watch = () => {
               <div className="w-full h-full relative rounded-lg overflow-hidden bg-muted">
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none" id="loading-overlay">
                   <div className="flex flex-col items-center">
-                    <RotateCw className={cn(
-                      "h-10 w-10 animate-spin",
-                      isNetflix ? "text-red-600" : "text-primary"
-                    )} />
+                    <RotateCw className="h-10 w-10 animate-spin text-primary" />
                     <p className="mt-4 text-sm">Loading video...</p>
                   </div>
                 </div>
@@ -308,12 +286,7 @@ const Watch = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className={cn(
-                    "gap-2",
-                    isNetflix 
-                      ? "bg-black/50 border-white/20 text-white hover:bg-white/20" 
-                      : "bg-black/50 border-white/20 text-white hover:bg-white/20"
-                  )}
+                  className="gap-2 bg-black/50 border-white/20 text-white hover:bg-white/20"
                   onClick={() => {
                     toast.success("Thanks for the feedback!");
                   }}
@@ -324,12 +297,7 @@ const Watch = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className={cn(
-                    "gap-2",
-                    isNetflix 
-                      ? "bg-black/50 border-white/20 text-white hover:bg-white/20" 
-                      : "bg-black/50 border-white/20 text-white hover:bg-white/20"
-                  )}
+                  className="gap-2 bg-black/50 border-white/20 text-white hover:bg-white/20"
                   onClick={tryNextServer}
                 >
                   <RotateCw size={14} />

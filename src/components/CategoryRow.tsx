@@ -45,29 +45,29 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
 
   return (
     <motion.div
-      className={cn("py-4 relative w-full", className)}
+      className={cn("py-6 relative w-full", className)}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       <div className="px-4 max-w-screen-2xl mx-auto">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{title}</h2>
           {!isMobile && (
             <div className="flex gap-2">
               <button
                 onClick={scrollLeft}
-                className="p-2 rounded-full bg-muted/30 hover:bg-muted/50 transition-colors"
+                className="p-2 rounded-full bg-muted/30 hover:bg-primary/20 transition-colors"
                 aria-label="Scroll left"
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={20} className="text-primary" />
               </button>
               <button
                 onClick={scrollRight}
-                className="p-2 rounded-full bg-muted/30 hover:bg-muted/50 transition-colors"
+                className="p-2 rounded-full bg-muted/30 hover:bg-primary/20 transition-colors"
                 aria-label="Scroll right"
               >
-                <ChevronRight size={20} />
+                <ChevronRight size={20} className="text-primary" />
               </button>
             </div>
           )}
@@ -82,7 +82,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         >
           <div className={cn("pl-4", isRanked && "pl-10")}></div>
           {items.map((item, idx) => (
-            <div
+            <motion.div
               key={`${type}-${item.id}`}
               className={cn(
                 "flex-shrink-0 px-1",
@@ -91,6 +91,9 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
                   : "w-[140px] sm:w-[160px] md:w-[200px]"  // Standard size
               )}
               style={{ scrollSnapAlign: 'start' }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: idx * 0.05 }}
             >
               <MovieCard 
                 item={item} 
@@ -99,7 +102,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
                 index={idx} 
                 isRanked={isRanked}
               />
-            </div>
+            </motion.div>
           ))}
           <div className="pr-4"></div>
         </div>

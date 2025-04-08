@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Theme = 'default' | 'netflix';
+type Theme = 'default';
 
 interface ThemeContextType {
   theme: Theme;
@@ -19,24 +19,22 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    const savedTheme = localStorage.getItem('app-theme');
-    return (savedTheme as Theme) || 'default';
-  });
+  // Since we only have one theme now, always use 'default'
+  const [theme, setThemeState] = useState<Theme>('default');
+
+  useEffect(() => {
+    // Apply theme class to the document body
+    document.body.classList.remove('theme-default');
+    document.body.classList.add(`theme-${theme}`);
+  }, []);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('app-theme', newTheme);
     
     // Apply theme class to the document body
-    document.body.classList.remove('theme-default', 'theme-netflix');
+    document.body.classList.remove('theme-default');
     document.body.classList.add(`theme-${newTheme}`);
   };
-
-  // Initialize theme on mount
-  useEffect(() => {
-    document.body.classList.add(`theme-${theme}`);
-  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>

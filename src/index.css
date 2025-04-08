@@ -5,84 +5,6 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
- 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
- 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
- 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
- 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
- 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
- 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
- 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
- 
-    --destructive: 0 100% 50%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --ring: 215 20.2% 65.1%;
- 
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222.2 47.4% 11.2%;
-    --sidebar-primary: 222.2 47.4% 11.2%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 215 20.2% 65.1%;
-  }
- 
-  .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
- 
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
- 
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
- 
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
- 
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
- 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 1.2%;
- 
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
- 
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
- 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --ring: 216 34% 17%;
-  }
-  
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-
-  .theme-default {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
@@ -102,58 +24,43 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 142.1 70.6% 45.3%;
-  }
 
-  .theme-netflix {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 0 74% 42%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 70%;
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 74% 42%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 74% 42%;
-
-    background-color: #000;
-    color: #fff;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222.2 47.4% 11.2%;
+    --sidebar-primary: 222.2 47.4% 11.2%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 215 20.2% 65.1%;
   }
 }
 
-/* Custom styles for Netflix theme */
-.theme-netflix .hero-content {
-  background: linear-gradient(to top, #000, transparent);
+body {
+  @apply bg-background text-foreground;
+  font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-.theme-netflix .card {
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-/* Netflix rank number styling */
-.netflix-rank-number {
-  font-size: 160px;
-  font-weight: 900;
-  line-height: 0.8;
-  background: linear-gradient(to bottom, #e50914 30%, #5c0408);
-  color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.75));
-}
-
-.text-shadow {
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.75);
+.theme-default {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 142.1 70.6% 45.3%;
+  --primary-foreground: 144.9 80.4% 10%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 142.1 70.6% 45.3%;
 }
 
 /* Hide scrollbars but keep functionality */
@@ -180,6 +87,14 @@
   animation: scaleIn 0.3s ease forwards;
 }
 
+.animate-blur-in {
+  animation: blurIn 0.8s ease-out forwards;
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.5s ease forwards;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -188,6 +103,16 @@
 @keyframes scaleIn {
   from { transform: scale(0); }
   to { transform: scale(1); }
+}
+
+@keyframes blurIn {
+  from { filter: blur(20px); opacity: 0; }
+  to { filter: blur(0); opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Fix mobile navigation styling */
@@ -225,36 +150,6 @@
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
 }
 
-.theme-netflix .stream-card .play-button {
-  background: rgba(229, 9, 20, 0.9);
-  color: white;
-}
-
-/* Improve title cards display */
-.theme-netflix .netflix-row {
-  margin-bottom: 2rem;
-}
-
-.theme-netflix .netflix-row h2 {
-  margin-bottom: 1rem;
-  font-weight: 700;
-}
-
-.theme-netflix .netflix-movie-card {
-  transition: all 0.3s ease;
-}
-
-.theme-netflix .netflix-row:hover .netflix-movie-card:not(:hover) {
-  transform: scale(0.95);
-  filter: brightness(0.7);
-}
-
-/* Default theme styling improvements */
-.theme-default {
-  background-color: #121212;
-  color: #f0f0f0;
-}
-
 /* Hover effects for cards */
 .movie-card-hover {
   transition: all 0.3s ease;
@@ -265,27 +160,46 @@
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
-/* Rank styling for default theme */
-.theme-default .rank-number {
-  font-weight: 800;
-  font-size: 2.5rem;
-  line-height: 1;
-  color: #fff;
-  text-shadow: 0 0 10px rgba(0,0,0,0.5);
+/* Text shadow for better readability on images */
+.text-shadow {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
-/* Fix header spacing on mobile */
-.theme-default .mobile-header-spacing {
-  padding-top: 5rem;
+/* Glassmorphism effects */
+.glass-panel {
+  @apply backdrop-blur-md bg-black/30 border border-white/10;
 }
 
-/* Added better styling for navigation bar */
-.theme-netflix .nav-highlight {
-  background: rgba(229, 9, 20, 0.15);
-  border-bottom: 2px solid #e50914;
+/* Progress bar custom styling */
+.progress-primary {
+  @apply h-1 rounded-full overflow-hidden bg-muted/40;
 }
 
-.theme-default .nav-highlight {
-  background: rgba(142, 70, 255, 0.15);
-  border-bottom: 2px solid var(--primary);
+.progress-primary > div {
+  @apply bg-primary;
+}
+
+/* DNS popup mobile styling */
+.dns-popup {
+  @apply fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:w-96 z-50 p-4 rounded-lg shadow-lg;
+  @apply bg-card border border-border/50;
+}
+
+/* Better focus styles */
+.focus-ring:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+}
+
+/* Mobile-friendly buttons */
+.mobile-touch-target {
+  @apply min-h-[44px] min-w-[44px];
+}
+
+/* Card hover effects */
+.card-hover {
+  @apply transition-all duration-300;
+}
+
+.card-hover:hover {
+  @apply transform -translate-y-1 shadow-lg;
 }
