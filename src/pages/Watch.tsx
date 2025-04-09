@@ -3,8 +3,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
-import { getMovieDetails, getTVShowDetails } from "@/lib/api";
-import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp } from "lucide-react";
+import { getMovieDetails, getTVShowDetails, getTVShowEpisodes } from "@/lib/api";
+import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
@@ -34,6 +34,8 @@ const Watch = () => {
   const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
   const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
   const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
+  const [hasNextEpisode, setHasNextEpisode] = useState(false);
+  const [nextEpisodeInfo, setNextEpisodeInfo] = useState<{season: number, episode: number} | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -56,6 +58,10 @@ const Watch = () => {
             server4: `https://embed.su/embed/movie/${itemId}`
           });
 
+          // No next episode for movies
+          setHasNextEpisode(false);
+          setNextEpisodeInfo(null);
+
           if (currentUser) {
             try {
               await addToWatchHistory(currentUser, {
@@ -72,6 +78,9 @@ const Watch = () => {
           }
         } else if (type === "tv" && season && episode) {
           const tvData = await getTVShowDetails(itemId);
+          const seasonNumber = parseInt(season);
+          const episodeNumber = parseInt(episode);
+          
           setTitle(`${tvData.name} - S${season} E${episode}`);
           setPosterPath(tvData.poster_path);
           
@@ -81,6 +90,36 @@ const Watch = () => {
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
             server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
+
+          // Check for next episode
+          try {
+            // Get total episodes in current season
+            const seasonData = await getTVShowEpisodes(itemId, seasonNumber);
+            const totalEpisodes = seasonData.episodes?.length || 0;
+            
+            if (episodeNumber < totalEpisodes) {
+              // Next episode in same season
+              setHasNextEpisode(true);
+              setNextEpisodeInfo({
+                season: seasonNumber,
+                episode: episodeNumber + 1
+              });
+            } else {
+              // Check if there's a next season
+              if (seasonNumber < tvData.number_of_seasons) {
+                setHasNextEpisode(true);
+                setNextEpisodeInfo({
+                  season: seasonNumber + 1,
+                  episode: 1
+                });
+              } else {
+                setHasNextEpisode(false);
+              }
+            }
+          } catch (error) {
+            console.error("Error checking for next episode:", error);
+            setHasNextEpisode(false);
+          }
 
           let episodeName = "";
           if (tvData.seasons) {
@@ -129,6 +168,13 @@ const Watch = () => {
 
     fetchDetails();
   }, [id, type, season, episode, navigate, uiToast, currentUser]);
+
+  const goToNextEpisode = () => {
+    if (nextEpisodeInfo && type === "tv" && id) {
+      navigate(`/watch/tv/${id}/${nextEpisodeInfo.season}/${nextEpisodeInfo.episode}`);
+      toast.success("Loading next episode...");
+    }
+  };
 
   const tryNextServer = () => {
     const serverOptions: ("server1" | "server2" | "server3" | "server4")[] = ["server1", "server2", "server3", "server4"];
@@ -189,29 +235,45 @@ const Watch = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background to-black">
       <div className="container mx-auto px-4 py-4 flex flex-col h-screen">
         <motion.div 
-          className="flex items-center mb-4" 
+          className="flex items-center justify-between mb-4" 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleBackNavigation}
-            className="flex items-center text-white hover:text-primary transition-colors"
-            aria-label="Go back"
-          >
-            <ArrowLeft size={20} className="mr-2" />
-            Back
-          </motion.button>
-          <h1 className="text-xl font-medium text-white ml-4 truncate">{title}</h1>
+          <div className="flex items-center">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleBackNavigation}
+              className="flex items-center text-white hover:text-primary transition-colors"
+              aria-label="Go back"
+            >
+              <ArrowLeft size={20} className="mr-2" />
+              Back
+            </motion.button>
+            <h1 className="text-xl font-medium text-white ml-4 truncate hidden sm:block">{title}</h1>
+          </div>
+          
+          {hasNextEpisode && (
+            <motion.button
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={goToNextEpisode}
+              className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-white px-3 py-1.5 rounded-full transition-colors"
+            >
+              <span className="hidden sm:inline">Next Episode</span>
+              <SkipForward size={18} />
+            </motion.button>
+          )}
         </motion.div>
         
         <motion.div 
-          className="flex space-x-2 mb-4 overflow-x-auto pb-2"
+          className="flex space-x-2 mb-4 overflow-x-auto pb-2 scrollbar-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 }}
@@ -229,7 +291,12 @@ const Watch = () => {
                 <Button 
                   size="sm" 
                   variant={activeServer === server ? "default" : "outline"} 
-                  className="gap-2"
+                  className={cn(
+                    "gap-2",
+                    activeServer === server 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                      : "border-white/10 bg-black/50 hover:bg-black/90"
+                  )}
                   onClick={() => handleServerSwitch(server as "server1" | "server2" | "server3" | "server4")}
                 >
                   <MonitorPlay size={16} />
@@ -248,7 +315,11 @@ const Watch = () => {
               exit={{ opacity: 0 }}
               className="flex-1 flex items-center justify-center"
             >
-              <motion.div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em]"></motion.div>
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
+              />
             </motion.div>
           ) : (
             <motion.div 
@@ -257,7 +328,7 @@ const Watch = () => {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="flex-1 flex flex-col"
             >
-              <div className="w-full h-full relative rounded-lg overflow-hidden bg-muted">
+              <div className="w-full h-full relative rounded-lg overflow-hidden bg-muted shadow-2xl border border-white/5">
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none" id="loading-overlay">
                   <div className="flex flex-col items-center">
                     <RotateCw className="h-10 w-10 animate-spin text-primary" />
@@ -278,7 +349,7 @@ const Watch = () => {
               </div>
               
               <motion.div 
-                className="flex justify-center mt-4 space-x-2"
+                className="flex justify-center items-center gap-4 mt-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -286,7 +357,7 @@ const Watch = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="gap-2 bg-black/50 border-white/20 text-white hover:bg-white/20"
+                  className="gap-2 bg-black/40 border-white/10 text-white hover:bg-white/10"
                   onClick={() => {
                     toast.success("Thanks for the feedback!");
                   }}
@@ -297,12 +368,24 @@ const Watch = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="gap-2 bg-black/50 border-white/20 text-white hover:bg-white/20"
+                  className="gap-2 bg-black/40 border-white/10 text-white hover:bg-white/10"
                   onClick={tryNextServer}
                 >
                   <RotateCw size={14} />
                   Try another server
                 </Button>
+                
+                {hasNextEpisode && (
+                  <Button 
+                    variant="default"
+                    size="sm" 
+                    className="gap-2 bg-primary hover:bg-primary/90"
+                    onClick={goToNextEpisode}
+                  >
+                    <SkipForward size={14} />
+                    Next Episode
+                  </Button>
+                )}
               </motion.div>
             </motion.div>
           )}

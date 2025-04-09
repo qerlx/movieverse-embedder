@@ -1,4 +1,3 @@
-
 // TMDb API Types
 export interface Movie {
   id: number;
@@ -42,14 +41,18 @@ export interface TVShow {
 }
 
 // Extended types for watch history
-export interface WatchHistoryItem extends Movie {
-  type: 'movie';
+export interface WatchHistoryItem {
+  id: number;
+  type: "movie" | "tv";
+  title: string;
+  posterPath: string | null;
   progress?: number;
+  lastWatched: number;
+  genres?: number[];
 }
 
-export interface TVWatchHistoryItem extends TVShow {
-  type: 'tv';
-  progress?: number;
+export interface TVWatchHistoryItem extends WatchHistoryItem {
+  type: "tv";
   lastEpisode?: {
     season: number;
     episode: number;
@@ -164,4 +167,18 @@ export interface FavoriteItem {
   title: string;
   posterPath: string | null;
   addedAt: number; // timestamp
+}
+
+export interface ContinueWatchingItem {
+  id: number;
+  type: 'movie' | 'tv';
+  title?: string;
+  name?: string;
+  poster_path: string | null;
+  progress?: number;
+  lastEpisode?: {
+    season: number;
+    episode: number;
+    name?: string;
+  };
 }

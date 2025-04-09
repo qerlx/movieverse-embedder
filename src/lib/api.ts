@@ -1,4 +1,3 @@
-
 import { MovieResult, TVResult, ConfigurationResponse, Genre } from "@/types";
 
 const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMzQzYzU2N2ZhZTk3Y2JlZGM0OGQ1YWQ0Yjg5M2YzMSIsIm5iZiI6MTc0MTc1NzA2NC43MzMsInN1YiI6IjY3ZDExYTg4MTM5OTBhMDU4YjYwYWExMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.PfUfbFyxCtI3bJehMrDRUuuKOPp58WC-_4B4aUovCyA";
@@ -200,6 +199,27 @@ export const getTVShowSeasonDetails = async (id: number, seasonNumber: number) =
       status_message: 'Network or server error', 
       episodes: [] 
     };
+  }
+};
+
+// Get TV show episodes
+export const getTVShowEpisodes = async (id: number, season: number) => {
+  try {
+    const response = await fetch(
+      `https://api.themoviedb.org/3/tv/${id}/season/${season}?api_key=${
+        import.meta.env.VITE_TMDB_API_KEY
+      }&language=en-US`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch TV show episode data");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching TV show episode data:", error);
+    throw error;
   }
 };
 

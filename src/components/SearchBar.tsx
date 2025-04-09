@@ -51,9 +51,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         className={cn(
-          "pr-10 pl-10 py-2 bg-background/60 backdrop-blur-lg border-muted/40 hover:border-muted focus:border-primary transition-all",
-          variant === "large" && "h-12 text-lg rounded-lg",
-          isFocused && "ring-1 ring-primary/30"
+          "pr-10 pl-10 py-2 bg-black/40 backdrop-blur-lg border-white/10 hover:border-white/30 focus:border-primary transition-all rounded-full",
+          variant === "large" && "h-12 text-lg",
+          isFocused && "ring-2 ring-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.15)]"
         )}
         autoFocus={autoFocus}
       />
@@ -68,9 +68,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
       <AnimatePresence>
         {query && (
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
             className="absolute right-10"
           >
             <Button
@@ -78,9 +78,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
               variant="ghost"
               size="sm"
               onClick={clearSearch}
-              className="h-6 w-6 p-0 rounded-full hover:bg-background"
+              className="h-6 w-6 p-0 rounded-full hover:bg-white/10"
             >
-              <X size={14} />
+              <X size={14} className="text-muted-foreground" />
               <span className="sr-only">Clear search</span>
             </Button>
           </motion.div>
@@ -92,7 +92,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         size="sm"
         variant="ghost"
         className={cn(
-          "absolute right-1 text-primary hover:text-primary hover:bg-primary/10 p-1",
+          "absolute right-1 text-primary hover:text-white hover:bg-primary/20 p-1.5 rounded-full",
           !query && "pointer-events-none opacity-50"
         )}
       >
