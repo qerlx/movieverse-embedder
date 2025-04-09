@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -192,4 +193,56 @@ body {
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-muted;
   }
+}
+
+/* Immersive cinema feeling styles */
+.cinema-gradient {
+  @apply bg-gradient-to-t from-black via-black/60 to-transparent;
+}
+
+.poster-glow {
+  @apply shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all duration-500;
+}
+
+.frost-blur {
+  @apply backdrop-blur-xl bg-white/5 border border-white/10;
+}
+
+.hover-lift {
+  @apply transition-all duration-300 hover:-translate-y-1;
+}
+
+/* Premium UI styling */
+.premium-card {
+  @apply rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/40 to-secondary/20 backdrop-blur-md border border-white/10 shadow-xl;
+}
+
+.button-glow {
+  @apply relative overflow-hidden;
+}
+
+.button-glow::before {
+  @apply content-[''] absolute -top-[100%] -left-[100%] w-[300%] h-[300%] bg-primary/30 animate-spin rounded-full opacity-30;
+  animation: spin 4s linear infinite;
+}
+
+/* Carousel snap scrolling */
+.carousel {
+  @apply flex overflow-x-scroll snap-x snap-mandatory;
+  scroll-padding: 1rem;
+}
+
+.carousel > * {
+  @apply snap-start flex-none;
+}
+
+/* Movie card premium styling */
+.premium-movie-poster {
+  @apply rounded-xl overflow-hidden transition-transform duration-500;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+}
+
+.premium-movie-poster:hover {
+  @apply transform scale-105;
+  box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.6);
 }

@@ -45,7 +45,8 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
     navigate(`/${item.type}/${item.id}`);
   };
   
-  const container = {
+  // Fixed variants objects to resolve TS errors
+  const containerVariants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -55,7 +56,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
     }
   };
   
-  const item = {
+  const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
   };
@@ -78,7 +79,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
       
       <motion.div 
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
-        variants={container}
+        variants={containerVariants}
         initial="hidden"
         animate="show"
       >
@@ -95,7 +96,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
               key={`${item.type}-${item.id}`}
               className="glass-card rounded-xl overflow-hidden cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
               onClick={() => handleContinueWatching(item)}
-              variants={item}
+              variants={itemVariants}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >

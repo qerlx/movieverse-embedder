@@ -105,7 +105,8 @@ const Search = () => {
     fetchResults(searchQuery, page);
   };
 
-  const container = {
+  // Fixed variants objects to resolve TS errors
+  const containerVariants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -115,7 +116,7 @@ const Search = () => {
     }
   };
 
-  const item = {
+  const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
   };
@@ -169,12 +170,12 @@ const Search = () => {
         <>
           <motion.div 
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
-            variants={container}
+            variants={containerVariants}
             initial="hidden"
             animate="show"
           >
             {results.map((item, index) => (
-              <motion.div key={`${item.id}-${(item as any).media_type}`} variants={item}>
+              <motion.div key={`${item.id}-${(item as any).media_type}`} variants={itemVariants}>
                 <MovieCard
                   item={item}
                   type={(item as any).media_type === "movie" ? "movie" : "tv"}

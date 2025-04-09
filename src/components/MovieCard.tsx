@@ -55,12 +55,12 @@ const MovieCard: React.FC<MovieCardProps> = ({
   return (
     <motion.div 
       className={cn(
-        "relative h-full w-full overflow-hidden shadow-md transition-all duration-300",
-        "cursor-pointer rounded-lg group",
+        "relative h-full w-full overflow-hidden",
+        "cursor-pointer rounded-xl group premium-movie-poster",
         className
       )}
       onClick={handleClick}
-      whileHover={{ y: -5, scale: 1.02 }}
+      whileHover={{ y: -8, scale: 1.03 }}
       whileTap={{ scale: 0.98 }}
     >
       {/* Rank indicator for ranked lists */}
@@ -77,13 +77,13 @@ const MovieCard: React.FC<MovieCardProps> = ({
         <img 
           src={posterPath} 
           alt={title}
-          className="w-full h-full object-cover rounded-t-lg"
+          className="w-full h-full object-cover rounded-xl"
           loading={priority ? "eager" : "lazy"}
         />
 
         {/* Episode badge for TV shows with last episode info */}
         {type === 'tv' && lastEpisode && (
-          <div className="absolute top-2 left-2 px-2 py-1 text-xs font-medium rounded bg-primary/90 backdrop-blur-sm text-primary-foreground">
+          <div className="absolute top-2 left-2 px-2 py-1 text-xs font-medium rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground">
             S{lastEpisode.season}:E{lastEpisode.episode}
           </div>
         )}
@@ -96,33 +96,38 @@ const MovieCard: React.FC<MovieCardProps> = ({
           </div>
         )}
         
-        {/* Play button overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
+        {/* Play button overlay with gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all duration-500">
           <button
             onClick={handlePlayClick}
-            className="w-12 h-12 rounded-full flex items-center justify-center transition-all transform bg-primary text-white hover:bg-primary/90 group-hover:scale-100 scale-75 opacity-0 group-hover:opacity-100 shadow-lg"
+            className="w-14 h-14 rounded-full flex items-center justify-center transition-all transform bg-primary text-white hover:bg-primary/90 group-hover:scale-100 scale-0 opacity-0 group-hover:opacity-100 shadow-lg mb-2"
           >
-            <Play className="text-white ml-0.5" size={20} />
+            <Play className="text-white ml-1" size={24} />
           </button>
+          
+          <h3 className="font-semibold text-center text-white text-shadow px-3 opacity-0 group-hover:opacity-100 transition-all duration-500 mt-2">
+            {title}
+          </h3>
         </div>
       </div>
       
       {/* Progress bar for watched items */}
       {hasProgress && (
-        <div className="absolute bottom-[58px] left-0 right-0">
+        <div className="absolute bottom-0 left-0 right-0">
           <Progress 
             value={(item as any).progress || 0} 
-            className="h-1 bg-background/50"
+            className="h-1.5 bg-background/30"
             indicatorClassName="bg-primary"
           />
         </div>
       )}
       
-      <div className="p-3 bg-background/95 backdrop-blur-sm rounded-b-lg border-t border-border/20">
-        <h3 className="font-semibold text-sm line-clamp-1">
+      {/* Title and info panel - only shown on non-hover for cleaner look */}
+      <div className="p-3 bg-black/80 backdrop-blur-md rounded-b-xl border-t border-white/5">
+        <h3 className="font-semibold text-sm text-center line-clamp-1 text-white/90">
           {title}
         </h3>
-        <div className="text-xs mt-1 text-muted-foreground">
+        <div className="text-xs mt-1 text-center text-white/60">
           {("release_date" in item && item.release_date) && (
             <time dateTime={item.release_date}>
               {new Date(item.release_date).getFullYear()}

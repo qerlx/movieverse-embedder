@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthModal from "./AuthModal";
 import { motion, AnimatePresence } from "framer-motion";
+import MobileNavigation from "./MobileNavigation";
 
 const Layout = () => {
   const location = useLocation();
@@ -101,15 +102,15 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
+      {/* Header - Premium Glass Style */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-transform duration-300",
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
           !showNavbar && !mobileMenuOpen && "-translate-y-full",
-          "bg-background/80 backdrop-blur-md border-b border-border/40"
+          "bg-black/60 backdrop-blur-xl border-b border-white/5"
         )}
       >
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -123,9 +124,13 @@ const Layout = () => {
                 />
               </div>
             ) : (
-              <div className={`transition-all duration-300 ${isMobile && searchExpanded ? 'opacity-0 scale-0 w-0' : 'opacity-100 animate-fade-in'}`}>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }} 
+                animate={{ opacity: 1, scale: 1 }}
+                className={`transition-all duration-300 ${isMobile && searchExpanded ? 'opacity-0 scale-0 w-0' : 'opacity-100'}`}
+              >
                 <Logo />
-              </div>
+              </motion.div>
             )}
             {!isMobile && (
               <nav className="hidden md:flex items-center gap-2">
@@ -143,7 +148,7 @@ const Layout = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setAuthModalOpen(true)}
-                className="text-sm font-medium bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-full transition-all"
+                className="text-sm font-medium bg-primary/20 hover:bg-primary/30 text-primary px-6 py-2 rounded-full transition-all"
               >
                 Sign In
               </motion.button>
@@ -152,9 +157,9 @@ const Layout = () => {
             {!searchExpanded && currentUser && (
               <NavLink 
                 to="/profile" 
-                className="flex items-center gap-2 hover:bg-muted/20 px-3 py-1.5 rounded-full transition-all"
+                className="flex items-center gap-2 hover:bg-white/10 px-3 py-1.5 rounded-full transition-all"
               >
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary/30">
+                <div className="w-9 h-9 rounded-full bg-primary/30 flex items-center justify-center overflow-hidden border-2 border-primary/40 hover-lift">
                   {currentUser.photoURL ? (
                     <img src={currentUser.photoURL} alt={currentUser.displayName || ""} className="w-full h-full object-cover" />
                   ) : (
@@ -171,14 +176,32 @@ const Layout = () => {
             {isMobile && !searchExpanded && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-full hover:bg-muted/20"
+                className="p-2 rounded-full hover:bg-white/10"
                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               >
-                {mobileMenuOpen ? (
-                  <X size={24} />
-                ) : (
-                  <Menu size={24} />
-                )}
+                <AnimatePresence mode="wait">
+                  {mobileMenuOpen ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <X size={24} />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Menu size={24} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </button>
             )}
           </div>
@@ -191,7 +214,7 @@ const Layout = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="bg-background border-t border-border/30"
+              className="bg-black/80 backdrop-blur-xl border-t border-white/5"
             >
               <nav className="container mx-auto p-4 flex flex-col gap-1">
                 <NavItems />
@@ -209,7 +232,7 @@ const Layout = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.4 }}
           >
             <Outlet />
           </motion.div>
@@ -217,79 +240,7 @@ const Layout = () => {
       </main>
       
       {/* Mobile bottom navigation */}
-      {isMobile && (
-        <motion.div 
-          className="fixed bottom-0 left-0 right-0 z-40 bg-background/90 backdrop-blur-md border-t border-border/40 shadow-lg h-16"
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="h-full grid grid-cols-4 gap-1">
-            <NavLink 
-              to="/" 
-              className={({ isActive }) => cn(
-                "flex flex-col items-center justify-center",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <Home size={20} />
-              <span className="text-xs mt-1">Home</span>
-            </NavLink>
-            
-            <NavLink 
-              to="/search" 
-              className={({ isActive }) => cn(
-                "flex flex-col items-center justify-center",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <Search size={20} />
-              <span className="text-xs mt-1">Search</span>
-            </NavLink>
-            
-            {currentUser ? (
-              <NavLink 
-                to="/profile" 
-                className={({ isActive }) => cn(
-                  "flex flex-col items-center justify-center",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                <User size={20} />
-                <span className="text-xs mt-1">Profile</span>
-              </NavLink>
-            ) : (
-              <button
-                onClick={() => setAuthModalOpen(true)}
-                className="flex flex-col items-center justify-center text-muted-foreground"
-              >
-                <User size={20} />
-                <span className="text-xs mt-1">Sign In</span>
-              </button>
-            )}
-            
-            <NavLink 
-              to={currentUser ? "/profile?tab=favorites" : "/movies"}
-              className={({ isActive }) => cn(
-                "flex flex-col items-center justify-center",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              {currentUser ? (
-                <>
-                  <Heart size={20} />
-                  <span className="text-xs mt-1">Favorites</span>
-                </>
-              ) : (
-                <>
-                  <Film size={20} />
-                  <span className="text-xs mt-1">Movies</span>
-                </>
-              )}
-            </NavLink>
-          </div>
-        </motion.div>
-      )}
+      {isMobile && <MobileNavigation />}
       
       {/* Auth Modal */}
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
