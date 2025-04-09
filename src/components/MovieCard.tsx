@@ -55,76 +55,94 @@ const MovieCard: React.FC<MovieCardProps> = ({
   return (
     <motion.div 
       className={cn(
-        "relative h-full w-full overflow-hidden",
-        "cursor-pointer rounded-xl group premium-movie-poster",
+        "relative h-full w-full group",
+        "cursor-pointer premium-movie-poster",
         className
       )}
       onClick={handleClick}
-      whileHover={{ y: -8, scale: 1.03 }}
+      whileHover={{ y: -5 }}
       whileTap={{ scale: 0.98 }}
     >
       {/* Rank indicator for ranked lists */}
       {isRanked && (
-        <div className="absolute -left-2 -top-2 z-10 h-10 w-10 flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/50 rounded-full blur-sm"></div>
-          <span className="relative text-xl font-extrabold text-white">
+        <div className="absolute -left-3 -top-3 z-10 h-12 w-12 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary/50 rounded-full blur-md opacity-70"></div>
+          <div className="absolute inset-0.5 bg-black rounded-full"></div>
+          <span className="relative text-xl font-black text-primary">
             {index + 1}
           </span>
         </div>
       )}
       
-      <div className="aspect-[2/3] relative">
+      <div className="aspect-poster relative overflow-hidden rounded-xl">
+        {/* Poster Image */}
         <img 
           src={posterPath} 
           alt={title}
-          className="w-full h-full object-cover rounded-xl"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           loading={priority ? "eager" : "lazy"}
         />
 
+        {/* Blurred backdrop overlay when hovered */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity duration-300"></div>
+
         {/* Episode badge for TV shows with last episode info */}
         {type === 'tv' && lastEpisode && (
-          <div className="absolute top-2 left-2 px-2 py-1 text-xs font-medium rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground">
+          <div className="absolute top-2 right-2 px-2 py-1 text-xs font-medium rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground shadow-md">
             S{lastEpisode.season}:E{lastEpisode.episode}
           </div>
         )}
         
         {/* Rating indicator */}
         {item.vote_average > 0 && (
-          <div className="absolute top-2 right-2 px-1.5 py-1 rounded-md bg-black/70 backdrop-blur-sm flex items-center">
-            <Star size={12} className="text-yellow-500 mr-0.5" />
+          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-sm flex items-center shadow-md">
+            <Star size={10} className="text-yellow-500 mr-1" />
             <span className="text-xs font-medium text-white">{item.vote_average.toFixed(1)}</span>
           </div>
         )}
         
         {/* Play button overlay with gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all duration-500">
-          <button
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all duration-300">
+          <motion.button
+            initial={{ scale: 0.5, opacity: 0 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            animate={{ scale: 1, opacity: 1 }}
             onClick={handlePlayClick}
-            className="w-14 h-14 rounded-full flex items-center justify-center transition-all transform bg-primary text-white hover:bg-primary/90 group-hover:scale-100 scale-0 opacity-0 group-hover:opacity-100 shadow-lg mb-2"
+            className="w-12 h-12 rounded-full flex items-center justify-center bg-primary text-white hover:bg-primary/90 shadow-lg mb-2 transition-transform"
           >
-            <Play className="text-white ml-1" size={24} />
-          </button>
+            <Play className="text-white ml-0.5" size={22} />
+          </motion.button>
           
-          <h3 className="font-semibold text-center text-white text-shadow px-3 opacity-0 group-hover:opacity-100 transition-all duration-500 mt-2">
+          <motion.h3 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="font-medium text-center text-white text-shadow px-3 text-sm line-clamp-2 max-w-[90%]"
+          >
             {title}
-          </h3>
+          </motion.h3>
         </div>
       </div>
       
       {/* Progress bar for watched items */}
       {hasProgress && (
         <div className="absolute bottom-0 left-0 right-0">
-          <Progress 
-            value={(item as any).progress || 0} 
-            className="h-1.5 bg-background/30"
-            indicatorClassName="bg-primary"
-          />
+          <div className="h-1.5 w-full bg-black/50">
+            <div 
+              className="h-full bg-gradient-to-r from-primary to-primary/70" 
+              style={{ width: `${(item as any).progress || 0}%` }}
+            ></div>
+          </div>
         </div>
       )}
       
-      {/* Title and info panel - only shown on non-hover for cleaner look */}
-      <div className="p-3 bg-black/80 backdrop-blur-md rounded-b-xl border-t border-white/5">
-        <h3 className="font-semibold text-sm text-center line-clamp-1 text-white/90">
+      {/* Info panel - slide in on hover for a cleaner look */}
+      <motion.div 
+        className="absolute -bottom-16 left-0 right-0 p-3 bg-gradient-to-t from-black to-black/80 backdrop-blur-sm border-t border-white/10 group-hover:bottom-0 transition-all duration-300"
+        style={{ transition: 'bottom 0.3s ease-in-out' }}
+      >
+        <h3 className="font-medium text-sm text-center line-clamp-1 text-white/90 text-shadow-sm">
           {title}
         </h3>
         <div className="text-xs mt-1 text-center text-white/60">
@@ -145,7 +163,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
             </span>
           )}
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 };

@@ -19,7 +19,7 @@ const MobileNavigation = () => {
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="fixed bottom-0 left-0 right-0 z-50 w-full h-16 glass-panel"
+      className="fixed bottom-0 left-0 right-0 z-50 w-full backdrop-blur-xl bg-black/60 border-t border-white/10 h-16"
     >
       <div className="h-full grid grid-cols-5 gap-1">
         {items.map((item) => {
@@ -57,7 +57,7 @@ const MobileNavigation = () => {
                   
                   <span className={cn(
                     "text-xs mt-1 transition-colors",
-                    isActive ? "font-medium text-white" : "font-normal"
+                    isActive ? "font-medium text-primary" : "font-normal"
                   )}>
                     {item.label}
                   </span>
@@ -65,7 +65,7 @@ const MobileNavigation = () => {
                   {isActive && (
                     <motion.div 
                       layoutId="activeNavIndicator"
-                      className="absolute top-2 left-1/2 transform -translate-x-1/2 h-0.5 w-5 bg-primary rounded-full"
+                      className="absolute top-0 left-1/2 transform -translate-x-1/2 h-1 w-10 bg-gradient-to-r from-primary/80 to-primary rounded-b-md"
                       transition={{ type: "spring", stiffness: 500 }}
                     />
                   )}
