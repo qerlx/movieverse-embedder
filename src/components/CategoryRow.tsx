@@ -93,7 +93,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent"
+            className="text-2xl md:text-3xl font-bold purple-text-gradient"
           >
             {title}
           </motion.h2>
@@ -155,7 +155,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
 
         <div
           ref={scrollContainerRef}
-          className="flex overflow-x-auto py-4 no-scrollbar scroll-smooth carousel"
+          className="flex overflow-x-auto py-4 no-scrollbar scroll-smooth carousel content-carousel"
         >
           <div className="pl-2"></div>
           {items.map((item, idx) => (

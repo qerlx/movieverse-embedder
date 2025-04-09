@@ -90,7 +90,11 @@ const Index = () => {
   return (
     <div className="min-h-screen pb-20">
       {/* Hero Slider - Only render when data is loaded */}
-      {!isLoading && heroItems && heroItems.length > 0 && <HeroSlider items={heroItems} type="movie" />}
+      {!isLoading && heroItems && heroItems.length > 0 && (
+        <div className="w-full relative overflow-hidden">
+          <HeroSlider items={heroItems} type="movie" />
+        </div>
+      )}
       
       {/* Loading indicator */}
       {isLoading && (
@@ -98,8 +102,17 @@ const Index = () => {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"
-          ></motion.div>
+            className="relative w-16 h-16"
+          >
+            <motion.div 
+              className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-primary animate-spin"
+              style={{ animationDuration: '1s' }}
+            />
+            <motion.div 
+              className="absolute inset-2 rounded-full border-2 border-t-transparent border-r-primary border-b-primary border-l-transparent animate-spin"
+              style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}
+            />
+          </motion.div>
         </div>
       )}
       
@@ -112,7 +125,7 @@ const Index = () => {
         >
           {/* Continue Watching Row */}
           {currentUser && continueWatchingItems.length > 0 && (
-            <motion.div variants={item}>
+            <motion.div variants={item} className="mt-4">
               <ContinueWatchingRow items={continueWatchingItems} />
             </motion.div>
           )}
@@ -179,7 +192,7 @@ const Index = () => {
           
           {/* Personalized Recommendations (only for logged in users) */}
           {currentUser && (
-            <motion.div variants={item}>
+            <motion.div variants={item} className="mt-8 mb-12">
               <PersonalizedRecommendations />
             </motion.div>
           )}

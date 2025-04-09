@@ -16,10 +16,12 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
         to="/" 
         className={cn("flex items-center justify-center", className)}
       >
-        <img 
+        <motion.img 
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          transition={{ duration: 0.3 }}
           src="/lovable-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
           alt="MovieStreamHub" 
-          className="w-8 h-8 object-contain" 
+          className="w-8 h-8 object-contain purple-glow" 
         />
       </Link>
     );
@@ -35,12 +37,14 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
         whileTap={{ scale: 0.95 }}
         className="flex items-center gap-2"
       >
-        <img 
+        <motion.img 
+          whileHover={{ rotate: 10 }}
+          transition={{ duration: 0.3 }}
           src="/lovable-uploads/caa73530-a5df-42b6-967d-52fda023811b.png" 
           alt="MovieStreamHub" 
-          className="w-8 h-8" 
+          className="w-8 h-8 purple-glow" 
         />
-        <span className="flex">
+        <span className="flex font-bold">
           <span className="text-white">Movie</span>
           <span className="text-primary">Stream</span>
           <span className="text-white">Hub</span>

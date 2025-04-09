@@ -71,7 +71,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
       <motion.h2 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-xl md:text-2xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent flex items-center"
+        className="text-xl md:text-2xl font-bold mb-6 purple-text-gradient flex items-center"
       >
         <Clock className="mr-2 h-6 w-6 text-primary" />
         Continue Watching
@@ -94,7 +94,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
           return (
             <motion.div 
               key={`${item.type}-${item.id}`}
-              className="glass-card rounded-xl overflow-hidden cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
+              className="premium-card rounded-xl overflow-hidden cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
               onClick={() => handleContinueWatching(item)}
               variants={itemVariants}
               whileHover={{ scale: 1.02 }}

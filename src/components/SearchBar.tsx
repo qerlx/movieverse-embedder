@@ -98,7 +98,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               className={cn(
                 "search-input pr-10 pl-10 py-2 bg-black/40 backdrop-blur-lg border-white/10 hover:border-white/30 focus:border-primary transition-all rounded-full",
                 variant === "large" && "h-12 text-lg",
-                isFocused && "ring-2 ring-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.15)]"
+                isFocused && "ring-2 ring-primary/30 shadow-[0_0_15px_rgba(147,51,234,0.15)]"
               )}
               autoFocus={autoFocus || isExpanded}
             />
@@ -111,23 +111,17 @@ const SearchBar: React.FC<SearchBarProps> = ({
             />
             
             {query && (
-              <motion.div
+              <motion.button
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0, opacity: 0 }}
-                className="absolute right-10"
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-10 h-6 w-6 p-0 rounded-full flex items-center justify-center hover:bg-white/10"
               >
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearSearch}
-                  className="h-6 w-6 p-0 rounded-full hover:bg-white/10"
-                >
-                  <X size={14} className="text-muted-foreground" />
-                  <span className="sr-only">Clear search</span>
-                </Button>
-              </motion.div>
+                <X size={14} className="text-muted-foreground" />
+                <span className="sr-only">Clear search</span>
+              </motion.button>
             )}
             
             <Button 

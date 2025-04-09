@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getMovieDetails } from "@/lib/api";
-import { Star, Clock, Calendar, Play, Eye } from "lucide-react";
+import { Star, Clock, Calendar, Play, Eye, Heart, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Movie, Cast } from "@/types";
 import CategoryRow from "@/components/CategoryRow";
@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
 import AddToWatchedButton from "@/components/AddToWatchedButton";
 import WatchProviders from "@/components/WatchProviders";
-import { useTheme } from "@/contexts/ThemeContext";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const MovieDetail = () => {
@@ -21,8 +21,7 @@ const MovieDetail = () => {
   const { currentUser } = useAuth();
   const [movie, setMovie] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { theme } = useTheme();
-
+  
   useEffect(() => {
     const fetchMovieDetails = async () => {
       if (!id) return;
@@ -45,6 +44,8 @@ const MovieDetail = () => {
     };
 
     fetchMovieDetails();
+    // Scroll to top when navigating to a new movie
+    window.scrollTo(0, 0);
   }, [id, toast]);
 
   const handleWatchClick = () => {
@@ -54,7 +55,20 @@ const MovieDetail = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+        <motion.div 
+          className="relative w-16 h-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.div 
+            className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-primary animate-spin"
+            style={{ animationDuration: '1s' }}
+          />
+          <motion.div 
+            className="absolute inset-2 rounded-full border-2 border-t-transparent border-r-primary border-b-primary border-l-transparent animate-spin"
+            style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}
+          />
+        </motion.div>
       </div>
     );
   }
@@ -62,10 +76,10 @@ const MovieDetail = () => {
   if (!movie) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Movie Not Found</h2>
-          <p className="text-muted-foreground mb-4">The movie you're looking for doesn't exist or has been removed.</p>
-          <Button onClick={() => navigate("/movies")}>Browse Movies</Button>
+        <div className="text-center max-w-md p-8 backdrop-blur-lg bg-black/40 rounded-2xl border border-white/10">
+          <h2 className="text-2xl font-bold mb-2 purple-text-gradient">Movie Not Found</h2>
+          <p className="text-muted-foreground mb-6">The movie you're looking for doesn't exist or has been removed.</p>
+          <Button onClick={() => navigate("/movies")} className="premium-button premium-button-primary">Browse Movies</Button>
         </div>
       </div>
     );
@@ -94,25 +108,39 @@ const MovieDetail = () => {
   const topCast = movie.credits?.cast?.slice(0, 6) || [];
 
   return (
-    <div className="min-h-screen">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen"
+    >
       {/* Hero section with backdrop */}
       <div className="relative">
         {backdropUrl && (
           <div className="absolute inset-0 w-full h-full">
-            <div 
-              className="w-full h-[70vh] bg-cover bg-center bg-no-repeat animate-blur-in"
+            <motion.div 
+              initial={{ filter: "blur(16px)", opacity: 0 }}
+              animate={{ filter: "blur(0px)", opacity: 1 }}
+              transition={{ duration: 1.2 }}
+              className="w-full h-[80vh] bg-cover bg-top bg-no-repeat"
               style={{ backgroundImage: `url(${backdropUrl})` }}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent"></div>
+            ></motion.div>
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
           </div>
         )}
 
-        <div className="relative container mx-auto px-4 pt-12 pb-8 min-h-[70vh] flex flex-col justify-center">
+        <div className="relative container mx-auto px-4 pt-20 pb-10 min-h-[80vh] flex flex-col justify-center">
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Poster */}
-            <div className="w-full max-w-xs mx-auto md:mx-0 animate-fade-in">
-              <div className="overflow-hidden shadow-xl rounded-lg">
+            <motion.div 
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="w-full max-w-xs mx-auto md:mx-0"
+            >
+              <div className="overflow-hidden rounded-2xl shadow-2xl hover:shadow-primary/20 transition-shadow duration-300 purple-glow">
                 <img
                   src={posterUrl}
                   alt={movie.title}
@@ -120,72 +148,111 @@ const MovieDetail = () => {
                 />
               </div>
               
-              <div className="mt-6 p-4 bg-muted/20 backdrop-blur-sm rounded-lg">
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="mt-8 p-4 backdrop-blur-md bg-black/30 border border-white/10 rounded-xl"
+              >
                 <WatchProviders id={parseInt(id!)} type="movie" />
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Details */}
-            <div className="flex-1 animate-fade-up" style={{ animationDelay: "200ms" }}>
-              <h1 className="text-3xl md:text-5xl font-bold mb-4">
+            <motion.div 
+              initial={{ x: -30, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="flex-1"
+            >
+              <motion.h1 
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6 }}
+                className="cinematic-title text-4xl md:text-6xl font-bold mb-4 text-white text-shadow"
+              >
                 {movie.title}
-              </h1>
+              </motion.h1>
               
-              <div className="flex flex-wrap gap-3 mb-6">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="flex flex-wrap gap-3 mb-6"
+              >
                 {movie.genres?.map((genre: any) => (
                   <span
                     key={genre.id}
-                    className="px-3 py-1 rounded-full text-sm bg-muted/30"
+                    className="px-3 py-1 rounded-full text-sm backdrop-blur-sm bg-black/30 border border-white/10 text-white/90"
                   >
                     {genre.name}
                   </span>
                 ))}
-              </div>
+              </motion.div>
               
-              <div className="flex flex-wrap gap-4 mb-6 text-sm">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="flex flex-wrap gap-6 mb-6 text-sm"
+              >
                 {movie.vote_average > 0 && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
                     <Star size={16} className="text-yellow-400" />
-                    <span>{movie.vote_average.toFixed(1)}/10</span>
+                    <span className="font-medium">{movie.vote_average.toFixed(1)}/10</span>
                   </div>
                 )}
                 
-                <div className="flex items-center gap-1">
-                  <Clock size={16} />
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                  <Clock size={16} className="text-white/80" />
                   <span>{formattedRuntime}</span>
                 </div>
                 
-                <div className="flex items-center gap-1">
-                  <Calendar size={16} />
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                  <Calendar size={16} className="text-white/80" />
                   <span>{releaseYear}</span>
                 </div>
-              </div>
+              </motion.div>
               
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">Overview</h2>
-                <p className="text-muted-foreground">{movie.overview}</p>
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="mb-6 max-w-2xl"
+              >
+                <h2 className="text-xl font-semibold mb-2 text-white/90">Overview</h2>
+                <p className="text-white/70 leading-relaxed">{movie.overview}</p>
+              </motion.div>
               
               {directors.length > 0 && (
-                <div className="mb-6">
-                  <h2 className="text-xl font-semibold mb-2">Director</h2>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.6 }}
+                  className="mb-8"
+                >
+                  <h2 className="text-xl font-semibold mb-2 text-white/90">Director</h2>
                   <div className="flex flex-wrap gap-2">
                     {directors.map((director: any) => (
-                      <span key={director.id} className="text-muted-foreground">
+                      <span key={director.id} className="text-white/70">
                         {director.name}
                       </span>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               )}
               
-              <div className="flex flex-wrap gap-4 mt-8">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.7 }}
+                className="flex flex-wrap gap-4 mt-8"
+              >
                 <Button
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 text-white gap-2"
                   onClick={handleWatchClick}
+                  className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-8 py-6 text-lg font-medium shadow-lg hover:shadow-primary/30 transition-all"
                 >
-                  <Play size={18} />
+                  <Play size={22} className="ml-1" />
                   Watch Now
                 </Button>
                 
@@ -199,60 +266,74 @@ const MovieDetail = () => {
                     variant="outline"
                   />
                 )}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </div>
 
       {/* Cast section */}
       {topCast.length > 0 && (
-        <div className="py-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="py-12 bg-gradient-to-b from-transparent to-black/30"
+        >
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-6">
-              Top Cast
+            <h2 className="text-2xl font-bold mb-8 purple-text-gradient">
+              Featured Cast
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {topCast.map((person: Cast) => (
-                <div key={person.id} className="animate-fade-in">
-                  <div className="overflow-hidden bg-muted/20 rounded-lg">
-                    {person.profile_path ? (
-                      <img
-                        src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
-                        alt={person.name}
-                        className="w-full h-48 object-cover object-center"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-48 flex items-center justify-center bg-muted/20">
-                        <span className="text-muted-foreground">No Photo</span>
-                      </div>
-                    )}
-                    <div className="p-3">
-                      <h3 className="font-medium text-sm line-clamp-1">{person.name}</h3>
-                      <p className="text-xs text-muted-foreground line-clamp-1">
-                        {person.character}
-                      </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
+              {topCast.map((person: Cast, index) => (
+                <motion.div 
+                  key={person.id} 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 * index }}
+                  className="premium-card hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
+                >
+                  {person.profile_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
+                      alt={person.name}
+                      className="w-full h-48 object-cover object-center"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-48 flex items-center justify-center bg-black/50">
+                      <span className="text-muted-foreground">No Photo</span>
                     </div>
+                  )}
+                  <div className="p-4">
+                    <h3 className="font-medium text-sm line-clamp-1">{person.name}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                      {person.character}
+                    </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Similar movies */}
       {movie.similar?.results?.length > 0 && (
-        <div className="py-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="py-12"
+        >
           <CategoryRow
-            title="Similar Movies"
+            title="More Like This"
             items={movie.similar.results}
             type="movie"
           />
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
