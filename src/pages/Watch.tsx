@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -58,7 +57,6 @@ const Watch = () => {
             server4: `https://embed.su/embed/movie/${itemId}`
           });
 
-          // No next episode for movies
           setHasNextEpisode(false);
           setNextEpisodeInfo(null);
 
@@ -91,21 +89,17 @@ const Watch = () => {
             server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
 
-          // Check for next episode
           try {
-            // Get total episodes in current season
             const seasonData = await getTVShowEpisodes(itemId, seasonNumber);
             const totalEpisodes = seasonData.episodes?.length || 0;
             
             if (episodeNumber < totalEpisodes) {
-              // Next episode in same season
               setHasNextEpisode(true);
               setNextEpisodeInfo({
                 season: seasonNumber,
                 episode: episodeNumber + 1
               });
             } else {
-              // Check if there's a next season
               if (seasonNumber < tvData.number_of_seasons) {
                 setHasNextEpisode(true);
                 setNextEpisodeInfo({
@@ -235,7 +229,7 @@ const Watch = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-black">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-black">
       <div className="container mx-auto px-4 py-4 flex flex-col h-screen">
         <motion.div 
           className="flex items-center justify-between mb-4" 
@@ -328,7 +322,7 @@ const Watch = () => {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="flex-1 flex flex-col"
             >
-              <div className="w-full h-full relative rounded-lg overflow-hidden bg-muted shadow-2xl border border-white/5">
+              <div className="w-full h-full relative rounded-lg overflow-hidden glass-panel shadow-2xl">
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none" id="loading-overlay">
                   <div className="flex flex-col items-center">
                     <RotateCw className="h-10 w-10 animate-spin text-primary" />
@@ -357,7 +351,7 @@ const Watch = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="gap-2 bg-black/40 border-white/10 text-white hover:bg-white/10"
+                  className="gap-2 glass-panel text-white hover:bg-white/10 border-none"
                   onClick={() => {
                     toast.success("Thanks for the feedback!");
                   }}
@@ -368,7 +362,7 @@ const Watch = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="gap-2 bg-black/40 border-white/10 text-white hover:bg-white/10"
+                  className="gap-2 glass-panel text-white hover:bg-white/10 border-none"
                   onClick={tryNextServer}
                 >
                   <RotateCw size={14} />

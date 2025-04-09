@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -43,9 +42,13 @@ body {
   scrollbar-width: none;
 }
 
-/* Gradient background for nav */
-.nav-blur {
-  backdrop-filter: blur(16px);
+/* Glass panels and cards */
+.glass-panel {
+  @apply backdrop-blur-md bg-black/30 border border-white/10;
+}
+
+.glass-card {
+  @apply backdrop-blur-lg bg-black/20 border border-white/10 shadow-lg;
 }
 
 /* Animation classes */
@@ -125,15 +128,6 @@ body {
 
 .text-shadow-sm {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-}
-
-/* Glassmorphism effects */
-.glass-panel {
-  @apply backdrop-blur-md bg-black/30 border border-white/10;
-}
-
-.glass-card {
-  @apply backdrop-blur-lg bg-white/5 border border-white/10 shadow-2xl;
 }
 
 /* Progress bar custom styling */

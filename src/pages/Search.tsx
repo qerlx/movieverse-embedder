@@ -6,8 +6,9 @@ import { searchMulti } from "@/lib/api";
 import { MediaItem, Movie, TVShow } from "@/types";
 import MovieCard from "@/components/MovieCard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search as SearchIcon } from "lucide-react";
+import SearchBar from "@/components/SearchBar";
+import { Search as SearchIcon, Film, Tv2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -104,63 +105,105 @@ const Search = () => {
     fetchResults(searchQuery, page);
   };
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-6">Search</h1>
+      <motion.div 
+        className="mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.h1 
+          className="text-3xl font-bold mb-6 text-gradient"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          Search
+        </motion.h1>
         
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="relative flex-1">
-            <Input
-              type="text"
-              placeholder="Search for movies or TV shows..."
-              value={inputQuery}
-              onChange={(e) => setInputQuery(e.target.value)}
-              className="pl-10"
-            />
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-          </div>
-          <Button type="submit">Search</Button>
-        </form>
-      </div>
+        <motion.div
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex items-center"
+        >
+          <SearchBar variant="large" autoFocus />
+        </motion.div>
+      </motion.div>
 
       {searchQuery && (
-        <h2 className="text-xl font-bold mb-6">
-          Search results for "{searchQuery}"
-        </h2>
+        <motion.h2 
+          className="text-xl font-bold mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          Search results for "<span className="text-primary">{searchQuery}</span>"
+        </motion.h2>
       )}
 
       {isLoading ? (
-        <div className="flex justify-center items-center min-h-[50vh]">
+        <motion.div 
+          className="flex justify-center items-center min-h-[50vh]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-        </div>
+        </motion.div>
       ) : results.length > 0 ? (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+          <motion.div 
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
+            variants={container}
+            initial="hidden"
+            animate="show"
+          >
             {results.map((item, index) => (
-              <MovieCard
-                key={`${item.id}-${(item as any).media_type}`}
-                item={item}
-                type={(item as any).media_type === "movie" ? "movie" : "tv"}
-                priority={index < 12}
-              />
+              <motion.div key={`${item.id}-${(item as any).media_type}`} variants={item}>
+                <MovieCard
+                  item={item}
+                  type={(item as any).media_type === "movie" ? "movie" : "tv"}
+                  priority={index < 12}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-12 flex justify-center">
+            <motion.div 
+              className="mt-12 flex justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
               <div className="flex flex-wrap gap-2 justify-center">
                 <Button
                   variant="outline"
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
+                  className="glass-panel border-none hover:bg-white/10"
                 >
                   Previous
                 </Button>
                 
-                <div className="flex items-center px-4 text-sm">
-                  <span className="text-muted-foreground">
+                <div className="flex items-center px-4 text-sm glass-panel">
+                  <span className="text-white">
                     Page {currentPage} of {totalPages}
                   </span>
                 </div>
@@ -169,22 +212,48 @@ const Search = () => {
                   variant="outline"
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
+                  className="glass-panel border-none hover:bg-white/10"
                 >
                   Next
                 </Button>
               </div>
-            </div>
+            </motion.div>
           )}
         </>
       ) : searchQuery ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">No results found for "{searchQuery}"</p>
-          <p className="text-sm mb-6">Try using different keywords or browse our categories</p>
-          <div className="flex gap-3 justify-center">
-            <Button onClick={() => navigate("/movies")}>Browse Movies</Button>
-            <Button onClick={() => navigate("/tv-shows")} variant="outline">Browse TV Shows</Button>
-          </div>
-        </div>
+        <motion.div 
+          className="text-center py-12"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="glass-card p-8 max-w-md mx-auto rounded-xl"
+          >
+            <p className="text-muted-foreground mb-4">No results found for "{searchQuery}"</p>
+            <p className="text-sm mb-6">Try using different keywords or browse our categories</p>
+            <div className="flex gap-3 justify-center">
+              <Button 
+                onClick={() => navigate("/movies")}
+                className="gap-2"
+              >
+                <Film size={18} />
+                Browse Movies
+              </Button>
+              <Button 
+                onClick={() => navigate("/tv-shows")} 
+                variant="outline"
+                className="gap-2"
+              >
+                <Tv2 size={18} />
+                Browse TV Shows
+              </Button>
+            </div>
+          </motion.div>
+        </motion.div>
       ) : null}
     </div>
   );

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 import { addToFavorites, removeFromFavorites, checkIsFavorite } from '@/lib/favorites';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface FavoriteButtonProps {
   itemId: number;
@@ -12,7 +13,7 @@ interface FavoriteButtonProps {
   title: string;
   posterPath?: string;
   size?: 'default' | 'sm' | 'lg' | 'icon';
-  variant?: 'default' | 'outline' | 'ghost' | 'netflix';
+  variant?: 'default' | 'outline' | 'ghost';
 }
 
 const FavoriteButton: React.FC<FavoriteButtonProps> = ({ 
@@ -67,46 +68,84 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     }
   };
 
-  // For non-standard variants like netflix, we'll use a custom button instead
-  if (variant === 'netflix') {
+  if (size === 'icon') {
     return (
-      <button
+      <motion.button
         disabled={isLoading || !currentUser}
         onClick={handleToggleFavorite}
         className={cn(
-          "flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium",
-          "border border-white/30 text-white hover:border-white transition-all",
-          "focus:outline-none",
-          size === 'lg' ? "px-8 h-11" : "px-4 h-10",
-          size === 'sm' ? "px-3 h-9" : "",
-          size === 'icon' ? "w-10 h-10" : "",
-          isFavorited ? "bg-red-600 border-red-600 hover:bg-red-700 hover:border-red-700" : ""
+          "flex items-center justify-center rounded-full w-9 h-9",
+          isFavorited 
+            ? "bg-primary/20 text-primary hover:bg-primary/30" 
+            : "bg-black/40 text-white/70 hover:bg-black/60 hover:text-white"
         )}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <Heart 
-          size={size === 'lg' ? 20 : 16} 
-          className={cn(isFavorited ? "fill-white" : "")} 
-        />
-        {size !== 'icon' && "My List"}
-      </button>
+        <AnimatePresence mode="wait">
+          {isFavorited ? (
+            <motion.div
+              key="filled"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Heart className="fill-primary text-primary" size={18} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="outline"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Heart size={18} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
     );
   }
   
-  // For standard button variants
   return (
     <Button
-      variant={variant as "default" | "outline" | "ghost"}
+      variant={variant}
       size={size}
       disabled={isLoading || !currentUser}
       onClick={handleToggleFavorite}
       className={cn(
         isFavorited && variant === 'outline' ? "bg-primary/10" : "",
+        "group"
       )}
     >
-      <Heart 
-        className={cn(isFavorited ? "fill-primary text-primary" : "")} 
-      />
-      {size !== 'icon' && (isFavorited ? "Added to Favorites" : "Add to Favorites")}
+      <AnimatePresence mode="wait">
+        {isFavorited ? (
+          <motion.span
+            key="filled-heart"
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            exit={{ scale: 0, rotate: 30 }}
+            transition={{ type: "spring", stiffness: 500, damping: 15 }}
+            className="mr-2"
+          >
+            <Heart className="fill-primary text-primary group-hover:scale-110 transition-transform" size={size === 'lg' ? 20 : 16} />
+          </motion.span>
+        ) : (
+          <motion.span
+            key="outline-heart"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 15 }}
+            className="mr-2"
+          >
+            <Heart className="group-hover:scale-110 group-hover:text-primary transition-all" size={size === 'lg' ? 20 : 16} />
+          </motion.span>
+        )}
+      </AnimatePresence>
+      {isFavorited ? "Added to Favorites" : "Add to Favorites"}
     </Button>
   );
 };

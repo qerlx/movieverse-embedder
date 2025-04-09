@@ -1,3 +1,4 @@
+
 // TMDb API Types
 export interface Movie {
   id: number;
@@ -17,6 +18,9 @@ export interface Movie {
   original_language: string;
   original_title?: string;
   score?: number; // For recommendation scoring
+  media_type?: "movie"; // Add this for compatibility
+  type?: "movie"; // Add this for compatibility with watch history
+  progress?: number; // Add this for watch history
 }
 
 export interface TVShow {
@@ -38,6 +42,14 @@ export interface TVShow {
   number_of_episodes?: number;
   seasons?: Season[];
   score?: number; // For recommendation scoring
+  media_type?: "tv"; // Add this for compatibility
+  type?: "tv"; // Add this for compatibility with watch history
+  progress?: number; // Add this for watch history
+  lastEpisode?: {
+    season: number;
+    episode: number;
+    name?: string;
+  }; // Add this for watch history
 }
 
 // Extended types for watch history

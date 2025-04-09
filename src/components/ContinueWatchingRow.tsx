@@ -45,19 +45,43 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
     navigate(`/${item.type}/${item.id}`);
   };
   
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+  
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
       className="py-6"
     >
-      <h2 className="text-xl md:text-2xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent flex items-center">
+      <motion.h2 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-xl md:text-2xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent flex items-center"
+      >
         <Clock className="mr-2 h-6 w-6 text-primary" />
         Continue Watching
-      </h2>
+      </motion.h2>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+        variants={container}
+        initial="hidden"
+        animate="show"
+      >
         {items.map((item, idx) => {
           const title = item.title || item.name || "";
           const posterPath = item.poster_path 
@@ -69,13 +93,11 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
           return (
             <motion.div 
               key={`${item.type}-${item.id}`}
-              className="relative bg-black/40 backdrop-blur-md rounded-xl overflow-hidden shadow-lg cursor-pointer group border border-white/10"
+              className="glass-card rounded-xl overflow-hidden cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
               onClick={() => handleContinueWatching(item)}
-              whileHover={{ scale: 1.02, y: -5 }}
+              variants={item}
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: idx * 0.1 }}
             >
               <div className="flex h-32">
                 <div className="w-1/3 relative">
@@ -92,15 +114,26 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
                       S{item.lastEpisode.season}:E{item.lastEpisode.episode}
                     </div>
                   )}
+                  
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <motion.div 
+                      className="flex items-center justify-center w-10 h-10 rounded-full bg-primary shadow-lg"
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    >
+                      <Play className="ml-1 w-5 h-5 text-white" />
+                    </motion.div>
+                  </div>
                 </div>
                 
                 <div className="w-2/3 p-4 flex flex-col justify-between">
                   <div>
                     <h3 className="font-semibold text-sm line-clamp-1">{title}</h3>
                     
-                    {item.type === 'tv' && item.lastEpisode && (
+                    {item.type === 'tv' && item.lastEpisode && item.lastEpisode.name && (
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                        {item.lastEpisode.name && `"${item.lastEpisode.name}"`}
+                        "{item.lastEpisode.name}"
                       </p>
                     )}
                   </div>
@@ -141,7 +174,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
             </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </motion.div>
   );
 };
