@@ -19,13 +19,16 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Use streaming theme by default
+  // Always use streaming theme by default
   const [theme, setThemeState] = useState<Theme>('streaming');
 
   useEffect(() => {
     // Apply theme class to the document body
     document.body.classList.remove('theme-default', 'theme-streaming');
     document.body.classList.add(`theme-${theme}`);
+    
+    // Make sure the CSS is loaded 
+    document.documentElement.style.setProperty('--primary', '267 75% 65%');
   }, [theme]);
 
   const setTheme = (newTheme: Theme) => {

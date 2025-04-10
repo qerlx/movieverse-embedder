@@ -19,7 +19,7 @@ const MobileNavigation = () => {
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="fixed bottom-0 left-0 right-0 z-50 w-full frosted-navbar border-t border-white/10 h-16"
+      className="fixed bottom-0 left-0 right-0 z-50 w-full frosted-navbar border-t border-white/10 h-16 bg-background/95 backdrop-blur-md"
     >
       <div className="h-full grid grid-cols-5 gap-1">
         {items.map((item) => {
@@ -30,7 +30,7 @@ const MobileNavigation = () => {
               key={item.to} 
               to={item.to} 
               className={({ isActive }) => cn(
-                "flex flex-col items-center justify-center",
+                "flex flex-col items-center justify-center relative overflow-hidden",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}
             >
@@ -39,7 +39,7 @@ const MobileNavigation = () => {
                   <div className="relative">
                     <IconComponent 
                       className={cn(
-                        "transition-all", 
+                        "transition-all duration-300", 
                         isActive ? "text-primary" : "text-muted-foreground"
                       )} 
                       size={20} 
@@ -56,7 +56,7 @@ const MobileNavigation = () => {
                   </div>
                   
                   <span className={cn(
-                    "text-xs mt-1 transition-colors",
+                    "text-xs mt-1 transition-colors duration-300",
                     isActive ? "font-medium text-primary" : "font-normal"
                   )}>
                     {item.label}
@@ -65,7 +65,7 @@ const MobileNavigation = () => {
                   {isActive && (
                     <motion.div 
                       layoutId="activeNavIndicator"
-                      className="absolute top-0 left-1/2 transform -translate-x-1/2 h-1 w-10 bg-gradient-to-r from-primary/80 to-primary rounded-b-md"
+                      className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-primary/60 via-primary to-primary/60"
                       transition={{ type: "spring", stiffness: 500 }}
                     />
                   )}

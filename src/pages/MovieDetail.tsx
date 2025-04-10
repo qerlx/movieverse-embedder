@@ -113,7 +113,7 @@ const MovieDetail = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen"
+      className="min-h-screen bg-background"
     >
       {/* Hero section with backdrop */}
       <div className="relative">
@@ -123,10 +123,10 @@ const MovieDetail = () => {
               initial={{ filter: "blur(16px)", opacity: 0 }}
               animate={{ filter: "blur(0px)", opacity: 1 }}
               transition={{ duration: 1.2 }}
-              className="w-full h-[80vh] bg-cover bg-top bg-no-repeat"
+              className="w-full h-[80vh] bg-cover bg-center bg-no-repeat"
               style={{ backgroundImage: `url(${backdropUrl})` }}
             ></motion.div>
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent"></div>
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
           </div>
         )}
@@ -141,7 +141,9 @@ const MovieDetail = () => {
               className="w-full max-w-xs mx-auto md:mx-0"
             >
               <div className="overflow-hidden rounded-2xl shadow-2xl hover:shadow-primary/20 transition-shadow duration-300 purple-glow">
-                <img
+                <motion.img
+                  whileHover={{ scale: 1.03 }}
+                  transition={{ duration: 0.2 }}
                   src={posterUrl}
                   alt={movie.title}
                   className="w-full h-auto object-cover"
