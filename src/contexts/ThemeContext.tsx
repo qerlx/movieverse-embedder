@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Theme = 'default';
+type Theme = 'default' | 'streaming';
 
 interface ThemeContextType {
   theme: Theme;
@@ -19,20 +19,20 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Since we only have one theme now, always use 'default'
-  const [theme, setThemeState] = useState<Theme>('default');
+  // Use streaming theme by default
+  const [theme, setThemeState] = useState<Theme>('streaming');
 
   useEffect(() => {
     // Apply theme class to the document body
-    document.body.classList.remove('theme-default');
+    document.body.classList.remove('theme-default', 'theme-streaming');
     document.body.classList.add(`theme-${theme}`);
-  }, []);
+  }, [theme]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     
     // Apply theme class to the document body
-    document.body.classList.remove('theme-default');
+    document.body.classList.remove('theme-default', 'theme-streaming');
     document.body.classList.add(`theme-${newTheme}`);
   };
 

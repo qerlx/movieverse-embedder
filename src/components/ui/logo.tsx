@@ -45,9 +45,9 @@ const Logo: React.FC<LogoProps> = ({ className, iconOnly = false }) => {
           className="w-8 h-8 purple-glow" 
         />
         <span className="flex font-bold">
-          <span className="text-white">Movie</span>
+          <span className="text-foreground">Movie</span>
           <span className="text-primary">Stream</span>
-          <span className="text-white">Hub</span>
+          <span className="text-foreground">Hub</span>
         </span>
       </motion.div>
     </Link>
