@@ -27,7 +27,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     document.body.classList.remove('theme-default', 'theme-streaming');
     document.body.classList.add(`theme-${theme}`);
     
-    // Make sure the CSS is loaded 
+    // Make sure the CSS variables are correctly set
     document.documentElement.style.setProperty('--primary', '267 75% 65%');
   }, [theme]);
 
