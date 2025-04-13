@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -131,23 +130,8 @@ const Search = () => {
               Discover Your Next Favorite
             </h1>
             
-            <div className="w-full max-w-2xl mb-6 relative">
+            <div className="w-full max-w-2xl">
               <SearchBar variant="large" autoFocus />
-              <motion.div 
-                className="absolute -bottom-12 left-0 right-0 flex justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-              >
-                <div className="flex gap-2 text-sm text-white/60">
-                  <span>Popular searches:</span>
-                  <div className="flex gap-3">
-                    <button onClick={() => setSearchParams({ q: "action" })} className="hover:text-primary transition-colors">Action</button>
-                    <button onClick={() => setSearchParams({ q: "comedy" })} className="hover:text-primary transition-colors">Comedy</button>
-                    <button onClick={() => setSearchParams({ q: "family" })} className="hover:text-primary transition-colors">Family</button>
-                  </div>
-                </div>
-              </motion.div>
             </div>
           </motion.div>
         </div>
