@@ -6,7 +6,7 @@ import { MediaItem, Movie, TVShow } from "@/types";
 import MovieCard from "@/components/MovieCard";
 import { Button } from "@/components/ui/button";
 import SearchBar from "@/components/SearchBar";
-import { Search as SearchIcon, Film, Tv2, Sparkles } from "lucide-react";
+import { Search as SearchIcon, Film, Tv2, Sparkles, Star, Calendar, Globe, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Search = () => {
@@ -36,7 +36,6 @@ const Search = () => {
       setIsLoading(true);
       
       const data = await searchMulti(query, page);
-      // Transform MediaItem results to Movie or TVShow
       const filteredResults = data.results
         .filter((item: any) => item.media_type === "movie" || item.media_type === "tv")
         .map((item: any): Movie | TVShow => {
@@ -75,7 +74,7 @@ const Search = () => {
         });
       
       setResults(filteredResults);
-      setTotalPages(Math.min(data.total_pages, 20)); // Limit to 20 pages
+      setTotalPages(Math.min(data.total_pages, 20));
       setCurrentPage(page);
       
     } catch (error) {
@@ -96,7 +95,16 @@ const Search = () => {
     fetchResults(searchQuery, page);
   };
 
-  // Fixed variants objects to resolve TS errors
+  const sortResultsByPopularity = (items: (Movie | TVShow)[]) => {
+    return [...items].sort((a, b) => b.popularity - a.popularity);
+  };
+
+  const sortResultsByRating = (items: (Movie | TVShow)[]) => {
+    return [...items].sort((a, b) => b.vote_average - a.vote_average);
+  };
+
+  const topRatedItems = sortResultsByRating(results).slice(0, 3);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -114,7 +122,6 @@ const Search = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      {/* Hero search section with backdrop */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-background/90 to-background"></div>
         <div className="absolute inset-0 bg-[url('https://source.unsplash.com/random/1920x1080/?cinema,movie')] bg-cover bg-center opacity-20"></div>
@@ -138,7 +145,6 @@ const Search = () => {
       </div>
 
       <div className="container max-w-screen-2xl mx-auto px-4 pt-16">
-        {/* Results header */}
         <AnimatePresence>
           {searchQuery && (
             <motion.div 
@@ -168,7 +174,6 @@ const Search = () => {
           )}
         </AnimatePresence>
 
-        {/* Loading state */}
         <AnimatePresence>
           {isLoading && (
             <motion.div 
@@ -188,7 +193,71 @@ const Search = () => {
           )}
         </AnimatePresence>
 
-        {/* Results grid with animation */}
+        {!isLoading && topRatedItems.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-16"
+          >
+            <h3 className="text-xl font-semibold mb-6 flex items-center">
+              <Star className="text-yellow-500 mr-2" size={20} />
+              Top Rated Results
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {topRatedItems.map((item, index) => {
+                const isMovie = (item as any).media_type === "movie";
+                const title = isMovie ? (item as Movie).title : (item as TVShow).name;
+                const year = isMovie 
+                  ? (item as Movie).release_date?.substring(0, 4) 
+                  : (item as TVShow).first_air_date?.substring(0, 4);
+                const backdropPath = item.backdrop_path
+                  ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}`
+                  : `https://image.tmdb.org/t/p/w780${item.poster_path}`;
+                  
+                return (
+                  <motion.div
+                    key={`top-${item.id}-${isMovie ? 'movie' : 'tv'}`}
+                    className="relative overflow-hidden rounded-2xl neo-blur hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all duration-300 h-52 group cursor-pointer"
+                    whileHover={{ scale: 1.03, y: -5 }}
+                    onClick={() => navigate(`/${isMovie ? 'movie' : 'tv'}/${item.id}`)}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent z-10"></div>
+                    <img 
+                      src={backdropPath} 
+                      alt={title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 z-20 p-4 flex flex-col justify-end">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="text-lg font-bold text-white mb-1">{title}</h4>
+                          <div className="flex items-center gap-3 text-sm text-white/70">
+                            {year && (
+                              <span className="flex items-center">
+                                <Calendar size={14} className="mr-1" />
+                                {year}
+                              </span>
+                            )}
+                            <span className="flex items-center">
+                              <Star size={14} className="text-yellow-500 mr-1" />
+                              {item.vote_average.toFixed(1)}
+                            </span>
+                            <span className="capitalize px-2 py-0.5 rounded-full text-xs bg-primary/20 text-primary/90 backdrop-blur-sm">
+                              {isMovie ? 'Movie' : 'TV Show'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
         {!isLoading && results.length > 0 && (
           <motion.div 
             variants={containerVariants}
@@ -213,19 +282,18 @@ const Search = () => {
           </motion.div>
         )}
 
-        {/* Empty state (no results) */}
         {!isLoading && searchQuery && results.length === 0 && (
           <motion.div 
-            className="py-16 flex flex-col items-center text-center"
+            className="py-16 flex flex-col items-center text-center neo-blur rounded-3xl p-8"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <Sparkles className="text-primary h-8 w-8" />
+            <div className="w-20 h-20 rounded-full bg-primary/20 backdrop-blur-xl flex items-center justify-center mb-6 animate-pulse">
+              <Sparkles className="text-primary h-10 w-10" />
             </div>
             <h3 className="text-2xl font-semibold mb-4">No results found</h3>
-            <p className="text-muted-foreground mb-6 max-w-md">
+            <p className="text-muted-foreground mb-8 max-w-md">
               We couldn't find any movies or shows matching "{searchQuery}". 
               Try using different keywords or explore our categories.
             </p>
@@ -252,7 +320,6 @@ const Search = () => {
           </motion.div>
         )}
 
-        {/* Pagination */}
         {!isLoading && results.length > 0 && totalPages > 1 && (
           <motion.div 
             className="mt-16 mb-4 flex justify-center"
@@ -275,7 +342,6 @@ const Search = () => {
               
               <div className="flex items-center px-4">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  // Show pages around current page
                   let pageNum;
                   if (totalPages <= 5) {
                     pageNum = i + 1;
