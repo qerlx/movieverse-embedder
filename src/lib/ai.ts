@@ -3,7 +3,9 @@ import Together from "together-ai";
 
 // Initialize the Together AI client with your API key
 const API_KEY = "2e02291e588ee5cd9660af7ab744417c65e7f3023da7b3c1d0ad90bbc04f3486";
-const together = new Together(API_KEY);
+const together = new Together({
+  apiKey: API_KEY
+});
 
 // The model to use
 const MODEL = "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8";
