@@ -140,6 +140,25 @@ const Search = () => {
             <div className="w-full max-w-2xl">
               <SearchBar variant="large" autoFocus />
             </div>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="mt-6 flex flex-col items-center"
+            >
+              <Button
+                onClick={() => navigate("/ai-recommendations")}
+                variant="outline"
+                className="gap-2 rounded-full px-6 py-2 bg-black/40 backdrop-blur-md border-white/10 hover:bg-primary/20 hover:border-primary/40 transition-all duration-300"
+              >
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span>Get AI Recommendations</span>
+              </Button>
+              <p className="text-xs text-white/50 mt-2">
+                Not sure what to watch? Let our AI help you find something!
+              </p>
+            </motion.div>
           </motion.div>
         </div>
       </div>
