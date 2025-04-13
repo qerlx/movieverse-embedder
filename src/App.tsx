@@ -18,6 +18,7 @@ import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
 import UserProfile from "./pages/UserProfile";
 import DnsPopup from "./components/DnsPopup";
+import AIRecommendations from "./components/AIRecommendations";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,6 +48,7 @@ const App = () => (
                   <Route path="tv/:id" element={<TVShowDetail />} />
                   <Route path="search" element={<Search />} />
                   <Route path="profile" element={<UserProfile />} />
+                  <Route path="ai-recommendations" element={<AIRecommendations />} />
                 </Route>
                 <Route path="/watch/:type/:id" element={<Watch />} />
                 <Route path="/watch/:type/:id/:season/:episode" element={<Watch />} />
