@@ -137,3 +137,43 @@ Your goal is to delight users with fascinating information they probably didn't 
     return "Sorry, I couldn't generate trivia at this time. Please try again later.";
   }
 }
+
+/**
+ * Function to simulate automation tasks that would typically require backend
+ */
+export async function simulateAutomationTask(taskType: string, parameters: Record<string, string>): Promise<string> {
+  try {
+    const systemPrompt = `You are an AI assistant that simulates browser automation for a streaming platform.
+Your task is to respond as if you are performing automated tasks in a browser, even though this is a simulation.
+
+REQUESTED TASK: ${taskType}
+PARAMETERS: ${JSON.stringify(parameters)}
+
+GUIDELINES:
+- Respond as if you're actually performing the requested browser task
+- For 'login' tasks: Describe the login process step by step and provide a simulated result
+- For 'screenshot' tasks: Describe what would be visible in the screenshot of the specified page
+- For 'check_playback' tasks: Describe the video player state as if you're checking if a video is playing
+- Include typical success/failure conditions that might occur during automation
+- Add realistic details about page elements, UI components, and interactions
+- Format your response to mimic an automation log with timestamps and step details
+- End with a clear status indicator (SUCCESS or FAILURE) and any relevant details
+
+Remember that your goal is to help users understand how browser automation would work in a real backend implementation.`;
+
+    const response = await together.chat.completions.create({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Execute ${taskType} task with parameters: ${JSON.stringify(parameters)}` }
+      ],
+      model: MODEL,
+      temperature: 0.7,
+      max_tokens: 800,
+    });
+    
+    return response.choices[0].message.content;
+  } catch (error) {
+    console.error("Error simulating automation task:", error);
+    return "Sorry, I couldn't simulate the automation task at this time. Please try again later.";
+  }
+}
