@@ -24,33 +24,66 @@ const Watch = () => {
   const { currentUser } = useAuth();
   const [title, setTitle] = useState("");
   const [posterPath, setPosterPath] = useState<string | null>(null);
-  const [embedUrls, setEmbedUrls] = useState<{server1: string, server2: string, server3: string, server4: string}>({
-    server1: "",
-    server2: "",
+  const [embedUrls, setEmbedUrls] = useState<{main: string, vidora: string, vidsrc: string, server3: string, server4: string}>({
+    main: "",
+    vidora: "",
+    vidsrc: "",
     server3: "",
     server4: ""
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeServer, setActiveServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
-  const [lastWorkingServer, setLastWorkingServer] = useState<"server1" | "server2" | "server3" | "server4">("server1");
+  const [activeServer, setActiveServer] = useState<"main" | "vidora" | "vidsrc" | "server3" | "server4">("main");
+  const [lastWorkingServer, setLastWorkingServer] = useState<"main" | "vidora" | "vidsrc" | "server3" | "server4">("main");
   const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
   const [hasNextEpisode, setHasNextEpisode] = useState(false);
   const [nextEpisodeInfo, setNextEpisodeInfo] = useState<{season: number, episode: number} | null>(null);
   const [serverStatus, setServerStatus] = useState<Record<string, 'loading' | 'online' | 'offline'>>({
-    server1: 'loading',
-    server2: 'loading',
+    main: 'loading',
+    vidora: 'loading',
+    vidsrc: 'loading',
     server3: 'loading',
     server4: 'loading'
   });
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Custom theme color for Vidora player
+  const vidoraThemeColor = "00ff9d"; // Teal color that matches our theme
+
   // Server names for display
   const serverNames: Record<string, string> = {
-    server1: "2embed",
-    server2: "VidSrc",
+    main: "Vidora Primary",
+    vidora: "Vidora Backup",
+    vidsrc: "VidSrc",
     server3: "MultiEmbed",
     server4: "Embed.su"
   };
+
+  // Setup watch progress syncing
+  useEffect(() => {
+    // Handle messages from the iframe
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'MEDIA_DATA') {
+        const mediaData = event.data.data;
+        if (mediaData.id && (mediaData.type === 'movie' || mediaData.type === 'tv')) {
+          console.log('Progress update received:', mediaData);
+          
+          if (currentUser) {
+            // Update watch progress logic
+            const progress = mediaData.progress?.percent || 0;
+            try {
+              // We would call updateWatchProgress here but we'll just log for now
+              console.log(`Updating watch progress for ${mediaData.type} ${mediaData.id}: ${progress}%`);
+            } catch (error) {
+              console.error("Error updating watch progress:", error);
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [currentUser]);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -65,10 +98,11 @@ const Watch = () => {
           setTitle(movieData.title);
           setPosterPath(movieData.poster_path);
           
-          // Correctly set updated vidsrc URL format for movies
+          // Set Vidora as main player
           setEmbedUrls({
-            server1: `https://www.2embed.cc/embed/${itemId}`,
-            server2: `https://vidsrc.cc/v2/embed/movie/${itemId}`,
+            main: `https://vidora.su/movie/${itemId}?autoplay=true&colour=${vidoraThemeColor}&pausescreen=true`,
+            vidora: `https://vidora.su/movie/tt${movieData.imdb_id || itemId}?autoplay=true&colour=${vidoraThemeColor}`,
+            vidsrc: `https://vidsrc.cc/v2/embed/movie/${itemId}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`,
             server4: `https://embed.su/embed/movie/${itemId}`
           });
@@ -98,10 +132,11 @@ const Watch = () => {
           setTitle(`${tvData.name} - S${season} E${episode}`);
           setPosterPath(tvData.poster_path);
           
-          // Correctly set updated vidsrc URL format for TV shows
+          // Set Vidora as main player for TV shows
           setEmbedUrls({
-            server1: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
-            server2: `https://vidsrc.cc/v2/embed/tv/${itemId}`, // Updated format
+            main: `https://vidora.su/tv/${itemId}/${season}/${episode}?autoplay=true&colour=${vidoraThemeColor}&autonextepisode=true&pausescreen=true`,
+            vidora: `https://vidora.su/tv/${itemId}/${season}/${episode}?autoplay=true&colour=${vidoraThemeColor}`,
+            vidsrc: `https://vidsrc.cc/v2/embed/tv/${itemId}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
             server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
@@ -165,11 +200,12 @@ const Watch = () => {
           throw new Error("Invalid parameters for TV show");
         }
 
-        // Simulate checking server status
+        // Simulate checking server status - we'd replace this with real checks
         setTimeout(() => {
           setServerStatus({
-            server1: Math.random() > 0.2 ? 'online' : 'offline',
-            server2: Math.random() > 0.1 ? 'online' : 'offline',
+            main: 'online',  // Assume our main server is always online
+            vidora: Math.random() > 0.1 ? 'online' : 'offline',
+            vidsrc: Math.random() > 0.2 ? 'online' : 'offline',
             server3: Math.random() > 0.3 ? 'online' : 'offline',
             server4: Math.random() > 0.2 ? 'online' : 'offline',
           });
@@ -188,7 +224,7 @@ const Watch = () => {
     };
 
     fetchDetails();
-  }, [id, type, season, episode, navigate, uiToast, currentUser]);
+  }, [id, type, season, episode, navigate, uiToast, currentUser, vidoraThemeColor]);
 
   const goToNextEpisode = () => {
     if (nextEpisodeInfo && type === "tv" && id) {
@@ -198,7 +234,7 @@ const Watch = () => {
   };
 
   const tryNextServer = () => {
-    const serverOptions: ("server1" | "server2" | "server3" | "server4")[] = ["server1", "server2", "server3", "server4"];
+    const serverOptions: ("main" | "vidora" | "vidsrc" | "server3" | "server4")[] = ["main", "vidora", "vidsrc", "server3", "server4"];
     const currentIndex = serverOptions.indexOf(activeServer);
     
     let nextIndex = (currentIndex + 1) % serverOptions.length;
@@ -217,7 +253,7 @@ const Watch = () => {
     setActiveServer(nextServer);
   };
 
-  const handleServerSwitch = (server: "server1" | "server2" | "server3" | "server4") => {
+  const handleServerSwitch = (server: "main" | "vidora" | "vidsrc" | "server3" | "server4") => {
     setActiveServer(server);
     setLastWorkingServer(server);
     
@@ -286,14 +322,14 @@ const Watch = () => {
           )}
         </motion.div>
         
-        {/* Redesigned server selection with pill buttons and status indicators */}
+        {/* Server selection with pill buttons and status indicators */}
         <motion.div 
           className="flex flex-wrap gap-2 mb-6 justify-center sm:justify-start"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          {["server1", "server2", "server3", "server4"].map((server, index) => {
+          {(["main", "vidora", "vidsrc", "server3", "server4"] as const).map((server, index) => {
             const isActive = activeServer === server;
             const status = serverStatus[server];
             
@@ -308,7 +344,7 @@ const Watch = () => {
               >
                 <Button 
                   size="lg" 
-                  onClick={() => handleServerSwitch(server as "server1" | "server2" | "server3" | "server4")}
+                  onClick={() => handleServerSwitch(server)}
                   className={cn(
                     "rounded-full px-5 gap-2 relative border h-11 transition-all duration-300 shadow-lg",
                     isActive 

@@ -2,7 +2,7 @@ import { MovieResult, TVResult, ConfigurationResponse, Genre } from "@/types";
 
 const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMzQzYzU2N2ZhZTk3Y2JlZGM0OGQ1YWQ0Yjg5M2YzMSIsIm5iZiI6MTc0MTc1NzA2NC43MzMsInN1YiI6IjY3ZDExYTg4MTM5OTBhMDU4YjYwYWExMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.PfUfbFyxCtI3bJehMrDRUuuKOPp58WC-_4B4aUovCyA";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
-const EMBED_BASE_URL = "https://embed.su/embed";
+const EMBED_BASE_URL = "https://vidora.su";
 
 const API_OPTIONS = {
   method: 'GET',
@@ -271,7 +271,46 @@ export const getWatchProviders = async (type: 'movie' | 'tv', id: number) => {
   }
 };
 
-// Generate embed URLs
+// Generate Vidora embed URLs with customizable parameters
+interface VidoraParams {
+  autoplay?: boolean;
+  colour?: string; // hex color without #
+  autonextepisode?: boolean; 
+  backbutton?: string; // URL
+  logo?: string; // URL
+  pausescreen?: boolean;
+  idlecheck?: number; // minutes, 0 to disable
+}
+
+export const getVidoraMovieEmbedUrl = (tmdbId: number, params?: VidoraParams): string => {
+  const url = new URL(`${EMBED_BASE_URL}/movie/${tmdbId}`);
+  
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        url.searchParams.append(key, String(value));
+      }
+    });
+  }
+  
+  return url.toString();
+};
+
+export const getVidoraTVEmbedUrl = (tmdbId: number, season: number, episode: number, params?: VidoraParams): string => {
+  const url = new URL(`${EMBED_BASE_URL}/tv/${tmdbId}/${season}/${episode}`);
+  
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        url.searchParams.append(key, String(value));
+      }
+    });
+  }
+  
+  return url.toString();
+};
+
+// Legacy embed URLs
 export const getMovieEmbedUrl = (tmdbId: number): string => {
   return `${EMBED_BASE_URL}/movie/${tmdbId}`;
 };
