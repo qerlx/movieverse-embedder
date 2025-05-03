@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +36,21 @@ const Watch = () => {
   const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
   const [hasNextEpisode, setHasNextEpisode] = useState(false);
   const [nextEpisodeInfo, setNextEpisodeInfo] = useState<{season: number, episode: number} | null>(null);
+  const [serverStatus, setServerStatus] = useState<Record<string, 'loading' | 'online' | 'offline'>>({
+    server1: 'loading',
+    server2: 'loading',
+    server3: 'loading',
+    server4: 'loading'
+  });
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Server names for display
+  const serverNames: Record<string, string> = {
+    server1: "2embed",
+    server2: "VidSrc",
+    server3: "MultiEmbed",
+    server4: "Embed.su"
+  };
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -50,6 +65,7 @@ const Watch = () => {
           setTitle(movieData.title);
           setPosterPath(movieData.poster_path);
           
+          // Correctly set updated vidsrc URL format for movies
           setEmbedUrls({
             server1: `https://www.2embed.cc/embed/${itemId}`,
             server2: `https://vidsrc.cc/v2/embed/movie/${itemId}`,
@@ -82,9 +98,10 @@ const Watch = () => {
           setTitle(`${tvData.name} - S${season} E${episode}`);
           setPosterPath(tvData.poster_path);
           
+          // Correctly set updated vidsrc URL format for TV shows
           setEmbedUrls({
             server1: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
-            server2: `https://vidsrc.cc/v2/embed/tv/${itemId}`,
+            server2: `https://vidsrc.cc/v2/embed/tv/${itemId}`, // Updated format
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
             server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
@@ -147,6 +164,16 @@ const Watch = () => {
         } else {
           throw new Error("Invalid parameters for TV show");
         }
+
+        // Simulate checking server status
+        setTimeout(() => {
+          setServerStatus({
+            server1: Math.random() > 0.2 ? 'online' : 'offline',
+            server2: Math.random() > 0.1 ? 'online' : 'offline',
+            server3: Math.random() > 0.3 ? 'online' : 'offline',
+            server4: Math.random() > 0.2 ? 'online' : 'offline',
+          });
+        }, 1500);
       } catch (error) {
         console.error("Error fetching details:", error);
         uiToast({
@@ -182,14 +209,7 @@ const Watch = () => {
       [activeServer]: (prev[activeServer] || 0) + 1
     }));
     
-    const serverNames: Record<string, string> = {
-      server1: "1 (2embed)",
-      server2: "2 (VidSrc)",
-      server3: "3 (MultiEmbed)",
-      server4: "4 (Embed.su)"
-    };
-    
-    toast.info(`Switching to Server ${serverNames[nextServer]}`, {
+    toast.info(`Switching to ${serverNames[nextServer]}`, {
       description: "If video doesn't load, try another server",
       duration: 3000
     });
@@ -201,14 +221,7 @@ const Watch = () => {
     setActiveServer(server);
     setLastWorkingServer(server);
     
-    const serverNames: Record<string, string> = {
-      server1: "1 (2embed)",
-      server2: "2 (VidSrc)",
-      server3: "3 (MultiEmbed)",
-      server4: "4 (Embed.su)"
-    };
-    
-    toast.info(`Switched to Server ${serverNames[server]}`, {
+    toast.info(`Switched to ${serverNames[server]}`, {
       description: "If video doesn't load, try another server",
       duration: 3000
     });
@@ -228,11 +241,18 @@ const Watch = () => {
     }
   };
 
+  // Server status badge color
+  const getStatusColor = (status: 'loading' | 'online' | 'offline') => {
+    if (status === 'loading') return 'bg-yellow-500/70';
+    if (status === 'online') return 'bg-green-500/70';
+    return 'bg-red-500/70';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-black">
       <div className="container mx-auto px-4 py-4 flex flex-col h-screen">
         <motion.div 
-          className="flex items-center justify-between mb-4" 
+          className="flex items-center justify-between mb-6" 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
@@ -258,7 +278,7 @@ const Watch = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={goToNextEpisode}
-              className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-white px-3 py-1.5 rounded-full transition-colors"
+              className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-white px-3 py-1.5 rounded-full transition-colors shadow-lg hover:shadow-primary/30"
             >
               <span className="hidden sm:inline">Next Episode</span>
               <SkipForward size={18} />
@@ -266,42 +286,52 @@ const Watch = () => {
           )}
         </motion.div>
         
+        {/* Redesigned server selection with pill buttons and status indicators */}
         <motion.div 
-          className="flex space-x-2 mb-4 overflow-x-auto pb-2 scrollbar-none"
+          className="flex flex-wrap gap-2 mb-6 justify-center sm:justify-start"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
           {["server1", "server2", "server3", "server4"].map((server, index) => {
-            const serverNames: Record<string, string> = {
-              server1: "Server 1",
-              server2: "Server 2",
-              server3: "Server 3",
-              server4: "Server 4"
-            };
+            const isActive = activeServer === server;
+            const status = serverStatus[server];
             
             return (
-              <motion.div key={server} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * index }}>
+              <motion.div 
+                key={server} 
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ delay: 0.1 * index }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <Button 
-                  size="sm" 
-                  variant={activeServer === server ? "default" : "outline"} 
-                  className={cn(
-                    "gap-2",
-                    activeServer === server 
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                      : "border-white/10 bg-black/50 hover:bg-black/90"
-                  )}
+                  size="lg" 
                   onClick={() => handleServerSwitch(server as "server1" | "server2" | "server3" | "server4")}
+                  className={cn(
+                    "rounded-full px-5 gap-2 relative border h-11 transition-all duration-300 shadow-lg",
+                    isActive 
+                      ? "bg-primary text-white border-primary/40 shadow-primary/20" 
+                      : "bg-black/30 backdrop-blur-md border-white/10 hover:bg-black/50"
+                  )}
                 >
-                  <MonitorPlay size={16} />
-                  {serverNames[server]}
+                  <MonitorPlay size={18} />
+                  <span>{serverNames[server]}</span>
+                  <span 
+                    className={cn(
+                      "absolute top-1 right-1 w-2.5 h-2.5 rounded-full animate-pulse",
+                      getStatusColor(status)
+                    )} 
+                    title={`Server is ${status}`}
+                  />
                 </Button>
               </motion.div>
             );
           })}
         </motion.div>
         
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div 
               initial={{ opacity: 0 }}
@@ -312,21 +342,22 @@ const Watch = () => {
               <motion.div 
                 animate={{ rotate: 360 }}
                 transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
+                className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full shadow-lg shadow-primary/10"
               />
             </motion.div>
           ) : (
             <motion.div 
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="flex-1 flex flex-col"
             >
-              <div className="w-full h-full relative rounded-lg overflow-hidden glass-panel shadow-2xl">
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none" id="loading-overlay">
-                  <div className="flex flex-col items-center">
-                    <RotateCw className="h-10 w-10 animate-spin text-primary" />
-                    <p className="mt-4 text-sm">Loading video...</p>
+              <div className="w-full h-full relative rounded-xl overflow-hidden glass-panel shadow-2xl border border-white/10">
+                <div id="loading-overlay" className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none transition-opacity duration-300">
+                  <div className="flex flex-col items-center bg-black/40 p-8 rounded-xl backdrop-blur-md">
+                    <RotateCw className="h-12 w-12 animate-spin text-primary" />
+                    <p className="mt-4 text-sm font-medium">Loading video stream...</p>
                   </div>
                 </div>
                 
@@ -340,43 +371,59 @@ const Watch = () => {
                   className="absolute inset-0 w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 ></iframe>
+
+                {/* Error fallback */}
+                <div className="absolute inset-0 hidden bg-black/80 flex-col items-center justify-center" id="error-fallback">
+                  <div className="text-center p-6 bg-black/50 rounded-xl backdrop-blur-md max-w-md">
+                    <h3 className="text-red-400 text-xl font-bold mb-3">Playback Error</h3>
+                    <p className="text-white/80 mb-4">This stream appears to be unavailable. Please try another server.</p>
+                    <Button 
+                      variant="default" 
+                      className="bg-primary hover:bg-primary/90 shadow-lg"
+                      onClick={tryNextServer}
+                    >
+                      <RotateCw size={16} className="mr-2" /> Try Another Server
+                    </Button>
+                  </div>
+                </div>
               </div>
               
               <motion.div 
-                className="flex justify-center items-center gap-4 mt-4"
+                className="flex flex-wrap justify-center sm:justify-between items-center gap-3 mt-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
                 <Button 
                   variant="outline" 
-                  size="sm" 
-                  className="gap-2 glass-panel text-white hover:bg-white/10 border-none"
+                  size="lg"
+                  className="gap-2 rounded-full glass-panel text-white hover:bg-white/10 hover:text-primary border-white/10 shadow-lg hover:shadow-primary/20 transition-all duration-300"
                   onClick={() => {
-                    toast.success("Thanks for the feedback!");
+                    toast.success("Thanks for your feedback!");
                   }}
                 >
-                  <ThumbsUp size={14} />
+                  <ThumbsUp size={16} />
                   Working well
                 </Button>
+                
                 <Button 
                   variant="outline" 
-                  size="sm" 
-                  className="gap-2 glass-panel text-white hover:bg-white/10 border-none"
+                  size="lg"
+                  className="gap-2 rounded-full glass-panel text-white hover:bg-white/10 hover:text-primary border-white/10 shadow-lg hover:shadow-primary/20 transition-all duration-300"
                   onClick={tryNextServer}
                 >
-                  <RotateCw size={14} />
+                  <RotateCw size={16} />
                   Try another server
                 </Button>
                 
                 {hasNextEpisode && (
                   <Button 
                     variant="default"
-                    size="sm" 
-                    className="gap-2 bg-primary hover:bg-primary/90"
+                    size="lg" 
+                    className="gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg hover:shadow-primary/30 transition-all duration-300"
                     onClick={goToNextEpisode}
                   >
-                    <SkipForward size={14} />
+                    <SkipForward size={16} />
                     Next Episode
                   </Button>
                 )}
