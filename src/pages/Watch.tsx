@@ -1,15 +1,17 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
-import { getMovieDetails, getTVShowDetails, getTVShowEpisodes } from "@/lib/api";
-import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, SkipForward } from "lucide-react";
+import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails, getVidoraMovieEmbedUrl, getVidoraTVEmbedUrl } from "@/lib/api";
+import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, SkipForward, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+
+// Storage key for watch progress
+const STORAGE_KEY = 'watch_progress';
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -44,22 +46,66 @@ const Watch = () => {
     server3: 'loading',
     server4: 'loading'
   });
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
 
-  // Custom theme color for Vidora player
-  const vidoraThemeColor = "00ff9d"; // Teal color that matches our theme
+  // Custom theme color for Vidora player - vibrant teal that matches theme
+  const vidoraThemeColor = "00ff9d";
+
+  // Vidora parameters
+  const vidoraParams = {
+    autoplay: true,
+    colour: vidoraThemeColor,
+    autonextepisode: true,
+    pausescreen: true,
+    backbutton: window.location.origin,
+    idlecheck: 20, // Check if user is still watching after 20 minutes
+  };
 
   // Server names for display
   const serverNames: Record<string, string> = {
-    main: "Vidora Primary",
+    main: "Vidora (Recommended)",
     vidora: "Vidora Backup",
-    vidsrc: "VidSrc",
+    vidsrc: "VidSrc (Second Best)",
     server3: "MultiEmbed",
     server4: "Embed.su"
   };
 
-  // Setup watch progress syncing
+  // Full-screen toggle function
+  const toggleFullscreen = () => {
+    if (!playerContainerRef.current) return;
+    
+    if (!document.fullscreenElement) {
+      playerContainerRef.current.requestFullscreen().catch(err => {
+        toast.error("Could not enter fullscreen mode", {
+          description: err.message
+        });
+      });
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  // Handle fullscreen change events
   useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Setup watch progress syncing using Vidora's built-in functionality
+  useEffect(() => {
+    // Initialize watch progress from localStorage
+    let watchProgress = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    
     // Handle messages from the iframe
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'MEDIA_DATA') {
@@ -67,12 +113,20 @@ const Watch = () => {
         if (mediaData.id && (mediaData.type === 'movie' || mediaData.type === 'tv')) {
           console.log('Progress update received:', mediaData);
           
+          // Update local storage with watch progress
+          watchProgress[mediaData.id] = {
+            ...watchProgress[mediaData.id],
+            ...mediaData,
+            last_updated: Date.now()
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(watchProgress));
+          
           if (currentUser) {
-            // Update watch progress logic
+            // Update watch progress in user profile if logged in
             const progress = mediaData.progress?.percent || 0;
             try {
-              // We would call updateWatchProgress here but we'll just log for now
               console.log(`Updating watch progress for ${mediaData.type} ${mediaData.id}: ${progress}%`);
+              // We could call a function to update this in the database if needed
             } catch (error) {
               console.error("Error updating watch progress:", error);
             }
@@ -98,9 +152,9 @@ const Watch = () => {
           setTitle(movieData.title);
           setPosterPath(movieData.poster_path);
           
-          // Set Vidora as main player
+          // Set Vidora as main player with parameters
           setEmbedUrls({
-            main: `https://vidora.su/movie/${itemId}?autoplay=true&colour=${vidoraThemeColor}&pausescreen=true`,
+            main: getVidoraMovieEmbedUrl(itemId, vidoraParams),
             vidora: `https://vidora.su/movie/tt${movieData.imdb_id || itemId}?autoplay=true&colour=${vidoraThemeColor}`,
             vidsrc: `https://vidsrc.cc/v2/embed/movie/${itemId}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`,
@@ -132,9 +186,9 @@ const Watch = () => {
           setTitle(`${tvData.name} - S${season} E${episode}`);
           setPosterPath(tvData.poster_path);
           
-          // Set Vidora as main player for TV shows
+          // Set Vidora as main player for TV shows with parameters
           setEmbedUrls({
-            main: `https://vidora.su/tv/${itemId}/${season}/${episode}?autoplay=true&colour=${vidoraThemeColor}&autonextepisode=true&pausescreen=true`,
+            main: getVidoraTVEmbedUrl(itemId, seasonNumber, episodeNumber, vidoraParams),
             vidora: `https://vidora.su/tv/${itemId}/${season}/${episode}?autoplay=true&colour=${vidoraThemeColor}`,
             vidsrc: `https://vidsrc.cc/v2/embed/tv/${itemId}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
@@ -142,7 +196,7 @@ const Watch = () => {
           });
 
           try {
-            const seasonData = await getTVShowEpisodes(itemId, seasonNumber);
+            const seasonData = await getTVShowSeasonDetails(itemId, seasonNumber);
             const totalEpisodes = seasonData.episodes?.length || 0;
             
             if (episodeNumber < totalEpisodes) {
@@ -203,7 +257,7 @@ const Watch = () => {
         // Simulate checking server status - we'd replace this with real checks
         setTimeout(() => {
           setServerStatus({
-            main: 'online',  // Assume our main server is always online
+            main: 'online',  // Assume our main Vidora server is always online
             vidora: Math.random() > 0.1 ? 'online' : 'offline',
             vidsrc: Math.random() > 0.2 ? 'online' : 'offline',
             server3: Math.random() > 0.3 ? 'online' : 'offline',
@@ -224,7 +278,7 @@ const Watch = () => {
     };
 
     fetchDetails();
-  }, [id, type, season, episode, navigate, uiToast, currentUser, vidoraThemeColor]);
+  }, [id, type, season, episode, navigate, uiToast, currentUser, vidoraThemeColor, vidoraParams]);
 
   const goToNextEpisode = () => {
     if (nextEpisodeInfo && type === "tv" && id) {
@@ -297,7 +351,7 @@ const Watch = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleBackNavigation}
+              onClick={() => navigate(-1)}
               className="flex items-center text-white hover:text-primary transition-colors"
               aria-label="Go back"
             >
@@ -307,19 +361,33 @@ const Watch = () => {
             <h1 className="text-xl font-medium text-white ml-4 truncate hidden sm:block">{title}</h1>
           </div>
           
-          {hasNextEpisode && (
+          <div className="flex items-center gap-2">
+            {hasNextEpisode && (
+              <motion.button
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate(`/watch/tv/${id}/${nextEpisodeInfo?.season}/${nextEpisodeInfo?.episode}`)}
+                className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-white px-3 py-1.5 rounded-full transition-colors shadow-lg hover:shadow-primary/30"
+              >
+                <span className="hidden sm:inline">Next Episode</span>
+                <SkipForward size={18} />
+              </motion.button>
+            )}
+            
             <motion.button
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={goToNextEpisode}
-              className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-white px-3 py-1.5 rounded-full transition-colors shadow-lg hover:shadow-primary/30"
+              onClick={toggleFullscreen}
+              className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white px-3 py-1.5 rounded-full transition-colors shadow-lg"
             >
-              <span className="hidden sm:inline">Next Episode</span>
-              <SkipForward size={18} />
+              <Maximize size={18} />
+              <span className="hidden sm:inline">{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
             </motion.button>
-          )}
+          </div>
         </motion.div>
         
         {/* Server selection with pill buttons and status indicators */}
@@ -329,9 +397,12 @@ const Watch = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          {(["main", "vidora", "vidsrc", "server3", "server4"] as const).map((server, index) => {
+          {(["main", "vidsrc", "vidora", "server3", "server4"] as const).map((server, index) => {
             const isActive = activeServer === server;
             const status = serverStatus[server];
+            // Make "Vidora (Recommended)" and "VidSrc (Second Best)" prominent
+            const isPrimary = server === "main";
+            const isSecondary = server === "vidsrc";
             
             return (
               <motion.div 
@@ -344,9 +415,11 @@ const Watch = () => {
               >
                 <Button 
                   size="lg" 
-                  onClick={() => handleServerSwitch(server)}
+                  onClick={() => setActiveServer(server)}
                   className={cn(
                     "rounded-full px-5 gap-2 relative border h-11 transition-all duration-300 shadow-lg",
+                    isPrimary && !isActive && "border-primary/30 bg-black/40",
+                    isSecondary && !isActive && "border-yellow-500/30 bg-black/40",
                     isActive 
                       ? "bg-primary text-white border-primary/40 shadow-primary/20" 
                       : "bg-black/30 backdrop-blur-md border-white/10 hover:bg-black/50"
@@ -389,7 +462,13 @@ const Watch = () => {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="flex-1 flex flex-col"
             >
-              <div className="w-full h-full relative rounded-xl overflow-hidden glass-panel shadow-2xl border border-white/10">
+              <div 
+                ref={playerContainerRef}
+                className={cn(
+                  "w-full h-full relative rounded-xl overflow-hidden glass-panel shadow-2xl border border-white/10",
+                  isFullscreen ? "fixed inset-0 z-50 rounded-none" : ""
+                )}
+              >
                 <div id="loading-overlay" className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none transition-opacity duration-300">
                   <div className="flex flex-col items-center bg-black/40 p-8 rounded-xl backdrop-blur-md">
                     <RotateCw className="h-12 w-12 animate-spin text-primary" />
@@ -416,7 +495,13 @@ const Watch = () => {
                     <Button 
                       variant="default" 
                       className="bg-primary hover:bg-primary/90 shadow-lg"
-                      onClick={tryNextServer}
+                      onClick={() => {
+                        const serverOptions: ("main" | "vidora" | "vidsrc" | "server3" | "server4")[] = ["main", "vidora", "vidsrc", "server3", "server4"];
+                        const currentIndex = serverOptions.indexOf(activeServer);
+                        let nextIndex = (currentIndex + 1) % serverOptions.length;
+                        const nextServer = serverOptions[nextIndex];
+                        setActiveServer(nextServer);
+                      }}
                     >
                       <RotateCw size={16} className="mr-2" /> Try Another Server
                     </Button>
@@ -424,46 +509,54 @@ const Watch = () => {
                 </div>
               </div>
               
-              <motion.div 
-                className="flex flex-wrap justify-center sm:justify-between items-center gap-3 mt-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="gap-2 rounded-full glass-panel text-white hover:bg-white/10 hover:text-primary border-white/10 shadow-lg hover:shadow-primary/20 transition-all duration-300"
-                  onClick={() => {
-                    toast.success("Thanks for your feedback!");
-                  }}
+              {!isFullscreen && (
+                <motion.div 
+                  className="flex flex-wrap justify-center sm:justify-between items-center gap-3 mt-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <ThumbsUp size={16} />
-                  Working well
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="gap-2 rounded-full glass-panel text-white hover:bg-white/10 hover:text-primary border-white/10 shadow-lg hover:shadow-primary/20 transition-all duration-300"
-                  onClick={tryNextServer}
-                >
-                  <RotateCw size={16} />
-                  Try another server
-                </Button>
-                
-                {hasNextEpisode && (
                   <Button 
-                    variant="default"
-                    size="lg" 
-                    className="gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg hover:shadow-primary/30 transition-all duration-300"
-                    onClick={goToNextEpisode}
+                    variant="outline" 
+                    size="lg"
+                    className="gap-2 rounded-full glass-panel text-white hover:bg-white/10 hover:text-primary border-white/10 shadow-lg hover:shadow-primary/20 transition-all duration-300"
+                    onClick={() => {
+                      toast.success("Thanks for your feedback!");
+                    }}
                   >
-                    <SkipForward size={16} />
-                    Next Episode
+                    <ThumbsUp size={16} />
+                    Working well
                   </Button>
-                )}
-              </motion.div>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    className="gap-2 rounded-full glass-panel text-white hover:bg-white/10 hover:text-primary border-white/10 shadow-lg hover:shadow-primary/20 transition-all duration-300"
+                    onClick={() => {
+                      const serverOptions: ("main" | "vidora" | "vidsrc" | "server3" | "server4")[] = ["main", "vidora", "vidsrc", "server3", "server4"];
+                      const currentIndex = serverOptions.indexOf(activeServer);
+                      let nextIndex = (currentIndex + 1) % serverOptions.length;
+                      const nextServer = serverOptions[nextIndex];
+                      setActiveServer(nextServer);
+                    }}
+                  >
+                    <RotateCw size={16} />
+                    Try another server
+                  </Button>
+                  
+                  {hasNextEpisode && (
+                    <Button 
+                      variant="default"
+                      size="lg" 
+                      className="gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg hover:shadow-primary/30 transition-all duration-300"
+                      onClick={() => navigate(`/watch/tv/${id}/${nextEpisodeInfo?.season}/${nextEpisodeInfo?.episode}`)}
+                    >
+                      <SkipForward size={16} />
+                      Next Episode
+                    </Button>
+                  )}
+                </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

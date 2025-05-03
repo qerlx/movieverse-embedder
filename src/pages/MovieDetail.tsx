@@ -3,8 +3,16 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getMovieDetails } from "@/lib/api";
-import { Star, Clock, Calendar, Play, Eye, Heart, Plus } from "lucide-react";
+import { Star, Clock, Calendar, Play, Eye, Heart, MonitorPlay } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { 
+  Card, 
+  CardContent, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle,
+  CardDescription 
+} from "@/components/ui/card";
 import { Movie, Cast } from "@/types";
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +29,7 @@ const MovieDetail = () => {
   const { currentUser } = useAuth();
   const [movie, setMovie] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showServerOptions, setShowServerOptions] = useState(false);
   
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -50,6 +59,18 @@ const MovieDetail = () => {
 
   const handleWatchClick = () => {
     navigate(`/watch/movie/${id}`);
+  };
+  
+  const handleServerSelect = (server: string) => {
+    if (server === "vidora") {
+      // Default is already Vidora
+      navigate(`/watch/movie/${id}`);
+    } else if (server === "vidsrc") {
+      // Pass a query param to indicate vidsrc server
+      navigate(`/watch/movie/${id}?server=vidsrc`);
+    } else {
+      navigate(`/watch/movie/${id}?server=${server}`);
+    }
   };
 
   if (isLoading) {
@@ -150,11 +171,69 @@ const MovieDetail = () => {
                 />
               </div>
               
+              {/* Video Player Options Card */}
               <motion.div 
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
-                className="mt-8 p-4 backdrop-blur-md bg-black/30 border border-white/10 rounded-xl"
+                className="mt-8"
+              >
+                <Card className="border-primary/20 bg-black/30 backdrop-blur-md">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-gradient text-xl">Watch Now</CardTitle>
+                    <CardDescription>Select your preferred streaming option</CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4 pb-3">
+                    <Button 
+                      onClick={handleWatchClick}
+                      className="w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-4 py-6 shadow-lg hover:shadow-primary/30 transition-all"
+                    >
+                      <Play size={22} className="ml-1" />
+                      Watch with Vidora
+                      <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">Recommended</span>
+                    </Button>
+                    
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 rounded-full border-white/10"
+                        onClick={() => handleServerSelect("vidsrc")}
+                      >
+                        <MonitorPlay size={14} />
+                        VidSrc
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 rounded-full border-white/10"
+                        onClick={() => handleServerSelect("server3")}
+                      >
+                        <MonitorPlay size={14} />
+                        MultiEmbed
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 rounded-full border-white/10"
+                        onClick={() => handleServerSelect("server4")}
+                      >
+                        <MonitorPlay size={14} />
+                        Embed
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+              
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className="mt-4"
               >
                 <WatchProviders id={parseInt(id!)} type="movie" />
               </motion.div>
