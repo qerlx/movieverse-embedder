@@ -52,7 +52,7 @@ const Watch = () => {
           
           setEmbedUrls({
             server1: `https://www.2embed.cc/embed/${itemId}`,
-            server2: `https://vidsrc.to/embed/movie/${itemId}`,
+            server2: `https://vidsrc.cc/v2/embed/movie/${itemId}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`,
             server4: `https://embed.su/embed/movie/${itemId}`
           });
@@ -84,7 +84,7 @@ const Watch = () => {
           
           setEmbedUrls({
             server1: `https://www.2embed.cc/embedtv/${itemId}&s=${season}&e=${episode}`,
-            server2: `https://vidsrc.to/embed/tv/${itemId}/${season}/${episode}`,
+            server2: `https://vidsrc.cc/v2/embed/tv/${itemId}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
             server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
