@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
-import { Star, Calendar, Play, ChevronDown, AlertTriangle, Tv2, Calendar as CalendarIcon, Clock, Film } from "lucide-react";
+import { Star, Calendar, Play, ChevronDown, AlertTriangle, Tv2, Calendar as CalendarIcon, Clock, Film, MonitorPlay } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TVShow, Season, Episode, Cast } from "@/types";
 import CategoryRow from "@/components/CategoryRow";
@@ -31,6 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 const TVShowDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,7 +45,14 @@ const TVShowDetail = () => {
   const [isLoadingSeason, setIsLoadingSeason] = useState(false);
   const [episodesError, setEpisodesError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
 
+  // Custom theme color for Vidora player
+  const vidoraThemeColor = "00ff9d";
+  
+  // Server options
+  const [selectedServer, setSelectedServer] = useState("vidora");
+  
   useEffect(() => {
     const fetchTVShowDetails = async () => {
       if (!id) return;
@@ -76,6 +84,8 @@ const TVShowDetail = () => {
     };
 
     fetchTVShowDetails();
+    // Scroll to top when navigating to a new TV show
+    window.scrollTo(0, 0);
   }, [id, toast]);
 
   useEffect(() => {
@@ -107,6 +117,11 @@ const TVShowDetail = () => {
             return episode;
           });
           setSeasonDetails({ ...data, episodes: processedEpisodes });
+          
+          // Set the first episode as default
+          if (processedEpisodes.length > 0) {
+            setSelectedEpisode(processedEpisodes[0].episode_number);
+          }
         }
       } catch (error) {
         console.error("Error fetching season details:", error);
@@ -133,11 +148,34 @@ const TVShowDetail = () => {
   const handleWatchClick = (episodeNumber: number) => {
     navigate(`/watch/tv/${id}/${selectedSeason}/${episodeNumber}`);
   };
+  
+  const handleServerSelect = (server: string, episodeNumber: number) => {
+    if (server === "vidora") {
+      // Default is already Vidora
+      navigate(`/watch/tv/${id}/${selectedSeason}/${episodeNumber}`);
+    } else {
+      // Pass a query param to indicate server
+      navigate(`/watch/tv/${id}/${selectedSeason}/${episodeNumber}?server=${server}`);
+    }
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+        <motion.div 
+          className="relative w-16 h-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.div 
+            className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-primary animate-spin"
+            style={{ animationDuration: '1s' }}
+          />
+          <motion.div 
+            className="absolute inset-2 rounded-full border-2 border-t-transparent border-r-primary border-b-primary border-l-transparent animate-spin"
+            style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}
+          />
+        </motion.div>
       </div>
     );
   }
@@ -145,10 +183,10 @@ const TVShowDetail = () => {
   if (!tvShow) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">TV Show Not Found</h2>
-          <p className="text-muted-foreground mb-4">The TV show you're looking for doesn't exist or has been removed.</p>
-          <Button onClick={() => navigate("/tv-shows")}>Browse TV Shows</Button>
+        <div className="text-center max-w-md p-8 backdrop-blur-lg bg-black/40 rounded-2xl border border-white/10">
+          <h2 className="text-2xl font-bold mb-2 purple-text-gradient">TV Show Not Found</h2>
+          <p className="text-muted-foreground mb-6">The TV show you're looking for doesn't exist or has been removed.</p>
+          <Button onClick={() => navigate("/tv-shows")} className="premium-button premium-button-primary">Browse TV Shows</Button>
         </div>
       </div>
     );
@@ -175,14 +213,23 @@ const TVShowDetail = () => {
   ) || [];
 
   return (
-    <div className="min-h-screen">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-background"
+    >
       <div className="relative">
         {backdropUrl && (
           <div className="absolute inset-0 w-full h-full">
-            <div 
-              className="w-full h-[70vh] bg-cover bg-center bg-no-repeat animate-blur-in"
+            <motion.div 
+              initial={{ filter: "blur(16px)", opacity: 0 }}
+              animate={{ filter: "blur(0px)", opacity: 1 }}
+              transition={{ duration: 1.2 }}
+              className="w-full h-[70vh] bg-cover bg-center bg-no-repeat"
               style={{ backgroundImage: `url(${backdropUrl})` }}
-            ></div>
+            ></motion.div>
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent"></div>
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent"></div>
           </div>
@@ -190,75 +237,239 @@ const TVShowDetail = () => {
 
         <div className="relative container mx-auto px-4 pt-12 pb-8 min-h-[70vh] flex flex-col justify-center">
           <div className="flex flex-col md:flex-row gap-8 items-start">
-            <div className="w-full max-w-xs mx-auto md:mx-0 animate-fade-in">
-              <div className="rounded-lg overflow-hidden shadow-xl">
-                <img
+            <motion.div 
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="w-full max-w-xs mx-auto md:mx-0"
+            >
+              <div className="overflow-hidden rounded-2xl shadow-2xl hover:shadow-primary/20 transition-shadow duration-300 purple-glow">
+                <motion.img
+                  whileHover={{ scale: 1.03 }}
+                  transition={{ duration: 0.2 }}
                   src={posterUrl}
                   alt={tvShow.name}
                   className="w-full h-auto object-cover"
                 />
               </div>
-            </div>
-
-            <div className="flex-1 animate-fade-up" style={{ animationDelay: "200ms" }}>
-              <h1 className="text-3xl md:text-5xl font-bold mb-4">{tvShow.name}</h1>
               
-              <div className="flex flex-wrap gap-3 mb-6">
+              {/* Video Player Options Card */}
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="mt-8"
+              >
+                <Card className="border-primary/20 bg-black/30 backdrop-blur-md">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-gradient text-xl">Watch Now</CardTitle>
+                    <CardDescription>Select season, episode and streaming option</CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4 pb-3">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm text-muted-foreground mb-1 block">Season</label>
+                        <Select
+                          value={selectedSeason.toString()}
+                          onValueChange={(value) => setSelectedSeason(parseInt(value))}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Season" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {actualSeasons.map((season: Season) => (
+                              <SelectItem
+                                key={season.id}
+                                value={season.season_number.toString()}
+                              >
+                                Season {season.season_number}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm text-muted-foreground mb-1 block">Episode</label>
+                        <Select
+                          value={selectedEpisode.toString()}
+                          onValueChange={(value) => setSelectedEpisode(parseInt(value))}
+                          disabled={isLoadingSeason || !seasonDetails?.episodes?.length}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Episode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {seasonDetails?.episodes?.map((episode: Episode) => (
+                              <SelectItem
+                                key={episode.id || `ep-${episode.episode_number}`}
+                                value={episode.episode_number.toString()}
+                              >
+                                Ep {episode.episode_number}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      onClick={() => handleWatchClick(selectedEpisode)}
+                      className="w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-4 py-6 shadow-lg hover:shadow-primary/30 transition-all"
+                      disabled={isLoadingSeason || !seasonDetails?.episodes?.length}
+                    >
+                      <Play size={22} className="ml-1" />
+                      Watch with Vidora
+                      <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">Recommended</span>
+                    </Button>
+                    
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "gap-2 rounded-full border-white/10", 
+                          selectedServer === "vidsrc" && "border-primary/50 bg-primary/10 text-primary"
+                        )}
+                        onClick={() => handleServerSelect("vidsrc", selectedEpisode)}
+                        disabled={isLoadingSeason || !seasonDetails?.episodes?.length}
+                      >
+                        <MonitorPlay size={14} />
+                        VidSrc
+                        <span className="text-xs opacity-70">(Second Best)</span>
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "gap-2 rounded-full border-white/10", 
+                          selectedServer === "server3" && "border-primary/50 bg-primary/10 text-primary"
+                        )}
+                        onClick={() => handleServerSelect("server3", selectedEpisode)}
+                        disabled={isLoadingSeason || !seasonDetails?.episodes?.length}
+                      >
+                        <MonitorPlay size={14} />
+                        MultiEmbed
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "gap-2 rounded-full border-white/10",
+                          selectedServer === "server4" && "border-primary/50 bg-primary/10 text-primary"
+                        )}
+                        onClick={() => handleServerSelect("server4", selectedEpisode)}
+                        disabled={isLoadingSeason || !seasonDetails?.episodes?.length}
+                      >
+                        <MonitorPlay size={14} />
+                        Embed
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+
+            <motion.div 
+              initial={{ x: -30, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="flex-1"
+            >
+              <motion.h1 
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6 }}
+                className="cinematic-title text-4xl md:text-6xl font-bold mb-4 text-white text-shadow"
+              >
+                {tvShow.name}
+              </motion.h1>
+              
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="flex flex-wrap gap-3 mb-6"
+              >
                 {tvShow.genres?.map((genre: any) => (
                   <span
                     key={genre.id}
-                    className="px-3 py-1 bg-muted/30 rounded-full text-sm"
+                    className="px-3 py-1 rounded-full text-sm backdrop-blur-sm bg-black/30 border border-white/10 text-white/90"
                   >
                     {genre.name}
                   </span>
                 ))}
-              </div>
+              </motion.div>
               
-              <div className="flex flex-wrap gap-4 mb-6 text-sm">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="flex flex-wrap gap-6 mb-6 text-sm"
+              >
                 {tvShow.vote_average > 0 && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
                     <Star size={16} className="text-yellow-400" />
-                    <span>{tvShow.vote_average.toFixed(1)}/10</span>
+                    <span className="font-medium">{tvShow.vote_average.toFixed(1)}/10</span>
                   </div>
                 )}
                 
-                <div className="flex items-center gap-1">
-                  <Calendar size={16} />
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                  <Calendar size={16} className="text-white/80" />
                   <span>{firstAirYear}</span>
                 </div>
                 
-                <div className="text-sm">
+                <div className="text-sm flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                  <Tv2 size={16} className="text-white/80" />
                   <span>{tvShow.number_of_seasons} Seasons</span>
-                  <span className="mx-2">·</span>
+                  <span className="mx-1">·</span>
                   <span>{tvShow.number_of_episodes} Episodes</span>
                 </div>
-              </div>
+              </motion.div>
               
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">Overview</h2>
-                <p className="text-muted-foreground">{tvShow.overview}</p>
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="mb-6 max-w-2xl"
+              >
+                <h2 className="text-xl font-semibold mb-2 text-white/90">Overview</h2>
+                <p className="text-white/70 leading-relaxed">{tvShow.overview}</p>
+              </motion.div>
               
               {creators.length > 0 && (
-                <div className="mb-6">
-                  <h2 className="text-xl font-semibold mb-2">Created By</h2>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.6 }}
+                  className="mb-8"
+                >
+                  <h2 className="text-xl font-semibold mb-2 text-white/90">Created By</h2>
                   <div className="flex flex-wrap gap-2">
                     {creators.map((creator: any) => (
-                      <span key={creator.id} className="text-muted-foreground">
+                      <span key={creator.id} className="text-white/70">
                         {creator.name}
                       </span>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               )}
               
-              <div className="flex flex-wrap gap-4 mt-8">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.7 }}
+                className="flex flex-wrap gap-4 mt-8"
+              >
                 <Button
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 gap-2"
-                  onClick={() => handleWatchClick(1)}
+                  onClick={() => handleWatchClick(selectedEpisode)}
+                  className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-8 py-6 text-lg font-medium shadow-lg hover:shadow-primary/30 transition-all"
+                  disabled={isLoadingSeason || !seasonDetails?.episodes?.length}
                 >
-                  <Play size={18} />
+                  <Play size={22} className="ml-1" />
                   Watch Now
                 </Button>
                 
@@ -272,8 +483,8 @@ const TVShowDetail = () => {
                     variant="outline"
                   />
                 )}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -313,7 +524,12 @@ const TVShowDetail = () => {
 
         {isLoadingSeason ? (
           <div className="py-8 flex justify-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+            />
           </div>
         ) : (
           <>
@@ -505,9 +721,8 @@ const TVShowDetail = () => {
           />
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
 export default TVShowDetail;
-

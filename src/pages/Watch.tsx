@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
-import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails, getVidoraMovieEmbedUrl, getVidoraTVEmbedUrl } from "@/lib/api";
+import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
 import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, SkipForward, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,25 +23,30 @@ const Watch = () => {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { toast: uiToast } = useToast();
   const { currentUser } = useAuth();
   const [title, setTitle] = useState("");
   const [posterPath, setPosterPath] = useState<string | null>(null);
-  const [embedUrls, setEmbedUrls] = useState<{main: string, vidora: string, vidsrc: string, server3: string, server4: string}>({
-    main: "",
+  const [embedUrls, setEmbedUrls] = useState<{vidora: string, vidsrc: string, server3: string, server4: string}>({
     vidora: "",
     vidsrc: "",
     server3: "",
     server4: ""
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeServer, setActiveServer] = useState<"main" | "vidora" | "vidsrc" | "server3" | "server4">("main");
-  const [lastWorkingServer, setLastWorkingServer] = useState<"main" | "vidora" | "vidsrc" | "server3" | "server4">("main");
-  const [serverAttempts, setServerAttempts] = useState<Record<string, number>>({});
+  
+  // Get server param from URL or default to "vidora"
+  const serverParam = searchParams.get("server");
+  const [activeServer, setActiveServer] = useState<"vidora" | "vidsrc" | "server3" | "server4">(
+    (serverParam === "vidsrc" || serverParam === "server3" || serverParam === "server4") 
+      ? serverParam 
+      : "vidora"
+  );
+  
   const [hasNextEpisode, setHasNextEpisode] = useState(false);
   const [nextEpisodeInfo, setNextEpisodeInfo] = useState<{season: number, episode: number} | null>(null);
   const [serverStatus, setServerStatus] = useState<Record<string, 'loading' | 'online' | 'offline'>>({
-    main: 'loading',
     vidora: 'loading',
     vidsrc: 'loading',
     server3: 'loading',
@@ -65,8 +71,7 @@ const Watch = () => {
 
   // Server names for display
   const serverNames: Record<string, string> = {
-    main: "Vidora (Recommended)",
-    vidora: "Vidora Backup",
+    vidora: "Vidora (Recommended)",
     vidsrc: "VidSrc (Second Best)",
     server3: "MultiEmbed",
     server4: "Embed.su"
@@ -152,10 +157,16 @@ const Watch = () => {
           setTitle(movieData.title);
           setPosterPath(movieData.poster_path);
           
-          // Set Vidora as main player with parameters
+          // Combine Vidora parameters
+          const vidoraParamsString = Object.entries(vidoraParams)
+            .map(([key, value]) => `${key}=${value}`)
+            .join('&');
+          
+          // Set URLs for different servers
           setEmbedUrls({
-            main: getVidoraMovieEmbedUrl(itemId, vidoraParams),
-            vidora: `https://vidora.su/movie/tt${movieData.imdb_id || itemId}?autoplay=true&colour=${vidoraThemeColor}`,
+            vidora: movieData.imdb_id 
+              ? `https://vidora.su/movie/tt${movieData.imdb_id}?${vidoraParamsString}`
+              : `https://vidora.su/movie/${itemId}?${vidoraParamsString}`,
             vidsrc: `https://vidsrc.cc/v2/embed/movie/${itemId}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1`,
             server4: `https://embed.su/embed/movie/${itemId}`
@@ -186,11 +197,15 @@ const Watch = () => {
           setTitle(`${tvData.name} - S${season} E${episode}`);
           setPosterPath(tvData.poster_path);
           
-          // Set Vidora as main player for TV shows with parameters
+          // Combine Vidora parameters
+          const vidoraParamsString = Object.entries(vidoraParams)
+            .map(([key, value]) => `${key}=${value}`)
+            .join('&');
+          
+          // Set URLs for different servers
           setEmbedUrls({
-            main: getVidoraTVEmbedUrl(itemId, seasonNumber, episodeNumber, vidoraParams),
-            vidora: `https://vidora.su/tv/${itemId}/${season}/${episode}?autoplay=true&colour=${vidoraThemeColor}`,
-            vidsrc: `https://vidsrc.cc/v2/embed/tv/${itemId}`,
+            vidora: `https://vidora.su/tv/${itemId}/${season}/${episode}?${vidoraParamsString}`,
+            vidsrc: `https://vidsrc.cc/v2/embed/tv/${itemId}/${season}/${episode}`,
             server3: `https://multiembed.mov/directstream.php?video_id=${itemId}&tmdb=1&s=${season}&e=${episode}`,
             server4: `https://embed.su/embed/tv/${itemId}/${season}/${episode}`
           });
@@ -257,8 +272,7 @@ const Watch = () => {
         // Simulate checking server status - we'd replace this with real checks
         setTimeout(() => {
           setServerStatus({
-            main: 'online',  // Assume our main Vidora server is always online
-            vidora: Math.random() > 0.1 ? 'online' : 'offline',
+            vidora: 'online',  // Assume our main Vidora server is always online
             vidsrc: Math.random() > 0.2 ? 'online' : 'offline',
             server3: Math.random() > 0.3 ? 'online' : 'offline',
             server4: Math.random() > 0.2 ? 'online' : 'offline',
@@ -288,16 +302,11 @@ const Watch = () => {
   };
 
   const tryNextServer = () => {
-    const serverOptions: ("main" | "vidora" | "vidsrc" | "server3" | "server4")[] = ["main", "vidora", "vidsrc", "server3", "server4"];
+    const serverOptions: ("vidora" | "vidsrc" | "server3" | "server4")[] = ["vidora", "vidsrc", "server3", "server4"];
     const currentIndex = serverOptions.indexOf(activeServer);
     
     let nextIndex = (currentIndex + 1) % serverOptions.length;
     const nextServer = serverOptions[nextIndex];
-    
-    setServerAttempts(prev => ({
-      ...prev,
-      [activeServer]: (prev[activeServer] || 0) + 1
-    }));
     
     toast.info(`Switching to ${serverNames[nextServer]}`, {
       description: "If video doesn't load, try another server",
@@ -307,9 +316,8 @@ const Watch = () => {
     setActiveServer(nextServer);
   };
 
-  const handleServerSwitch = (server: "main" | "vidora" | "vidsrc" | "server3" | "server4") => {
+  const handleServerSwitch = (server: "vidora" | "vidsrc" | "server3" | "server4") => {
     setActiveServer(server);
-    setLastWorkingServer(server);
     
     toast.info(`Switched to ${serverNames[server]}`, {
       description: "If video doesn't load, try another server",
@@ -351,7 +359,7 @@ const Watch = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate(-1)}
+              onClick={handleBackNavigation}
               className="flex items-center text-white hover:text-primary transition-colors"
               aria-label="Go back"
             >
@@ -368,7 +376,7 @@ const Watch = () => {
                 animate={{ opacity: 1, x: 0 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => navigate(`/watch/tv/${id}/${nextEpisodeInfo?.season}/${nextEpisodeInfo?.episode}`)}
+                onClick={goToNextEpisode}
                 className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-white px-3 py-1.5 rounded-full transition-colors shadow-lg hover:shadow-primary/30"
               >
                 <span className="hidden sm:inline">Next Episode</span>
@@ -397,11 +405,11 @@ const Watch = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          {(["main", "vidsrc", "vidora", "server3", "server4"] as const).map((server, index) => {
+          {(["vidora", "vidsrc", "server3", "server4"] as const).map((server, index) => {
             const isActive = activeServer === server;
             const status = serverStatus[server];
             // Make "Vidora (Recommended)" and "VidSrc (Second Best)" prominent
-            const isPrimary = server === "main";
+            const isPrimary = server === "vidora";
             const isSecondary = server === "vidsrc";
             
             return (
@@ -415,7 +423,7 @@ const Watch = () => {
               >
                 <Button 
                   size="lg" 
-                  onClick={() => setActiveServer(server)}
+                  onClick={() => handleServerSwitch(server)}
                   className={cn(
                     "rounded-full px-5 gap-2 relative border h-11 transition-all duration-300 shadow-lg",
                     isPrimary && !isActive && "border-primary/30 bg-black/40",
@@ -469,13 +477,6 @@ const Watch = () => {
                   isFullscreen ? "fixed inset-0 z-50 rounded-none" : ""
                 )}
               >
-                <div id="loading-overlay" className="absolute inset-0 flex items-center justify-center bg-background/80 z-10 opacity-0 pointer-events-none transition-opacity duration-300">
-                  <div className="flex flex-col items-center bg-black/40 p-8 rounded-xl backdrop-blur-md">
-                    <RotateCw className="h-12 w-12 animate-spin text-primary" />
-                    <p className="mt-4 text-sm font-medium">Loading video stream...</p>
-                  </div>
-                </div>
-                
                 <iframe
                   ref={iframeRef}
                   key={`${activeServer}-${id}-${season || ''}-${episode || ''}`}
@@ -486,27 +487,6 @@ const Watch = () => {
                   className="absolute inset-0 w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 ></iframe>
-
-                {/* Error fallback */}
-                <div className="absolute inset-0 hidden bg-black/80 flex-col items-center justify-center" id="error-fallback">
-                  <div className="text-center p-6 bg-black/50 rounded-xl backdrop-blur-md max-w-md">
-                    <h3 className="text-red-400 text-xl font-bold mb-3">Playback Error</h3>
-                    <p className="text-white/80 mb-4">This stream appears to be unavailable. Please try another server.</p>
-                    <Button 
-                      variant="default" 
-                      className="bg-primary hover:bg-primary/90 shadow-lg"
-                      onClick={() => {
-                        const serverOptions: ("main" | "vidora" | "vidsrc" | "server3" | "server4")[] = ["main", "vidora", "vidsrc", "server3", "server4"];
-                        const currentIndex = serverOptions.indexOf(activeServer);
-                        let nextIndex = (currentIndex + 1) % serverOptions.length;
-                        const nextServer = serverOptions[nextIndex];
-                        setActiveServer(nextServer);
-                      }}
-                    >
-                      <RotateCw size={16} className="mr-2" /> Try Another Server
-                    </Button>
-                  </div>
-                </div>
               </div>
               
               {!isFullscreen && (
@@ -532,13 +512,7 @@ const Watch = () => {
                     variant="outline" 
                     size="lg"
                     className="gap-2 rounded-full glass-panel text-white hover:bg-white/10 hover:text-primary border-white/10 shadow-lg hover:shadow-primary/20 transition-all duration-300"
-                    onClick={() => {
-                      const serverOptions: ("main" | "vidora" | "vidsrc" | "server3" | "server4")[] = ["main", "vidora", "vidsrc", "server3", "server4"];
-                      const currentIndex = serverOptions.indexOf(activeServer);
-                      let nextIndex = (currentIndex + 1) % serverOptions.length;
-                      const nextServer = serverOptions[nextIndex];
-                      setActiveServer(nextServer);
-                    }}
+                    onClick={tryNextServer}
                   >
                     <RotateCw size={16} />
                     Try another server
@@ -549,7 +523,7 @@ const Watch = () => {
                       variant="default"
                       size="lg" 
                       className="gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg hover:shadow-primary/30 transition-all duration-300"
-                      onClick={() => navigate(`/watch/tv/${id}/${nextEpisodeInfo?.season}/${nextEpisodeInfo?.episode}`)}
+                      onClick={goToNextEpisode}
                     >
                       <SkipForward size={16} />
                       Next Episode
