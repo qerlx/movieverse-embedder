@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from "react";
 import { Button } from "./ui/button";
-import { generateMovieRecommendations } from "@/lib/ai";
+import { generateAIRecommendations } from "@/lib/ai";
 import { useToast } from "@/hooks/use-toast";
 import { Wand } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,12 +31,36 @@ const AIAutomation: React.FC = () => {
 
     try {
       setIsGenerating(true);
-      const result = await generateMovieRecommendations(prompt);
+      // Use the correct function name here
+      const result = await generateAIRecommendations(prompt);
+      
+      // Parse the AI response as needed
+      // The response is currently a string, so we need to extract movie data
+      let movieData;
+      try {
+        // For demo purposes, we'll use a simple approach to extract movie titles and years
+        const recommendations = result.match(/"([^"]+)"\s*\((\d{4})\)/g) || [];
+        movieData = recommendations.map((rec, index) => {
+          const match = rec.match(/"([^"]+)"\s*\((\d{4})\)/);
+          if (match) {
+            return {
+              id: `ai-rec-${index}`,
+              title: match[1],
+              release_date: match[2] + "-01-01", // Just need the year for display
+              poster_path: null, // We don't have poster paths for AI recommendations
+            };
+          }
+          return null;
+        }).filter(Boolean);
+      } catch (parseError) {
+        console.error("Error parsing AI response:", parseError);
+        movieData = [];
+      }
       
       setResponse({
         success: true,
         message: "Successfully generated recommendations!",
-        data: result
+        data: movieData
       });
 
       toast({
