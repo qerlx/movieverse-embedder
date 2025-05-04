@@ -4,7 +4,7 @@ import { useParams, useNavigate, useLocation, useSearchParams } from "react-rout
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
-import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, SkipForward, Maximize } from "lucide-react";
+import { ArrowLeft, MonitorPlay, RotateCw, ThumbsUp, SkipForward, Maximize, Minimize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
@@ -348,105 +348,121 @@ const Watch = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-black">
-      <div className="container mx-auto px-4 py-4 flex flex-col h-screen">
-        <motion.div 
-          className="flex items-center justify-between mb-6" 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="flex items-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleBackNavigation}
-              className="flex items-center text-white hover:text-primary transition-colors"
-              aria-label="Go back"
-            >
-              <ArrowLeft size={20} className="mr-2" />
-              Back
-            </motion.button>
-            <h1 className="text-xl font-medium text-white ml-4 truncate hidden sm:block">{title}</h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {hasNextEpisode && (
+      <div className={cn(
+        "container mx-auto px-4 py-4 flex flex-col",
+        isFullscreen ? "h-screen" : "min-h-screen"
+      )}>
+        {!isFullscreen && (
+          <motion.div 
+            className="flex items-center justify-between mb-6" 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-center">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleBackNavigation}
+                className="flex items-center text-white hover:text-primary transition-colors"
+                aria-label="Go back"
+              >
+                <ArrowLeft size={20} className="mr-2" />
+                Back
+              </motion.button>
+              <h1 className="text-xl font-medium text-white ml-4 truncate hidden sm:block">{title}</h1>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {hasNextEpisode && (
+                <motion.button
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={goToNextEpisode}
+                  className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-white px-3 py-1.5 rounded-full transition-colors shadow-lg hover:shadow-primary/30"
+                >
+                  <span className="hidden sm:inline">Next Episode</span>
+                  <SkipForward size={18} />
+                </motion.button>
+              )}
+              
               <motion.button
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={goToNextEpisode}
-                className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-white px-3 py-1.5 rounded-full transition-colors shadow-lg hover:shadow-primary/30"
+                onClick={toggleFullscreen}
+                className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white px-3 py-1.5 rounded-full transition-colors shadow-lg"
               >
-                <span className="hidden sm:inline">Next Episode</span>
-                <SkipForward size={18} />
+                {isFullscreen ? (
+                  <>
+                    <Minimize size={18} />
+                    <span className="hidden sm:inline">Exit Full Screen</span>
+                  </>
+                ) : (
+                  <>
+                    <Maximize size={18} />
+                    <span className="hidden sm:inline">Full Screen</span>
+                  </>
+                )}
               </motion.button>
-            )}
-            
-            <motion.button
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={toggleFullscreen}
-              className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white px-3 py-1.5 rounded-full transition-colors shadow-lg"
-            >
-              <Maximize size={18} />
-              <span className="hidden sm:inline">{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
-            </motion.button>
-          </div>
-        </motion.div>
+            </div>
+          </motion.div>
+        )}
         
         {/* Server selection with pill buttons and status indicators */}
-        <motion.div 
-          className="flex flex-wrap gap-2 mb-6 justify-center sm:justify-start"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
-          {(["vidora", "vidsrc", "server3", "server4"] as const).map((server, index) => {
-            const isActive = activeServer === server;
-            const status = serverStatus[server];
-            // Make "Vidora (Recommended)" and "VidSrc (Second Best)" prominent
-            const isPrimary = server === "vidora";
-            const isSecondary = server === "vidsrc";
-            
-            return (
-              <motion.div 
-                key={server} 
-                initial={{ opacity: 0, y: 10 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                transition={{ delay: 0.1 * index }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button 
-                  size="lg" 
-                  onClick={() => handleServerSwitch(server)}
-                  className={cn(
-                    "rounded-full px-5 gap-2 relative border h-11 transition-all duration-300 shadow-lg",
-                    isPrimary && !isActive && "border-primary/30 bg-black/40",
-                    isSecondary && !isActive && "border-yellow-500/30 bg-black/40",
-                    isActive 
-                      ? "bg-primary text-white border-primary/40 shadow-primary/20" 
-                      : "bg-black/30 backdrop-blur-md border-white/10 hover:bg-black/50"
-                  )}
+        {!isFullscreen && (
+          <motion.div 
+            className="flex flex-wrap gap-2 mb-6 justify-center sm:justify-start"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            {(["vidora", "vidsrc", "server3", "server4"] as const).map((server, index) => {
+              const isActive = activeServer === server;
+              const status = serverStatus[server];
+              // Make "Vidora (Recommended)" and "VidSrc (Second Best)" prominent
+              const isPrimary = server === "vidora";
+              const isSecondary = server === "vidsrc";
+              
+              return (
+                <motion.div 
+                  key={server} 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.1 * index }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <MonitorPlay size={18} />
-                  <span>{serverNames[server]}</span>
-                  <span 
+                  <Button 
+                    size="lg" 
+                    onClick={() => handleServerSwitch(server)}
                     className={cn(
-                      "absolute top-1 right-1 w-2.5 h-2.5 rounded-full animate-pulse",
-                      getStatusColor(status)
-                    )} 
-                    title={`Server is ${status}`}
-                  />
-                </Button>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                      "rounded-full px-5 gap-2 relative border h-11 transition-all duration-300 shadow-lg",
+                      isPrimary && !isActive && "border-primary/30 bg-black/40",
+                      isSecondary && !isActive && "border-yellow-500/30 bg-black/40",
+                      isActive 
+                        ? "bg-primary text-white border-primary/40 shadow-primary/20" 
+                        : "bg-black/30 backdrop-blur-md border-white/10 hover:bg-black/50"
+                    )}
+                  >
+                    <MonitorPlay size={18} />
+                    <span>{serverNames[server]}</span>
+                    <span 
+                      className={cn(
+                        "absolute top-1 right-1 w-2.5 h-2.5 rounded-full animate-pulse",
+                        getStatusColor(status)
+                      )} 
+                      title={`Server is ${status}`}
+                    />
+                  </Button>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        )}
         
         <AnimatePresence mode="wait">
           {isLoading ? (
@@ -487,6 +503,30 @@ const Watch = () => {
                   className="absolute inset-0 w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 ></iframe>
+                
+                {isFullscreen && (
+                  <div className="absolute top-4 right-4 z-10 flex gap-2">
+                    {hasNextEpisode && (
+                      <Button 
+                        variant="outline"
+                        size="sm" 
+                        onClick={goToNextEpisode}
+                        className="bg-black/40 text-white border-white/10 hover:bg-black/60 hover:text-primary rounded-full"
+                      >
+                        <SkipForward size={16} />
+                        <span className="ml-1">Next</span>
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline"
+                      size="sm" 
+                      onClick={toggleFullscreen}
+                      className="bg-black/40 text-white border-white/10 hover:bg-black/60 hover:text-primary rounded-full"
+                    >
+                      <Minimize size={16} />
+                    </Button>
+                  </div>
+                )}
               </div>
               
               {!isFullscreen && (

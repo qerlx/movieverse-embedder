@@ -1,172 +1,154 @@
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent, 
-  CardFooter 
-} from "@/components/ui/card";
-import { simulateAutomationTask } from "@/lib/ai";
-import { motion } from "framer-motion";
-import { Loader2, Terminal, Monitor, Play, Camera, User } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Button } from "./ui/button";
+import { generateMovieRecommendations } from "@/lib/ai";
+import { useToast } from "@/hooks/use-toast";
+import { Wand } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1,
-    transition: { 
-      when: "beforeChildren", 
-      staggerChildren: 0.1 
-    } 
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { y: 0, opacity: 1 }
-};
-
-const AIAutomation = () => {
-  const [url, setUrl] = useState("https://moviestreamhub.com");
-  const [taskType, setTaskType] = useState("screenshot");
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<null | {
+const AIAutomation: React.FC = () => {
+  const [prompt, setPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [response, setResponse] = useState<{
     success: boolean;
     message: string;
     data?: any;
-  }>(null);
+  }>({ success: false, message: "" });
+  const { toast } = useToast();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setResult(null);
-    
+  const handleGenerateRecommendations = async () => {
+    if (!prompt.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a prompt to generate recommendations",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Simulate an automation task using our API
-      const response = await simulateAutomationTask(url, taskType);
-      setResult(response);
+      setIsGenerating(true);
+      const result = await generateMovieRecommendations(prompt);
+      
+      setResponse({
+        success: true,
+        message: "Successfully generated recommendations!",
+        data: result
+      });
+
+      toast({
+        title: "Success",
+        description: "Successfully generated movie recommendations!",
+        variant: "default",
+      });
+
+      // Clear prompt
+      setPrompt("");
     } catch (error) {
-      setResult({
+      console.error("Error generating recommendations:", error);
+      
+      setResponse({
         success: false,
-        message: "An error occurred while processing your request."
+        message: "Failed to generate recommendations. Please try again.",
+      });
+      
+      toast({
+        title: "Error",
+        description: "Failed to generate recommendations. Please try again.",
+        variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getTaskIcon = () => {
-    switch(taskType) {
-      case "login": return <User className="mr-2 h-4 w-4" />;
-      case "playback": return <Play className="mr-2 h-4 w-4" />;
-      case "screenshot": return <Camera className="mr-2 h-4 w-4" />;
-      default: return <Terminal className="mr-2 h-4 w-4" />;
+      setIsGenerating(false);
     }
   };
 
   return (
-    <motion.div 
-      className="container mx-auto px-4 py-8"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      <motion.div variants={itemVariants}>
-        <Card className="glass-panel border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-gradient">AI Automation Testing</CardTitle>
-            <CardDescription>
-              Test browser automation for the streaming platform
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">URL</label>
-                <Input
-                  type="text"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="Enter URL"
-                  className="bg-black/20 border-white/10"
-                />
+    <div className="space-y-4 my-4">
+      <div className="bg-black/20 border border-white/10 rounded-lg p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <Wand size={20} className="text-primary" />
+          <h2 className="text-xl font-semibold">AI Movie Recommendations</h2>
+        </div>
+        
+        <p className="text-muted-foreground">
+          Describe what kind of movie you're in the mood for, and our AI will recommend something for you.
+        </p>
+        
+        <textarea
+          ref={inputRef}
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          className="w-full h-20 p-3 bg-black/30 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+          placeholder="e.g. 'I want something like Inception but with more action'"
+        />
+        
+        <Button 
+          onClick={handleGenerateRecommendations}
+          disabled={isGenerating || !prompt.trim()} 
+          className="gap-2"
+        >
+          {isGenerating ? (
+            <>
+              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Wand size={16} />
+              Generate Recommendations
+            </>
+          )}
+        </Button>
+        
+        <AnimatePresence>
+          {response.success && response.data && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              <h3 className="font-medium">Recommended Movies:</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {response.data.map((movie: any, index: number) => (
+                  <motion.div
+                    key={movie.id || index}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-black/30 rounded-lg overflow-hidden border border-white/10 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/10 cursor-pointer"
+                    onClick={() => navigate(`/movie/${movie.id}`)}
+                  >
+                    <div className="h-40 bg-black/50 overflow-hidden">
+                      {movie.poster_path ? (
+                        <img 
+                          src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                          alt={movie.title}
+                          className="w-full h-full object-cover object-center"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-muted-foreground">No Image</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h4 className="font-medium">{movie.title}</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {movie.release_date?.substring(0, 4) || "Unknown Year"}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Task Type</label>
-                <div className="flex flex-wrap gap-2">
-                  {["login", "screenshot", "playback"].map((task) => (
-                    <Button
-                      key={task}
-                      type="button"
-                      variant={taskType === task ? "default" : "outline"}
-                      className="capitalize"
-                      onClick={() => setTaskType(task)}
-                    >
-                      {task === "login" && <User className="mr-2 h-4 w-4" />}
-                      {task === "screenshot" && <Camera className="mr-2 h-4 w-4" />}
-                      {task === "playback" && <Play className="mr-2 h-4 w-4" />}
-                      {task}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    {getTaskIcon()}
-                    Run {taskType} Task
-                  </>
-                )}
-              </Button>
-            </form>
-
-            {result && (
-              <motion.div 
-                className="mt-6 p-4 rounded-lg bg-black/30 border border-white/10"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant={result.success ? "default" : "destructive"}>
-                    {result.success ? "Success" : "Failed"}
-                  </Badge>
-                  <span className="text-sm">{result.message}</span>
-                </div>
-                
-                {result.data && (
-                  <div className="mt-4">
-                    <pre className="p-3 bg-black/50 rounded text-xs overflow-x-auto">
-                      {JSON.stringify(result.data, null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </CardContent>
-          <CardFooter className="text-xs text-muted-foreground">
-            <Monitor className="mr-2 h-4 w-4" /> 
-            This is a simulated environment. No actual browser automation is performed.
-          </CardFooter>
-        </Card>
-      </motion.div>
-    </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 };
 
