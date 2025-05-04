@@ -4,13 +4,12 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
-import { ThumbsUp, Play } from "lucide-react";
+import { ArrowLeft, ThumbsUp, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import VideoPlayerControls from "@/components/VideoPlayerControls";
 
 // Storage key for watch progress
 const STORAGE_KEY = 'watch_progress';
@@ -34,10 +33,7 @@ const Watch = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   // Player state
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
   const [hasNextEpisode, setHasNextEpisode] = useState(false);
   const [nextEpisodeInfo, setNextEpisodeInfo] = useState<{season: number, episode: number} | null>(null);
   
@@ -48,59 +44,19 @@ const Watch = () => {
   // Custom theme color for Vidora player - vibrant teal that matches theme
   const vidoraThemeColor = "00ff9d";
 
-  // Vidora parameters
-  const vidoraParams = {
-    autoplay: true,
-    colour: vidoraThemeColor,
-    autonextepisode: true,
-    pausescreen: true,
-    backbutton: window.location.origin,
-    idlecheck: 20, // Check if user is still watching after 20 minutes
-  };
-
-  // Full-screen toggle function
-  const toggleFullscreen = () => {
-    if (!playerContainerRef.current) return;
-    
-    if (!document.fullscreenElement) {
-      playerContainerRef.current.requestFullscreen().catch(err => {
-        toast.error("Could not enter fullscreen mode", {
-          description: err.message
-        });
-      });
+  // Handle back navigation
+  const handleBackNavigation = () => {
+    if (location.key !== "default") {
+      navigate(-1);
     } else {
-      document.exitFullscreen();
+      if (type === "movie") {
+        navigate(`/movie/${id}`);
+      } else if (type === "tv" && id) {
+        navigate(`/tv/${id}`);
+      } else {
+        navigate('/');
+      }
     }
-  };
-
-  // Handle fullscreen change events
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
-
-  // Toggle play/pause (this would need to communicate with iframe)
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-    // This would need a postMessage implementation to control the embedded player
-  };
-
-  // Toggle mute state
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-    // This would need a postMessage implementation to control the embedded player
-  };
-
-  // Handle volume change
-  const handleVolumeChange = (value: number) => {
-    setVolume(value);
-    // This would need a postMessage implementation to control the embedded player
   };
 
   // Setup watch progress syncing using Vidora's built-in functionality
@@ -158,7 +114,20 @@ const Watch = () => {
         setIsLoading(true);
         const itemId = parseInt(id);
         
-        // Combine Vidora parameters
+        // Build Vidora parameters
+        const vidoraParams: Record<string, string | boolean | number> = {
+          autoplay: true,
+          colour: vidoraThemeColor,
+          autonextepisode: true,
+          pausescreen: true,
+          // Set back button to current page for movie details or show details
+          backbutton: type === "movie" 
+            ? `${window.location.origin}/movie/${id}`
+            : `${window.location.origin}/tv/${id}`,
+          logo: `${window.location.origin}/placeholder.svg`,
+        };
+        
+        // Convert params to URL string
         const vidoraParamsString = Object.entries(vidoraParams)
           .map(([key, value]) => `${key}=${value}`)
           .join('&');
@@ -206,8 +175,9 @@ const Watch = () => {
           setIsPlaying(true);
 
           try {
-            const seasonData = await getTVShowSeasonDetails(itemId, seasonNumber);
-            const totalEpisodes = seasonData.episodes?.length || 0;
+            // Fix for seasonData not being defined
+            const seasonDetails = await getTVShowSeasonDetails(itemId, seasonNumber);
+            const totalEpisodes = seasonDetails.episodes?.length || 0;
             
             if (episodeNumber < totalEpisodes) {
               setHasNextEpisode(true);
@@ -226,40 +196,36 @@ const Watch = () => {
                 setHasNextEpisode(false);
               }
             }
-          } catch (error) {
-            console.error("Error checking for next episode:", error);
-            setHasNextEpisode(false);
-          }
-
-          let episodeName = "";
-          try {
-            if (seasonData && seasonData.episodes) {
-              const episodeData = seasonData.episodes.find((e: any) => e.episode_number === episodeNumber);
+            
+            let episodeName = "";
+            if (seasonDetails && seasonDetails.episodes) {
+              const episodeData = seasonDetails.episodes.find((e: any) => e.episode_number === episodeNumber);
               if (episodeData) {
                 episodeName = episodeData.name;
               }
             }
-          } catch (error) {
-            console.error("Error getting episode name:", error);
-          }
 
-          if (currentUser) {
-            try {
-              await addToWatchHistory(currentUser, {
-                id: itemId,
-                type: "tv",
-                title: tvData.name,
-                posterPath: tvData.poster_path,
-                lastEpisode: {
-                  season: parseInt(season),
-                  episode: parseInt(episode),
-                  name: episodeName || "Episode " + episode
-                },
-                genres: tvData.genres?.map((g: any) => g.id)
-              });
-            } catch (error) {
-              console.error("Error adding to watch history:", error);
+            if (currentUser) {
+              try {
+                await addToWatchHistory(currentUser, {
+                  id: itemId,
+                  type: "tv",
+                  title: tvData.name,
+                  posterPath: tvData.poster_path,
+                  lastEpisode: {
+                    season: parseInt(season),
+                    episode: parseInt(episode),
+                    name: episodeName || "Episode " + episode
+                  },
+                  genres: tvData.genres?.map((g: any) => g.id)
+                });
+              } catch (error) {
+                console.error("Error adding to watch history:", error);
+              }
             }
+          } catch (error) {
+            console.error("Error checking for next episode:", error);
+            setHasNextEpisode(false);
           }
         } else {
           throw new Error("Invalid parameters for TV show");
@@ -287,43 +253,9 @@ const Watch = () => {
     }
   };
 
-  const handleBackNavigation = () => {
-    if (location.key !== "default") {
-      navigate(-1);
-    } else {
-      if (type === "movie") {
-        navigate(`/movie/${id}`);
-      } else if (type === "tv" && id) {
-        navigate(`/tv/${id}`);
-      } else {
-        navigate('/');
-      }
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-black">
-      <div className={cn(
-        "container mx-auto px-4 py-4 flex flex-col",
-        isFullscreen ? "h-screen" : "min-h-[calc(100vh-8rem)]"
-      )}>
-        {!isFullscreen && (
-          <VideoPlayerControls 
-            title={title}
-            isFullscreen={isFullscreen}
-            hasNextEpisode={hasNextEpisode}
-            isPlaying={isPlaying}
-            volume={volume}
-            isMuted={isMuted}
-            onTogglePlay={togglePlay}
-            onToggleFullscreen={toggleFullscreen}
-            onGoBack={handleBackNavigation}
-            onNextEpisode={goToNextEpisode}
-            onVolumeChange={handleVolumeChange}
-            onToggleMute={toggleMute}
-          />
-        )}
-        
+      <div className="container mx-auto px-0 py-0 flex flex-col h-screen">
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div 
@@ -344,14 +276,25 @@ const Watch = () => {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="flex-1 flex flex-col"
+              className="flex-1 flex flex-col relative"
             >
-              <div 
+              {/* Back button overlay */}
+              <div className="absolute top-0 left-0 z-20 p-6">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBackNavigation}
+                  className="bg-black/30 text-white hover:bg-black/50 rounded-full"
+                >
+                  <ArrowLeft size={20} className="mr-2" />
+                  <span className="opacity-60 hover:opacity-100 transition-opacity">Back</span>
+                </Button>
+              </div>
+              
+              {/* Vidora Player - full screen by default */}
+              <div
                 ref={playerContainerRef}
-                className={cn(
-                  "w-full aspect-video relative rounded-xl overflow-hidden glass-panel shadow-2xl border border-white/10",
-                  isFullscreen ? "fixed inset-0 z-50 aspect-auto rounded-none" : "h-auto"
-                )}
+                className="w-full h-full relative overflow-hidden"
               >
                 {vidoraUrl && (
                   <iframe
@@ -360,60 +303,25 @@ const Watch = () => {
                     title={title}
                     frameBorder="0"
                     allowFullScreen
-                    className="absolute inset-0 w-full h-full z-10"
+                    className="w-full h-full absolute inset-0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   ></iframe>
                 )}
-                
-                {isFullscreen && (
-                  <VideoPlayerControls 
-                    title={title}
-                    isFullscreen={isFullscreen}
-                    hasNextEpisode={hasNextEpisode}
-                    isPlaying={isPlaying}
-                    volume={volume}
-                    isMuted={isMuted}
-                    onTogglePlay={togglePlay}
-                    onToggleFullscreen={toggleFullscreen}
-                    onGoBack={handleBackNavigation}
-                    onNextEpisode={goToNextEpisode}
-                    onVolumeChange={handleVolumeChange}
-                    onToggleMute={toggleMute}
-                  />
-                )}
               </div>
-              
-              {!isFullscreen && (
-                <motion.div 
-                  className="flex flex-wrap justify-center sm:justify-between items-center gap-3 mt-6"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Button 
-                    variant="outline" 
+
+              {/* Next episode button - shown at the bottom */}
+              {hasNextEpisode && (
+                <div className="absolute bottom-8 right-8 z-20">
+                  <Button
+                    variant="default"
                     size="lg"
-                    className="gap-2 rounded-full glass-panel text-white hover:bg-white/10 hover:text-primary border-white/10 shadow-lg hover:shadow-primary/20 transition-all duration-300"
-                    onClick={() => {
-                      toast.success("Thanks for your feedback!");
-                    }}
+                    className="gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg hover:shadow-primary/30 transition-all duration-300"
+                    onClick={goToNextEpisode}
                   >
-                    <ThumbsUp size={16} />
-                    Working well
+                    <Play size={16} className="ml-0.5" />
+                    Next Episode
                   </Button>
-                  
-                  {hasNextEpisode && (
-                    <Button 
-                      variant="default"
-                      size="lg" 
-                      className="gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg hover:shadow-primary/30 transition-all duration-300"
-                      onClick={goToNextEpisode}
-                    >
-                      <Play size={16} className="ml-0.5" />
-                      Next Episode
-                    </Button>
-                  )}
-                </motion.div>
+                </div>
               )}
             </motion.div>
           )}

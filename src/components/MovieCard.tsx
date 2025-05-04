@@ -40,11 +40,13 @@ const MovieCard: React.FC<MovieCardProps> = ({
     e.stopPropagation();
     if (!item.id) return;
     
+    // Direct navigation to watch page for movies
     if (type === "movie") {
       navigate(`/watch/movie/${item.id}`);
     } else {
-      // For TV shows, navigate to the details page where users can select episodes
-      navigate(`/tv/${item.id}`);
+      // Direct navigation to first episode for TV shows
+      // Assumes season 1 episode 1 is available
+      navigate(`/watch/tv/${item.id}/1/1`);
     }
   };
   
