@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Movie, TVShow } from "@/types";
 import { cn } from "@/lib/utils";
 import { Play, Star } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
 
 interface MovieCardProps {
@@ -33,12 +32,20 @@ const MovieCard: React.FC<MovieCardProps> = ({
   const title = "title" in item ? item.title : item.name;
   
   const handleClick = () => {
+    if (!item.id) return;
     navigate(`/${type}/${item.id}`);
   };
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/watch/${type}/${item.id}`);
+    if (!item.id) return;
+    
+    if (type === "movie") {
+      navigate(`/watch/movie/${item.id}`);
+    } else {
+      // For TV shows, navigate to the details page where users can select episodes
+      navigate(`/tv/${item.id}`);
+    }
   };
   
   // Check if we have progress information (for continue watching)
@@ -122,7 +129,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
         </div>
       )}
       
-      {/* Info panel - slide in on hover for a cleaner look */}
+      {/* Info panel */}
       <motion.div 
         className="absolute -bottom-16 left-0 right-0 p-3 bg-gradient-to-t from-black to-black/80 backdrop-blur-sm border-t border-white/10 group-hover:bottom-0 transition-all duration-300"
         style={{ transition: 'bottom 0.3s ease-in-out' }}

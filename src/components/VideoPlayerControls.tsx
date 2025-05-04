@@ -43,7 +43,7 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
 
   if (isFullscreen) {
     return (
-      <div className="absolute top-0 left-0 w-full z-30 flex flex-col">
+      <div className="absolute top-0 left-0 w-full h-full z-30 flex flex-col justify-between opacity-0 hover:opacity-100 transition-opacity duration-300">
         {/* Top controls - visible when in fullscreen */}
         <div className="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent">
           <Button 
@@ -81,8 +81,8 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
           </div>
         </div>
         
-        {/* Bottom controls for fullscreen - can be expanded later */}
-        <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between">
+        {/* Bottom controls for fullscreen */}
+        <div className="p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between">
           {onTogglePlay && (
             <Button
               variant="ghost"

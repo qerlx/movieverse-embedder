@@ -4,7 +4,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
-import { ThumbsUp, Play, Pause, Volume2, VolumeOff } from "lucide-react";
+import { ThumbsUp, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
@@ -68,10 +68,8 @@ const Watch = () => {
           description: err.message
         });
       });
-      setIsFullscreen(true);
     } else {
       document.exitFullscreen();
-      setIsFullscreen(false);
     }
   };
 
@@ -171,9 +169,7 @@ const Watch = () => {
           setPosterPath(movieData.poster_path);
           
           // Set URLs for Vidora
-          setVidoraUrl(movieData.imdb_id 
-            ? `https://vidora.su/movie/tt${movieData.imdb_id}?${vidoraParamsString}`
-            : `https://vidora.su/movie/${itemId}?${vidoraParamsString}`);
+          setVidoraUrl(`https://vidora.su/movie/${itemId}?${vidoraParamsString}`);
 
           setHasNextEpisode(false);
           setNextEpisodeInfo(null);
@@ -236,14 +232,15 @@ const Watch = () => {
           }
 
           let episodeName = "";
-          if (tvData.seasons) {
-            const seasonData = tvData.seasons.find((s: any) => s.season_number === parseInt(season));
+          try {
             if (seasonData && seasonData.episodes) {
-              const episodeData = seasonData.episodes.find((e: any) => e.episode_number === parseInt(episode));
+              const episodeData = seasonData.episodes.find((e: any) => e.episode_number === episodeNumber);
               if (episodeData) {
                 episodeName = episodeData.name;
               }
             }
+          } catch (error) {
+            console.error("Error getting episode name:", error);
           }
 
           if (currentUser) {
@@ -281,7 +278,7 @@ const Watch = () => {
     };
 
     fetchDetails();
-  }, [id, type, season, episode, navigate, uiToast, currentUser, vidoraParams]);
+  }, [id, type, season, episode, navigate, uiToast, currentUser]);
 
   const goToNextEpisode = () => {
     if (nextEpisodeInfo && type === "tv" && id) {
@@ -296,7 +293,7 @@ const Watch = () => {
     } else {
       if (type === "movie") {
         navigate(`/movie/${id}`);
-      } else if (type === "tv" && season && episode) {
+      } else if (type === "tv" && id) {
         navigate(`/tv/${id}`);
       } else {
         navigate('/');
@@ -356,15 +353,17 @@ const Watch = () => {
                   isFullscreen ? "fixed inset-0 z-50 aspect-auto rounded-none" : "h-auto"
                 )}
               >
-                <iframe
-                  ref={iframeRef}
-                  src={vidoraUrl}
-                  title={title}
-                  frameBorder="0"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                ></iframe>
+                {vidoraUrl && (
+                  <iframe
+                    ref={iframeRef}
+                    src={vidoraUrl}
+                    title={title}
+                    frameBorder="0"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full z-10"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  ></iframe>
+                )}
                 
                 {isFullscreen && (
                   <VideoPlayerControls 
