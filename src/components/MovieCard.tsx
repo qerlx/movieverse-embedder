@@ -38,19 +38,11 @@ const MovieCard: React.FC<MovieCardProps> = ({
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    // Handle TV show episode navigation if available
-    if (type === 'tv' && (item as any).lastEpisode) {
-      const lastEpisode = (item as any).lastEpisode;
-      navigate(`/watch/tv/${item.id}/${lastEpisode.season}/${lastEpisode.episode}`);
-    } else {
-      navigate(`/watch/${type}/${item.id}`);
-    }
+    navigate(`/watch/${type}/${item.id}`);
   };
   
   // Check if we have progress information (for continue watching)
   const hasProgress = (item as any).progress !== undefined;
-  const lastEpisode = (item as any).lastEpisode;
   
   return (
     <motion.div 
@@ -85,13 +77,6 @@ const MovieCard: React.FC<MovieCardProps> = ({
 
         {/* Blurred backdrop overlay when hovered */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity duration-300"></div>
-
-        {/* Episode badge for TV shows with last episode info */}
-        {type === 'tv' && lastEpisode && (
-          <div className="absolute top-2 right-2 px-2 py-1 text-xs font-medium rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground shadow-md">
-            S{lastEpisode.season}:E{lastEpisode.episode}
-          </div>
-        )}
         
         {/* Rating indicator */}
         {item.vote_average > 0 && (
@@ -155,12 +140,6 @@ const MovieCard: React.FC<MovieCardProps> = ({
             <time dateTime={item.first_air_date}>
               {new Date(item.first_air_date).getFullYear()}
             </time>
-          )}
-          
-          {lastEpisode && (
-            <span className="ml-2">
-              • S{lastEpisode.season}:E{lastEpisode.episode}
-            </span>
           )}
         </div>
       </motion.div>

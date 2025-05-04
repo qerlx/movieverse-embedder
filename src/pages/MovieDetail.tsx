@@ -1,19 +1,16 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { getMovieDetails, getVidoraMovieEmbedUrl } from "@/lib/api";
-import { Star, Clock, Calendar, Play, Eye, Heart, MonitorPlay } from "lucide-react";
+import { getMovieDetails } from "@/lib/api";
+import { Star, Clock, Calendar, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
   CardContent, 
-  CardFooter, 
   CardHeader, 
   CardTitle,
   CardDescription 
 } from "@/components/ui/card";
-import { Movie, Cast } from "@/types";
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -29,19 +26,9 @@ const MovieDetail = () => {
   const { currentUser } = useAuth();
   const [movie, setMovie] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedServer, setSelectedServer] = useState("vidora");
   
   // Custom theme color for Vidora player
   const vidoraThemeColor = "00ff9d";
-  
-  // Vidora parameters
-  const vidoraParams = {
-    autoplay: true,
-    colour: vidoraThemeColor,
-    pausescreen: true,
-    backbutton: window.location.origin,
-    idlecheck: 20, // Check if user is still watching after 20 minutes
-  };
   
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -72,19 +59,8 @@ const MovieDetail = () => {
   const handleWatchClick = () => {
     navigate(`/watch/movie/${id}`);
   };
-  
-  const handleServerSelect = (server: string) => {
-    if (server === "vidora") {
-      // Default is already Vidora
-      navigate(`/watch/movie/${id}`);
-    } else if (server === "vidsrc") {
-      // Pass a query param to indicate vidsrc server
-      navigate(`/watch/movie/${id}?server=vidsrc`);
-    } else {
-      navigate(`/watch/movie/${id}?server=${server}`);
-    }
-  };
 
+  // Loading and error states
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -140,11 +116,6 @@ const MovieDetail = () => {
 
   const topCast = movie.credits?.cast?.slice(0, 6) || [];
 
-  // Generate the Vidora embed URL
-  const vidoraUrl = movie.imdb_id ? 
-    `https://vidora.su/movie/tt${movie.imdb_id}?autoplay=true&colour=${vidoraThemeColor}` : 
-    `https://vidora.su/movie/${movie.id}?autoplay=true&colour=${vidoraThemeColor}`;
-
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -198,7 +169,7 @@ const MovieDetail = () => {
                 <Card className="border-primary/20 bg-black/30 backdrop-blur-md">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-gradient text-xl">Watch Now</CardTitle>
-                    <CardDescription>Select your preferred streaming option</CardDescription>
+                    <CardDescription>High quality streaming with Vidora</CardDescription>
                   </CardHeader>
                   
                   <CardContent className="space-y-4 pb-3">
@@ -208,50 +179,7 @@ const MovieDetail = () => {
                     >
                       <Play size={22} className="ml-1" />
                       Watch with Vidora
-                      <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">Recommended</span>
                     </Button>
-                    
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "gap-2 rounded-full border-white/10", 
-                          selectedServer === "vidsrc" && "border-primary/50 bg-primary/10 text-primary"
-                        )}
-                        onClick={() => handleServerSelect("vidsrc")}
-                      >
-                        <MonitorPlay size={14} />
-                        VidSrc
-                        <span className="text-xs opacity-70">(Second Best)</span>
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "gap-2 rounded-full border-white/10", 
-                          selectedServer === "server3" && "border-primary/50 bg-primary/10 text-primary"
-                        )}
-                        onClick={() => handleServerSelect("server3")}
-                      >
-                        <MonitorPlay size={14} />
-                        MultiEmbed
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "gap-2 rounded-full border-white/10",
-                          selectedServer === "server4" && "border-primary/50 bg-primary/10 text-primary"
-                        )}
-                        onClick={() => handleServerSelect("server4")}
-                      >
-                        <MonitorPlay size={14} />
-                        Embed
-                      </Button>
-                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
