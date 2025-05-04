@@ -52,7 +52,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       
       <div className="space-y-3 pb-6">
         {seasons.filter(season => season.season_number > 0).map((season) => (
-          <Card key={season.id} className="bg-black/40 border-white/10 overflow-hidden">
+          <Card key={season.id} className="bg-black/40 border-white/10 overflow-hidden hover:border-primary/20 transition-colors">
             <motion.div 
               className={cn(
                 "flex justify-between items-center p-4 cursor-pointer hover:bg-black/60 transition-colors",
@@ -80,14 +80,14 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {season.episodes.map((episode) => (
                       <motion.div
                         key={episode.id}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className={cn(
-                          "flex gap-3 p-2 rounded-lg cursor-pointer transition-all",
+                          "flex gap-3 p-3 rounded-lg cursor-pointer transition-all",
                           selectedEpisode?.season === season.season_number && 
                           selectedEpisode?.episode === episode.episode_number
                             ? "bg-primary/20 border border-primary/40"
@@ -105,21 +105,23 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-white/30">
-                              No Image
+                              <span className="text-xs">No Preview</span>
                             </div>
                           )}
                         </div>
                         
                         <div className="flex-1 overflow-hidden">
                           <div className="flex items-center">
-                            <span className="text-xs font-medium bg-black/40 text-white/70 px-1.5 py-0.5 rounded">
+                            <span className="text-xs font-medium bg-black/40 text-primary px-1.5 py-0.5 rounded">
                               {episode.episode_number}
                             </span>
                           </div>
                           <h4 className="text-sm font-medium line-clamp-1 mt-1">{episode.name}</h4>
-                          <p className="text-xs text-white/50 line-clamp-1 mt-0.5">
-                            {episode.runtime && `${episode.runtime} min`}
-                          </p>
+                          {episode.runtime && (
+                            <p className="text-xs text-white/50 line-clamp-1 mt-0.5">
+                              {episode.runtime} min
+                            </p>
+                          )}
                         </div>
                         
                         <div className="flex items-center">

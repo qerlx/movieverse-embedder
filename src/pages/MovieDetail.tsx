@@ -19,6 +19,13 @@ import WatchProviders from "@/components/WatchProviders";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+interface Cast {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+}
+
 const MovieDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();

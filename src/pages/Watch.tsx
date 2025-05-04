@@ -4,7 +4,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
-import { ThumbsUp } from "lucide-react";
+import { ThumbsUp, Play, Pause, Volume2, VolumeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
@@ -26,14 +26,22 @@ const Watch = () => {
   const location = useLocation();
   const { toast: uiToast } = useToast();
   const { currentUser } = useAuth();
+  
+  // Content info
   const [title, setTitle] = useState("");
   const [posterPath, setPosterPath] = useState<string | null>(null);
   const [vidoraUrl, setVidoraUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   
+  // Player state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
   const [hasNextEpisode, setHasNextEpisode] = useState(false);
   const [nextEpisodeInfo, setNextEpisodeInfo] = useState<{season: number, episode: number} | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
 
@@ -79,6 +87,24 @@ const Watch = () => {
     };
   }, []);
 
+  // Toggle play/pause (this would need to communicate with iframe)
+  const togglePlay = () => {
+    setIsPlaying(!isPlaying);
+    // This would need a postMessage implementation to control the embedded player
+  };
+
+  // Toggle mute state
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    // This would need a postMessage implementation to control the embedded player
+  };
+
+  // Handle volume change
+  const handleVolumeChange = (value: number) => {
+    setVolume(value);
+    // This would need a postMessage implementation to control the embedded player
+  };
+
   // Setup watch progress syncing using Vidora's built-in functionality
   useEffect(() => {
     // Initialize watch progress from localStorage
@@ -90,6 +116,15 @@ const Watch = () => {
         const mediaData = event.data.data;
         if (mediaData.id && (mediaData.type === 'movie' || mediaData.type === 'tv')) {
           console.log('Progress update received:', mediaData);
+          
+          // If we receive play state info from Vidora, update our local state
+          if (mediaData.playState) {
+            if (mediaData.playState === 'playing') {
+              setIsPlaying(true);
+            } else if (mediaData.playState === 'paused') {
+              setIsPlaying(false);
+            }
+          }
           
           // Update local storage with watch progress
           watchProgress[mediaData.id] = {
@@ -142,6 +177,9 @@ const Watch = () => {
 
           setHasNextEpisode(false);
           setNextEpisodeInfo(null);
+          
+          // Auto set isPlaying to true since we're using autoplay
+          setIsPlaying(true);
 
           if (currentUser) {
             try {
@@ -167,6 +205,9 @@ const Watch = () => {
           
           // Set URL for Vidora
           setVidoraUrl(`https://vidora.su/tv/${itemId}/${season}/${episode}?${vidoraParamsString}`);
+          
+          // Auto set isPlaying to true since we're using autoplay
+          setIsPlaying(true);
 
           try {
             const seasonData = await getTVShowSeasonDetails(itemId, seasonNumber);
@@ -267,16 +308,22 @@ const Watch = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-black">
       <div className={cn(
         "container mx-auto px-4 py-4 flex flex-col",
-        isFullscreen ? "h-screen" : "min-h-screen"
+        isFullscreen ? "h-screen" : "min-h-[calc(100vh-8rem)]"
       )}>
         {!isFullscreen && (
           <VideoPlayerControls 
             title={title}
             isFullscreen={isFullscreen}
             hasNextEpisode={hasNextEpisode}
+            isPlaying={isPlaying}
+            volume={volume}
+            isMuted={isMuted}
+            onTogglePlay={togglePlay}
             onToggleFullscreen={toggleFullscreen}
             onGoBack={handleBackNavigation}
             onNextEpisode={goToNextEpisode}
+            onVolumeChange={handleVolumeChange}
+            onToggleMute={toggleMute}
           />
         )}
         
@@ -305,8 +352,8 @@ const Watch = () => {
               <div 
                 ref={playerContainerRef}
                 className={cn(
-                  "w-full h-full relative rounded-xl overflow-hidden glass-panel shadow-2xl border border-white/10",
-                  isFullscreen ? "fixed inset-0 z-50 rounded-none" : ""
+                  "w-full aspect-video relative rounded-xl overflow-hidden glass-panel shadow-2xl border border-white/10",
+                  isFullscreen ? "fixed inset-0 z-50 aspect-auto rounded-none" : "h-auto"
                 )}
               >
                 <iframe
@@ -321,12 +368,18 @@ const Watch = () => {
                 
                 {isFullscreen && (
                   <VideoPlayerControls 
-                    title=""
+                    title={title}
                     isFullscreen={isFullscreen}
                     hasNextEpisode={hasNextEpisode}
+                    isPlaying={isPlaying}
+                    volume={volume}
+                    isMuted={isMuted}
+                    onTogglePlay={togglePlay}
                     onToggleFullscreen={toggleFullscreen}
                     onGoBack={handleBackNavigation}
                     onNextEpisode={goToNextEpisode}
+                    onVolumeChange={handleVolumeChange}
+                    onToggleMute={toggleMute}
                   />
                 )}
               </div>
@@ -357,6 +410,7 @@ const Watch = () => {
                       className="gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg hover:shadow-primary/30 transition-all duration-300"
                       onClick={goToNextEpisode}
                     >
+                      <Play size={16} className="ml-0.5" />
                       Next Episode
                     </Button>
                   )}
