@@ -30,7 +30,10 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   
   React.useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (!currentUser) return setIsLoading(false);
+      if (!currentUser) {
+        setIsLoading(false);
+        return;
+      }
       
       try {
         const status = await checkIsFavorite(currentUser.uid, itemId, itemType);
@@ -71,7 +74,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   if (size === 'icon') {
     return (
       <motion.button
-        disabled={isLoading || !currentUser}
+        disabled={isLoading}
         onClick={handleToggleFavorite}
         className={cn(
           "flex items-center justify-center rounded-full w-9 h-9",
@@ -113,7 +116,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     <Button
       variant={variant}
       size={size}
-      disabled={isLoading || !currentUser}
+      disabled={isLoading}
       onClick={handleToggleFavorite}
       className={cn(
         isFavorited && variant === 'outline' ? "bg-primary/10" : "",

@@ -46,6 +46,28 @@ const videoSources: VideoSource[] = [
         return `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`;
       }
     }
+  },
+  {
+    id: "vidzee",
+    name: "Vidzee",
+    getUrl: (type, id, season, episode) => {
+      if (type === "movie") {
+        return `https://vidzee.wtf/movie/movie.php?id=${id}`;
+      } else {
+        return `https://vidzee.wtf/tv/tv.php?id=${id}&season=${season}&episode=${episode}`;
+      }
+    }
+  },
+  {
+    id: "vidjoy",
+    name: "Vidjoy",
+    getUrl: (type, id, season, episode) => {
+      if (type === "movie") {
+        return `https://vidjoy.pro/embed/movie/${id}?adFree=true`;
+      } else {
+        return `https://vidjoy.pro/embed/tv/${id}/${season}/${episode}?adFree=true`;
+      }
+    }
   }
 ];
 
@@ -69,6 +91,19 @@ const Watch = () => {
   // Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
+
+  // Parse source from query params on initial load
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const sourceParam = searchParams.get('source');
+    
+    if (sourceParam) {
+      const foundSource = videoSources.find(src => src.id === sourceParam);
+      if (foundSource) {
+        setActiveSource(foundSource);
+      }
+    }
+  }, [location.search]);
 
   // Handle back navigation
   const handleBackNavigation = () => {
@@ -94,6 +129,12 @@ const Watch = () => {
       const url = source.getUrl(type, id, season, episode);
       setVideoUrl(url);
       
+      // Update URL with source parameter without navigating
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.set('source', source.id);
+      const newUrl = `${location.pathname}?${searchParams.toString()}`;
+      window.history.replaceState(null, '', newUrl);
+      
       // Small delay to ensure proper loading state
       setTimeout(() => {
         setIsLoading(false);
@@ -110,7 +151,7 @@ const Watch = () => {
         if (mediaData.id && (mediaData.type === 'movie' || mediaData.type === 'tv')) {
           console.log('Progress update received:', mediaData);
           
-          // Use Vidora's built-in progress tracking, but still save locally
+          // Use Vidora's built-in progress tracking
           let watchProgress = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
           watchProgress[mediaData.id] = {
             ...watchProgress[mediaData.id],
@@ -235,7 +276,7 @@ const Watch = () => {
   return (
     <div className="min-h-screen bg-black">
       <div className="h-screen w-screen relative">
-        {/* Back button and source switchers */}
+        {/* Source switcher buttons */}
         <div className="absolute top-6 left-0 right-0 z-50 flex justify-between px-6">
           <Button
             variant="ghost"
@@ -247,7 +288,7 @@ const Watch = () => {
             <span>Back</span>
           </Button>
           
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 justify-end">
             {videoSources.map((source) => (
               <Button 
                 key={source.id}
@@ -256,7 +297,7 @@ const Watch = () => {
                 onClick={() => switchVideoSource(source)}
                 className={`
                   ${activeSource.id === source.id ? 'bg-purple-600 hover:bg-purple-700' : 'bg-black/30 text-white border-white/20'}
-                  rounded-full transition-all
+                  rounded-full transition-all text-xs sm:text-sm
                 `}
               >
                 {source.name}
@@ -288,6 +329,8 @@ const Watch = () => {
               className="w-full h-full absolute inset-0 bg-black"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               style={{ zIndex: 10 }}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+              referrerPolicy="no-referrer"
             ></iframe>
           </div>
         )}

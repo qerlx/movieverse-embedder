@@ -14,7 +14,17 @@ import { Progress } from "./ui/progress";
 const STORAGE_KEY = 'watch_progress';
 
 // Define a type for the watch history items that includes Vidora's structure
-type WatchHistoryItem = (Movie | TVShow) & { 
+interface WatchHistoryItem {
+  id: number;
+  title: string;
+  name?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  overview?: string;
+  vote_average?: number;
+  first_air_date?: string;
+  release_date?: string;
+  genre_ids?: number[];
   progress?: number; 
   lastEpisode?: { 
     season: number; 
@@ -23,7 +33,7 @@ type WatchHistoryItem = (Movie | TVShow) & {
   };
   media_type?: string;
   type?: string;
-};
+}
 
 const RecentlyWatched: React.FC = () => {
   const { currentUser } = useAuth();
@@ -42,7 +52,7 @@ const RecentlyWatched: React.FC = () => {
       try {
         setIsLoading(true);
         // Get watch history from local service
-        let history = await getWatchHistory(currentUser) as WatchHistoryItem[];
+        const history = await getWatchHistory(currentUser) as unknown as WatchHistoryItem[];
 
         // Also check Vidora's local storage for additional items
         try {
@@ -67,7 +77,7 @@ const RecentlyWatched: React.FC = () => {
                 name: data.episode_title || `Episode ${data.episode || 1}`
               } : undefined,
               media_type: data.type || 'movie',
-              // Add minimum required TVShow properties
+              // Add minimum required properties
               backdrop_path: null,
               overview: '',
               vote_average: 0,
@@ -82,14 +92,14 @@ const RecentlyWatched: React.FC = () => {
           const existingIds = new Set(history.map(item => item.id));
           const uniqueVidoraItems = vidoraItems.filter(item => !existingIds.has(item.id));
           
-          history = [...history, ...uniqueVidoraItems];
+          setWatchHistory([...history, ...uniqueVidoraItems]);
         } catch (error) {
           console.error("Error parsing Vidora progress:", error);
+          setWatchHistory(history);
         }
-        
-        setWatchHistory(history);
       } catch (error) {
         console.error("Error fetching watch history:", error);
+        setWatchHistory([]);
       } finally {
         setIsLoading(false);
       }
@@ -159,7 +169,19 @@ const RecentlyWatched: React.FC = () => {
             return (
               <div key={`${mediaType}-${item.id}-${index}`} className="relative">
                 <MovieCard 
-                  item={item} 
+                  item={{
+                    id: item.id,
+                    title: item.title || item.name || "Unknown",
+                    name: item.name || item.title || "Unknown",
+                    poster_path: item.poster_path || null,
+                    backdrop_path: item.backdrop_path || null,
+                    overview: item.overview || "",
+                    vote_average: item.vote_average || 0,
+                    release_date: item.release_date || "",
+                    first_air_date: item.first_air_date || "",
+                    genre_ids: item.genre_ids || [],
+                    progress: item.progress,
+                  }}
                   type={mediaType === "tv" ? "tv" : "movie"} 
                   priority={true} 
                 />

@@ -3,17 +3,15 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getMovieDetails } from "@/lib/api";
-import { Star, Clock, Calendar, Play, Film, Tv } from "lucide-react";
+import { Star, Clock, Calendar, Play, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
   CardContent,
-  CardTitle,
 } from "@/components/ui/card";
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
-import AddToWatchedButton from "@/components/AddToWatchedButton";
 import WatchProviders from "@/components/WatchProviders";
 import { motion } from "framer-motion";
 
@@ -25,10 +23,9 @@ interface Cast {
 }
 
 interface VideoSource {
+  id: string;
   name: string;
   icon?: React.ReactNode;
-  url: string;
-  isPrimary?: boolean;
 }
 
 const MovieDetail = () => {
@@ -38,9 +35,14 @@ const MovieDetail = () => {
   const { currentUser } = useAuth();
   const [movie, setMovie] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Vidora theme color - purple to match the site theme
-  const vidoraThemeColor = "8B5CF6";
+
+  // Video sources list
+  const videoSources: VideoSource[] = [
+    { id: "vidora", name: "Vidora", icon: <Play size={16} className="mr-1" /> },
+    { id: "vidsrc", name: "VidSrc", icon: <Film size={16} className="mr-1" /> },
+    { id: "vidzee", name: "Vidzee", icon: <Film size={16} className="mr-1" /> },
+    { id: "vidjoy", name: "Vidjoy", icon: <Film size={16} className="mr-1" /> }
+  ];
   
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -68,30 +70,11 @@ const MovieDetail = () => {
     window.scrollTo(0, 0);
   }, [id, toast]);
 
-  // Generate video sources
-  const getVideoSources = (): VideoSource[] => {
-    if (!id) return [];
-    
-    return [
-      {
-        name: "Vidora",
-        icon: <Play size={16} className="mr-1" />,
-        url: `/watch/movie/${id}`,
-        isPrimary: true
-      },
-      {
-        name: "VidSrc",
-        icon: <Film size={16} className="mr-1" />,
-        url: `/watch/movie/${id}?source=vidsrc`,
-      }
-    ];
-  };
-
   // Handle watch button click for specific source
   const handleWatchClick = (source?: string) => {
     if (id) {
-      if (source === "vidsrc") {
-        navigate(`/watch/movie/${id}?source=vidsrc`);
+      if (source) {
+        navigate(`/watch/movie/${id}?source=${source}`);
       } else {
         navigate(`/watch/movie/${id}`);
       }
@@ -153,7 +136,6 @@ const MovieDetail = () => {
   ) || [];
 
   const topCast = movie.credits?.cast?.slice(0, 6) || [];
-  const videoSources = getVideoSources();
 
   return (
     <motion.div 
@@ -212,27 +194,28 @@ const MovieDetail = () => {
                 className="mt-8"
               >
                 <Card className="border-primary/20 bg-black/30 backdrop-blur-md">
-                  <CardContent className="space-y-4 p-4">
-                    <CardTitle className="text-gradient text-xl mb-4">Watch Options</CardTitle>
+                  <CardContent className="space-y-3 p-4">
+                    <h3 className="text-gradient text-xl mb-2 font-semibold">Watch Options</h3>
                     
-                    {/* Primary button for Vidora */}
-                    <Button 
-                      onClick={() => handleWatchClick()}
-                      className="w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-4 py-6 shadow-lg hover:shadow-primary/30 transition-all"
-                    >
-                      <Play size={22} className="ml-1" />
-                      Watch with Vidora
-                    </Button>
-                    
-                    {/* Secondary button for VidSrc */}
-                    <Button 
-                      onClick={() => handleWatchClick('vidsrc')}
-                      variant="outline"
-                      className="w-full text-white gap-2 rounded-full px-4 py-4 border-primary/30 hover:border-primary/50 transition-all"
-                    >
-                      <Film size={20} />
-                      Watch with VidSrc
-                    </Button>
+                    {/* Video source buttons */}
+                    <div className="space-y-2">
+                      {videoSources.map((source, index) => (
+                        <Button 
+                          key={source.id}
+                          onClick={() => handleWatchClick(source.id)}
+                          className={
+                            index === 0 
+                              ? "w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-4 py-6 shadow-lg hover:shadow-primary/30 transition-all" 
+                              : "w-full bg-black/60 hover:bg-black/80 text-white gap-2 rounded-full px-4 py-4 border border-primary/30 hover:border-primary/50 transition-all mt-2"
+                          }
+                          size={index === 0 ? "lg" : "default"}
+                        >
+                          {source.icon}
+                          Watch with {source.name}
+                          {index === 0 && <span className="text-xs ml-1 opacity-70">(Recommended)</span>}
+                        </Button>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>

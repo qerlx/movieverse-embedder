@@ -74,7 +74,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
       )}
       
       <div className="aspect-[2/3] relative overflow-hidden rounded-lg">
-        {/* Media Type Indicator - Always visible now */}
+        {/* Media Type Indicator - Always visible */}
         <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm flex items-center">
           {type === 'tv' ? (
             <Tv size={12} className="text-purple-400 mr-1" />
@@ -100,10 +100,10 @@ const MovieCard: React.FC<MovieCardProps> = ({
           }}
         />
 
-        {/* Overlay with gradient - simplified for better performance */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 
-                        sm:transition-opacity sm:duration-200 
-                        lg:opacity-0 lg:group-hover:opacity-100"></div>
+        {/* Overlay gradient - simplified for better performance */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent 
+                      opacity-60 sm:opacity-0 sm:group-hover:opacity-100 
+                      transition-opacity duration-200"></div>
         
         {/* Rating indicator */}
         {item.vote_average > 0 && (
@@ -113,28 +113,32 @@ const MovieCard: React.FC<MovieCardProps> = ({
           </div>
         )}
         
-        {/* Mobile-friendly title - always visible on mobile, hidden on desktop unless hovered */}
-        <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black to-transparent 
-                       sm:hidden lg:block lg:opacity-0 lg:group-hover:opacity-100 lg:transition-opacity lg:duration-200">
+        {/* Title - always visible on mobile, hidden on desktop unless hovered */}
+        <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black to-transparent">
           <h3 className="text-xs sm:text-sm font-medium text-white line-clamp-1 text-shadow">
             {title}
           </h3>
         </div>
         
-        {/* Play button overlay - hidden on mobile, visible on hover for desktop */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent 
-                       hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100 flex-col items-center justify-center 
-                       sm:transition-all sm:duration-200">
+        {/* Play button overlay - More visible on mobile */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
           <button
             onClick={handlePlayClick}
-            className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-500/90 text-white hover:bg-purple-600 shadow-lg mb-2 transition-transform"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-purple-500/90 text-white 
+                     hover:bg-purple-600 shadow-lg transition-transform scale-0 sm:group-hover:scale-100 opacity-0 sm:group-hover:opacity-100"
           >
-            <Play className="text-white ml-0.5" size={22} />
+            <Play className="text-white ml-0.5" size={20} />
           </button>
-          
-          <h3 className="font-medium text-center text-white text-shadow px-3 text-sm line-clamp-2 max-w-[90%]">
-            {title}
-          </h3>
+        </div>
+        
+        {/* Mobile play button - always visible on mobile */}
+        <div className="absolute bottom-2 right-2 sm:hidden">
+          <button
+            onClick={handlePlayClick}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-purple-500/90 text-white shadow-lg"
+          >
+            <Play className="text-white ml-0.5" size={16} />
+          </button>
         </div>
       </div>
       
