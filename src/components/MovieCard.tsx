@@ -53,15 +53,13 @@ const MovieCard: React.FC<MovieCardProps> = ({
   const hasProgress = (item as any).progress !== undefined;
   
   return (
-    <motion.div 
+    <div 
       className={cn(
         "relative h-full w-full group",
         "cursor-pointer premium-movie-poster",
         className
       )}
       onClick={handleClick}
-      whileHover={{ y: -5 }}
-      whileTap={{ scale: 0.98 }}
     >
       {/* Rank indicator for ranked lists */}
       {isRanked && (
@@ -79,12 +77,12 @@ const MovieCard: React.FC<MovieCardProps> = ({
         <img 
           src={posterPath} 
           alt={title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          className="w-full h-full object-cover"
           loading={priority ? "eager" : "lazy"}
         />
 
         {/* Blurred backdrop overlay when hovered */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity duration-200"></div>
         
         {/* Rating indicator */}
         {item.vote_average > 0 && (
@@ -95,26 +93,17 @@ const MovieCard: React.FC<MovieCardProps> = ({
         )}
         
         {/* Play button overlay with gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all duration-300">
-          <motion.button
-            initial={{ scale: 0.5, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            animate={{ scale: 1, opacity: 1 }}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all duration-200">
+          <button
             onClick={handlePlayClick}
             className="w-12 h-12 rounded-full flex items-center justify-center bg-primary text-white hover:bg-primary/90 shadow-lg mb-2 transition-transform"
           >
             <Play className="text-white ml-0.5" size={22} />
-          </motion.button>
+          </button>
           
-          <motion.h3 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="font-medium text-center text-white text-shadow px-3 text-sm line-clamp-2 max-w-[90%]"
-          >
+          <h3 className="font-medium text-center text-white text-shadow px-3 text-sm line-clamp-2 max-w-[90%]">
             {title}
-          </motion.h3>
+          </h3>
         </div>
       </div>
       
@@ -131,10 +120,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
       )}
       
       {/* Info panel */}
-      <motion.div 
-        className="absolute -bottom-16 left-0 right-0 p-3 bg-gradient-to-t from-black to-black/80 backdrop-blur-sm border-t border-white/10 group-hover:bottom-0 transition-all duration-300"
-        style={{ transition: 'bottom 0.3s ease-in-out' }}
-      >
+      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-black/80 backdrop-blur-sm border-t border-white/10">
         <h3 className="font-medium text-sm text-center line-clamp-1 text-white/90 text-shadow-sm">
           {title}
         </h3>
@@ -150,8 +136,8 @@ const MovieCard: React.FC<MovieCardProps> = ({
             </time>
           )}
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 

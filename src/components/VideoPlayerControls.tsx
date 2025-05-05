@@ -2,7 +2,6 @@
 import React from 'react';
 import { ArrowLeft, Play, Volume, Volume1, Volume2, VolumeOff, Pause } from 'lucide-react';
 import { Button } from './ui/button';
-import { motion } from 'framer-motion';
 
 interface VideoPlayerControlsProps {
   title: string;
@@ -22,7 +21,6 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
   volume = 1,
   onTogglePlay,
   onGoBack,
-  onVolumeChange,
   onToggleMute,
   isMuted = false,
 }) => {
@@ -35,9 +33,9 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
   };
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full z-30 flex flex-col justify-between opacity-0 hover:opacity-100 transition-opacity duration-300">
+    <div className="absolute top-0 left-0 w-full h-full z-30 flex flex-col justify-between opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none">
       {/* Top controls - only back button */}
-      <div className="flex justify-start items-center p-4 bg-gradient-to-b from-black/80 to-transparent">
+      <div className="flex justify-start items-center p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-auto">
         <Button 
           variant="ghost"
           size="sm" 
@@ -52,7 +50,7 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
       </div>
       
       {/* Bottom controls */}
-      <div className="p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between">
+      <div className="p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between pointer-events-auto">
         {onTogglePlay && (
           <Button
             variant="ghost"
