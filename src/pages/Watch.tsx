@@ -4,12 +4,11 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
-import { ArrowLeft, ThumbsUp, Play } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
 
 // Storage key for watch progress
 const STORAGE_KEY = 'watch_progress';
@@ -31,11 +30,6 @@ const Watch = () => {
   const [posterPath, setPosterPath] = useState<string | null>(null);
   const [vidoraUrl, setVidoraUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Player state
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [hasNextEpisode, setHasNextEpisode] = useState(false);
-  const [nextEpisodeInfo, setNextEpisodeInfo] = useState<{season: number, episode: number} | null>(null);
   
   // Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -70,15 +64,6 @@ const Watch = () => {
         const mediaData = event.data.data;
         if (mediaData.id && (mediaData.type === 'movie' || mediaData.type === 'tv')) {
           console.log('Progress update received:', mediaData);
-          
-          // If we receive play state info from Vidora, update our local state
-          if (mediaData.playState) {
-            if (mediaData.playState === 'playing') {
-              setIsPlaying(true);
-            } else if (mediaData.playState === 'paused') {
-              setIsPlaying(false);
-            }
-          }
           
           // Update local storage with watch progress
           watchProgress[mediaData.id] = {
@@ -115,36 +100,24 @@ const Watch = () => {
         const itemId = parseInt(id);
         
         // Build Vidora parameters
-        const vidoraParams: Record<string, string | boolean | number> = {
-          autoplay: true,
-          colour: vidoraThemeColor,
-          autonextepisode: true,
-          pausescreen: true,
-          // Set back button to current page for movie details or show details
-          backbutton: type === "movie" 
-            ? `${window.location.origin}/movie/${id}`
-            : `${window.location.origin}/tv/${id}`,
-          logo: `${window.location.origin}/placeholder.svg`,
-        };
+        let backbuttonUrl;
+        if (type === "movie") {
+          backbuttonUrl = `${window.location.origin}/movie/${id}`;
+        } else {
+          backbuttonUrl = `${window.location.origin}/tv/${id}`;
+        }
         
-        // Convert params to URL string
-        const vidoraParamsString = Object.entries(vidoraParams)
-          .map(([key, value]) => `${key}=${value}`)
-          .join('&');
+        // Ensure the URL is properly encoded
+        const encodedBackbuttonUrl = encodeURIComponent(backbuttonUrl);
+        const logoUrl = encodeURIComponent(`${window.location.origin}/placeholder.svg`);
         
         if (type === "movie") {
           const movieData = await getMovieDetails(itemId);
           setTitle(movieData.title);
           setPosterPath(movieData.poster_path);
           
-          // Set URLs for Vidora
-          setVidoraUrl(`https://vidora.su/movie/${itemId}?${vidoraParamsString}`);
-
-          setHasNextEpisode(false);
-          setNextEpisodeInfo(null);
-          
-          // Auto set isPlaying to true since we're using autoplay
-          setIsPlaying(true);
+          // Set URL for Vidora with properly formatted parameters
+          setVidoraUrl(`https://vidora.su/movie/${itemId}?autoplay=true&colour=${vidoraThemeColor}&backbutton=${encodedBackbuttonUrl}&pausescreen=true&logo=${logoUrl}`);
 
           if (currentUser) {
             try {
@@ -168,34 +141,12 @@ const Watch = () => {
           setTitle(`${tvData.name} - S${season} E${episode}`);
           setPosterPath(tvData.poster_path);
           
-          // Set URL for Vidora
-          setVidoraUrl(`https://vidora.su/tv/${itemId}/${season}/${episode}?${vidoraParamsString}`);
-          
-          // Auto set isPlaying to true since we're using autoplay
-          setIsPlaying(true);
+          // Set URL for Vidora with properly formatted parameters and built-in next episode support
+          setVidoraUrl(`https://vidora.su/tv/${itemId}/${season}/${episode}?autoplay=true&colour=${vidoraThemeColor}&backbutton=${encodedBackbuttonUrl}&pausescreen=true&autonextepisode=true&logo=${logoUrl}`);
 
           try {
             // Fix for seasonData not being defined
             const seasonDetails = await getTVShowSeasonDetails(itemId, seasonNumber);
-            const totalEpisodes = seasonDetails.episodes?.length || 0;
-            
-            if (episodeNumber < totalEpisodes) {
-              setHasNextEpisode(true);
-              setNextEpisodeInfo({
-                season: seasonNumber,
-                episode: episodeNumber + 1
-              });
-            } else {
-              if (seasonNumber < tvData.number_of_seasons) {
-                setHasNextEpisode(true);
-                setNextEpisodeInfo({
-                  season: seasonNumber + 1,
-                  episode: 1
-                });
-              } else {
-                setHasNextEpisode(false);
-              }
-            }
             
             let episodeName = "";
             if (seasonDetails && seasonDetails.episodes) {
@@ -224,8 +175,7 @@ const Watch = () => {
               }
             }
           } catch (error) {
-            console.error("Error checking for next episode:", error);
-            setHasNextEpisode(false);
+            console.error("Error with season details:", error);
           }
         } else {
           throw new Error("Invalid parameters for TV show");
@@ -245,13 +195,6 @@ const Watch = () => {
 
     fetchDetails();
   }, [id, type, season, episode, navigate, uiToast, currentUser]);
-
-  const goToNextEpisode = () => {
-    if (nextEpisodeInfo && type === "tv" && id) {
-      navigate(`/watch/tv/${id}/${nextEpisodeInfo.season}/${nextEpisodeInfo.episode}`);
-      toast.success("Loading next episode...");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-black">
@@ -278,20 +221,20 @@ const Watch = () => {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="flex-1 flex flex-col relative"
             >
-              {/* Back button overlay */}
-              <div className="absolute top-0 left-0 z-20 p-6">
+              {/* Back button overlay - faint and in top left corner */}
+              <div className="absolute top-4 left-4 z-50">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleBackNavigation}
-                  className="bg-black/30 text-white hover:bg-black/50 rounded-full"
+                  className="bg-black/30 text-white hover:bg-black/50 rounded-full transition-opacity opacity-70 hover:opacity-100"
                 >
                   <ArrowLeft size={20} className="mr-2" />
-                  <span className="opacity-60 hover:opacity-100 transition-opacity">Back</span>
+                  <span>Back</span>
                 </Button>
               </div>
               
-              {/* Vidora Player - full screen by default */}
+              {/* Vidora Player - full screen iframe with proper styling */}
               <div
                 ref={playerContainerRef}
                 className="w-full h-full relative overflow-hidden"
@@ -303,26 +246,12 @@ const Watch = () => {
                     title={title}
                     frameBorder="0"
                     allowFullScreen
-                    className="w-full h-full absolute inset-0"
+                    className="w-full h-full absolute inset-0 bg-black"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    style={{ zIndex: 10 }}
                   ></iframe>
                 )}
               </div>
-
-              {/* Next episode button - shown at the bottom */}
-              {hasNextEpisode && (
-                <div className="absolute bottom-8 right-8 z-20">
-                  <Button
-                    variant="default"
-                    size="lg"
-                    className="gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg hover:shadow-primary/30 transition-all duration-300"
-                    onClick={goToNextEpisode}
-                  >
-                    <Play size={16} className="ml-0.5" />
-                    Next Episode
-                  </Button>
-                </div>
-              )}
             </motion.div>
           )}
         </AnimatePresence>

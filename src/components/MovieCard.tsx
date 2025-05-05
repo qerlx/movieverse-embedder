@@ -40,12 +40,11 @@ const MovieCard: React.FC<MovieCardProps> = ({
     e.stopPropagation();
     if (!item.id) return;
     
-    // Direct navigation to watch page for movies
+    // Direct navigation to Vidora player
     if (type === "movie") {
       navigate(`/watch/movie/${item.id}`);
     } else {
-      // Direct navigation to first episode for TV shows
-      // Assumes season 1 episode 1 is available
+      // For TV shows, navigate to first episode
       navigate(`/watch/tv/${item.id}/1/1`);
     }
   };

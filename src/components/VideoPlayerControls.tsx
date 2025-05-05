@@ -1,17 +1,16 @@
 
 import React from 'react';
-import { ArrowLeft, SkipForward, Play, Volume, Volume1, Volume2, VolumeOff, Pause } from 'lucide-react';
+import { ArrowLeft, Play, Volume, Volume1, Volume2, VolumeOff, Pause } from 'lucide-react';
 import { Button } from './ui/button';
 import { motion } from 'framer-motion';
 
 interface VideoPlayerControlsProps {
   title: string;
-  hasNextEpisode: boolean;
+  hasNextEpisode?: boolean;
   isPlaying?: boolean;
   volume?: number;
   onTogglePlay?: () => void;
   onGoBack: () => void;
-  onNextEpisode: () => void;
   onVolumeChange?: (value: number) => void;
   onToggleMute?: () => void;
   isMuted?: boolean;
@@ -19,12 +18,10 @@ interface VideoPlayerControlsProps {
 
 const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
   title,
-  hasNextEpisode,
   isPlaying = false,
   volume = 1,
   onTogglePlay,
   onGoBack,
-  onNextEpisode,
   onVolumeChange,
   onToggleMute,
   isMuted = false,
@@ -39,8 +36,8 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
 
   return (
     <div className="absolute top-0 left-0 w-full h-full z-30 flex flex-col justify-between opacity-0 hover:opacity-100 transition-opacity duration-300">
-      {/* Top controls */}
-      <div className="flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent">
+      {/* Top controls - only back button */}
+      <div className="flex justify-start items-center p-4 bg-gradient-to-b from-black/80 to-transparent">
         <Button 
           variant="ghost"
           size="sm" 
@@ -51,19 +48,7 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
           <span className="ml-1">Back</span>
         </Button>
         
-        <h1 className="text-lg font-medium text-white truncate">{title}</h1>
-        
-        {hasNextEpisode && (
-          <Button 
-            variant="ghost"
-            size="sm" 
-            onClick={onNextEpisode}
-            className="text-white hover:bg-white/20 rounded-full"
-          >
-            <SkipForward size={16} />
-            <span className="ml-1">Next</span>
-          </Button>
-        )}
+        <h1 className="ml-4 text-lg font-medium text-white truncate">{title}</h1>
       </div>
       
       {/* Bottom controls */}
