@@ -33,42 +33,42 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
   };
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full z-30 flex flex-col justify-between opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+    <div className="absolute top-0 left-0 w-full h-full z-30 flex flex-col justify-between opacity-0 hover:opacity-100 transition-opacity duration-150 pointer-events-none">
       {/* Top controls - only back button */}
-      <div className="flex justify-start items-center p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-auto">
+      <div className="flex justify-start items-center p-3 bg-gradient-to-b from-black/80 to-transparent pointer-events-auto">
         <Button 
           variant="ghost"
           size="sm" 
           onClick={onGoBack}
-          className="text-white hover:bg-white/20 rounded-full"
+          className="text-white hover:bg-white/10 rounded-full"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={16} />
           <span className="ml-1">Back</span>
         </Button>
         
-        <h1 className="ml-4 text-lg font-medium text-white truncate">{title}</h1>
+        <h1 className="ml-3 text-base font-medium text-white truncate">{title}</h1>
       </div>
       
       {/* Bottom controls */}
-      <div className="p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between pointer-events-auto">
+      <div className="p-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between pointer-events-auto">
         {onTogglePlay && (
           <Button
             variant="ghost"
             size="icon"
             onClick={onTogglePlay}
-            className="text-white hover:bg-white/20 rounded-full w-10 h-10"
+            className="text-white hover:bg-white/10 rounded-full w-9 h-9"
           >
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+            {isPlaying ? <Pause size={18} /> : <Play size={18} />}
           </Button>
         )}
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {onToggleMute && (
             <Button
               variant="ghost"
               size="icon"
               onClick={onToggleMute}
-              className="text-white hover:bg-white/20 rounded-full w-8 h-8"
+              className="text-white hover:bg-white/10 rounded-full w-7 h-7"
             >
               {getVolumeIcon()}
             </Button>

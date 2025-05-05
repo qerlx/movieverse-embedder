@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
 
-// Vidora theme color - vibrant teal that matches theme
-const VIDORA_THEME_COLOR = "00ff9d";
+// Vidora theme color - vibrant purple that matches theme
+const VIDORA_THEME_COLOR = "8B5CF6"; // Changed to a purple color
 // Storage key for watch progress
 const STORAGE_KEY = 'watch_progress';
 
@@ -50,9 +50,6 @@ const Watch = () => {
 
   // Setup watch progress syncing using Vidora's built-in functionality
   useEffect(() => {
-    // Initialize watch progress from localStorage
-    let watchProgress = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    
     // Handle messages from the iframe
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'MEDIA_DATA') {
@@ -60,7 +57,8 @@ const Watch = () => {
         if (mediaData.id && (mediaData.type === 'movie' || mediaData.type === 'tv')) {
           console.log('Progress update received:', mediaData);
           
-          // Update local storage with watch progress
+          // Use Vidora's built-in progress tracking, but still save locally
+          let watchProgress = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
           watchProgress[mediaData.id] = {
             ...watchProgress[mediaData.id],
             ...mediaData,
@@ -78,7 +76,6 @@ const Watch = () => {
                 title: mediaData.title || '',
                 posterPath: mediaData.poster_path || '',
                 progress: progress,
-                lastUpdated: Date.now()
               }).catch(err => console.error("Failed to update watch history:", err));
             } catch (error) {
               console.error("Error updating watch progress:", error);

@@ -7,8 +7,11 @@ import { Movie, TVShow } from "@/types";
 import MovieCard from "./MovieCard";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Play } from "lucide-react";
+import { ChevronRight, Play, Clock, Tv, Film } from "lucide-react";
 import { Progress } from "./ui/progress";
+
+// Storage key for watch progress - for local client-side favorites
+const STORAGE_KEY = 'watch_progress';
 
 const RecentlyWatched: React.FC = () => {
   const { currentUser } = useAuth();
@@ -33,8 +36,8 @@ const RecentlyWatched: React.FC = () => {
 
       try {
         setIsLoading(true);
-        // Cast the return value to Match Movie or TVShow type
-        const history = await getWatchHistory(currentUser) as unknown as (Movie | TVShow & {
+        // Get watch history from local service
+        let history = await getWatchHistory(currentUser) as unknown as (Movie | TVShow & {
           progress?: number;
           lastEpisode?: {
             season: number;
@@ -42,6 +45,41 @@ const RecentlyWatched: React.FC = () => {
             name?: string;
           }
         })[];
+
+        // Also check Vidora's local storage for additional items
+        try {
+          const vidoraProgress = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+          
+          // Convert Vidora progress to our format
+          const vidoraItems = Object.entries(vidoraProgress).map(([id, data]: [string, any]) => {
+            const itemId = parseInt(id);
+            if (isNaN(itemId)) return null;
+            
+            return {
+              id: itemId,
+              type: data.type || 'movie',
+              title: data.title || 'Unknown Title',
+              name: data.title || 'Unknown Title',
+              poster_path: data.poster_path,
+              progress: data.progress?.percent || 0,
+              lastEpisode: data.type === 'tv' ? {
+                season: data.season || 1,
+                episode: data.episode || 1,
+                name: data.episode_title || `Episode ${data.episode || 1}`
+              } : undefined,
+              media_type: data.type || 'movie'
+            };
+          }).filter(Boolean);
+          
+          // Merge with our history (prioritizing our own data)
+          const existingIds = new Set(history.map(item => item.id));
+          const uniqueVidoraItems = vidoraItems.filter((item: any) => !existingIds.has(item.id));
+          
+          history = [...history, ...uniqueVidoraItems];
+        } catch (error) {
+          console.error("Error parsing Vidora progress:", error);
+        }
+        
         setWatchHistory(history);
       } catch (error) {
         console.error("Error fetching watch history:", error);
@@ -78,31 +116,29 @@ const RecentlyWatched: React.FC = () => {
     );
   }
 
-  // Section title for recently watched
-  const getSectionTitle = () => {
-    return "Recently Watched";
-  };
-
   const handleContinueWatching = (item: any) => {
     if (item.type === 'tv' && item.lastEpisode) {
       navigate(`/watch/tv/${item.id}/${item.lastEpisode.season}/${item.lastEpisode.episode}`);
     } else {
-      navigate(`/watch/${item.media_type || 'movie'}/${item.id}`);
+      navigate(`/watch/${item.media_type || item.type || 'movie'}/${item.id}`);
     }
   };
 
   return (
-    <div className="py-6">
+    <div className="py-4">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl md:text-2xl font-bold">
-            {getSectionTitle()}
+          <h2 className="text-xl md:text-2xl font-bold flex items-center">
+            <Clock className="text-purple-500 mr-2" size={20} />
+            <span className="bg-gradient-to-r from-purple-500 to-purple-300 bg-clip-text text-transparent">
+              Recently Watched
+            </span>
           </h2>
           <button
             onClick={handleSeeAllClick}
             className={cn(
               "flex items-center gap-1 text-sm transition-colors",
-              "text-muted-foreground hover:text-primary"
+              "text-muted-foreground hover:text-purple-500"
             )}
           >
             See All
@@ -110,39 +146,29 @@ const RecentlyWatched: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {watchHistory.slice(0, 6).map((item: any, index) => (
-            <div key={`${(item as any).media_type || "movie"}-${item.id}-${index}`} className="relative">
-              <MovieCard 
-                item={item} 
-                type={(item as any).media_type === "tv" ? "tv" : "movie"} 
-                priority={true} 
-              />
-              
-              {/* Episode info if available */}
-              {item.lastEpisode && (
-                <div className="absolute bottom-12 left-0 right-0 bg-black/70 px-2 py-1 text-[10px] text-white">
-                  S{item.lastEpisode.season}:E{item.lastEpisode.episode}
-                </div>
-              )}
-              
-              {/* Progress bar */}
-              <Progress 
-                value={item.progress || 10} 
-                className="h-1 w-full absolute bottom-0 left-0 bg-secondary"
-              />
-              
-              {/* Play button overlay */}
-              <div 
-                className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
-                onClick={() => handleContinueWatching(item)}
-              >
-                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-primary">
-                  <Play size={20} className="text-white ml-1" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {watchHistory.slice(0, 6).map((item: any, index) => {
+            const mediaType = item.media_type || item.type || "movie";
+            return (
+              <div key={`${mediaType}-${item.id}-${index}`} className="relative">
+                <MovieCard 
+                  item={item} 
+                  type={mediaType === "tv" ? "tv" : "movie"} 
+                  priority={true} 
+                />
+                
+                {/* Play button overlay */}
+                <div 
+                  className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                  onClick={() => handleContinueWatching(item)}
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-500">
+                    <Play size={20} className="text-white ml-1" />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

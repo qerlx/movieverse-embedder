@@ -3,8 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Movie, TVShow } from "@/types";
 import { cn } from "@/lib/utils";
-import { Play, Star } from "lucide-react";
-import { motion } from "framer-motion";
+import { Play, Star, Tv, Film } from "lucide-react";
 
 interface MovieCardProps {
   item: Movie | TVShow;
@@ -38,6 +37,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     if (!item.id) return;
     
     // Direct navigation to Vidora player
@@ -56,33 +56,45 @@ const MovieCard: React.FC<MovieCardProps> = ({
     <div 
       className={cn(
         "relative h-full w-full group",
-        "cursor-pointer premium-movie-poster",
+        "cursor-pointer shadow-md hover:shadow-lg hover:shadow-purple-900/20 transition-shadow duration-200",
         className
       )}
       onClick={handleClick}
     >
       {/* Rank indicator for ranked lists */}
       {isRanked && (
-        <div className="absolute -left-3 -top-3 z-10 h-12 w-12 flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary/50 rounded-full blur-md opacity-70"></div>
-          <div className="absolute inset-0.5 bg-black rounded-full"></div>
-          <span className="relative text-xl font-black text-primary">
+        <div className="absolute -left-2 -top-2 z-10 h-10 w-10 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full blur-[2px] opacity-90"></div>
+          <div className="absolute inset-0.5 bg-black/80 rounded-full"></div>
+          <span className="relative text-base font-black text-purple-400">
             {index + 1}
           </span>
         </div>
       )}
       
-      <div className="aspect-poster relative overflow-hidden rounded-xl">
+      <div className="aspect-[2/3] relative overflow-hidden rounded-lg">
+        {/* Media Type Indicator */}
+        <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm flex items-center">
+          {type === 'tv' ? (
+            <Tv size={12} className="text-purple-400 mr-1" />
+          ) : (
+            <Film size={12} className="text-purple-400 mr-1" />
+          )}
+          <span className="text-[10px] font-medium text-white">
+            {type === 'tv' ? 'TV' : 'Movie'}
+          </span>
+        </div>
+
         {/* Poster Image */}
         <img 
           src={posterPath} 
           alt={title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
           loading={priority ? "eager" : "lazy"}
         />
 
-        {/* Blurred backdrop overlay when hovered */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity duration-200"></div>
+        {/* Overlay with gradient */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-t from-black via-black/50 to-transparent transition-opacity duration-200"></div>
         
         {/* Rating indicator */}
         {item.vote_average > 0 && (
@@ -96,7 +108,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all duration-200">
           <button
             onClick={handlePlayClick}
-            className="w-12 h-12 rounded-full flex items-center justify-center bg-primary text-white hover:bg-primary/90 shadow-lg mb-2 transition-transform"
+            className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-500/90 text-white hover:bg-purple-600 shadow-lg mb-2 transition-transform"
           >
             <Play className="text-white ml-0.5" size={22} />
           </button>
@@ -110,33 +122,14 @@ const MovieCard: React.FC<MovieCardProps> = ({
       {/* Progress bar for watched items */}
       {hasProgress && (
         <div className="absolute bottom-0 left-0 right-0">
-          <div className="h-1.5 w-full bg-black/50">
+          <div className="h-1 w-full bg-black/50">
             <div 
-              className="h-full bg-gradient-to-r from-primary to-primary/70" 
+              className="h-full bg-gradient-to-r from-purple-600 to-purple-400" 
               style={{ width: `${(item as any).progress || 0}%` }}
             ></div>
           </div>
         </div>
       )}
-      
-      {/* Info panel */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-black/80 backdrop-blur-sm border-t border-white/10">
-        <h3 className="font-medium text-sm text-center line-clamp-1 text-white/90 text-shadow-sm">
-          {title}
-        </h3>
-        <div className="text-xs mt-1 text-center text-white/60">
-          {("release_date" in item && item.release_date) && (
-            <time dateTime={item.release_date}>
-              {new Date(item.release_date).getFullYear()}
-            </time>
-          )}
-          {("first_air_date" in item && item.first_air_date) && (
-            <time dateTime={item.first_air_date}>
-              {new Date(item.first_air_date).getFullYear()}
-            </time>
-          )}
-        </div>
-      </div>
     </div>
   );
 };
