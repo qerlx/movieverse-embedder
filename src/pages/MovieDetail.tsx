@@ -1,15 +1,14 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getMovieDetails } from "@/lib/api";
-import { Star, Clock, Calendar, Play } from "lucide-react";
+import { Star, Clock, Calendar, Play, Film, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
-  CardContent, 
-  CardHeader, 
+  CardContent,
   CardTitle,
-  CardDescription 
 } from "@/components/ui/card";
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,13 +16,19 @@ import FavoriteButton from "@/components/FavoriteButton";
 import AddToWatchedButton from "@/components/AddToWatchedButton";
 import WatchProviders from "@/components/WatchProviders";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
 
 interface Cast {
   id: number;
   name: string;
   character: string;
   profile_path: string | null;
+}
+
+interface VideoSource {
+  name: string;
+  icon?: React.ReactNode;
+  url: string;
+  isPrimary?: boolean;
 }
 
 const MovieDetail = () => {
@@ -34,8 +39,8 @@ const MovieDetail = () => {
   const [movie, setMovie] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Custom theme color for Vidora player
-  const vidoraThemeColor = "00ff9d";
+  // Vidora theme color - purple to match the site theme
+  const vidoraThemeColor = "8B5CF6";
   
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -63,10 +68,33 @@ const MovieDetail = () => {
     window.scrollTo(0, 0);
   }, [id, toast]);
 
-  // Handle watch button click - directs to Vidora player
-  const handleWatchClick = () => {
+  // Generate video sources
+  const getVideoSources = (): VideoSource[] => {
+    if (!id) return [];
+    
+    return [
+      {
+        name: "Vidora",
+        icon: <Play size={16} className="mr-1" />,
+        url: `/watch/movie/${id}`,
+        isPrimary: true
+      },
+      {
+        name: "VidSrc",
+        icon: <Film size={16} className="mr-1" />,
+        url: `/watch/movie/${id}?source=vidsrc`,
+      }
+    ];
+  };
+
+  // Handle watch button click for specific source
+  const handleWatchClick = (source?: string) => {
     if (id) {
-      navigate(`/watch/movie/${id}`);
+      if (source === "vidsrc") {
+        navigate(`/watch/movie/${id}?source=vidsrc`);
+      } else {
+        navigate(`/watch/movie/${id}`);
+      }
     }
   };
 
@@ -125,6 +153,7 @@ const MovieDetail = () => {
   ) || [];
 
   const topCast = movie.credits?.cast?.slice(0, 6) || [];
+  const videoSources = getVideoSources();
 
   return (
     <motion.div 
@@ -166,6 +195,12 @@ const MovieDetail = () => {
                   src={posterUrl}
                   alt={movie.title}
                   className="w-full h-auto object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (target.src !== '/placeholder.svg') {
+                      target.src = '/placeholder.svg';
+                    }
+                  }}
                 />
               </div>
               
@@ -177,18 +212,26 @@ const MovieDetail = () => {
                 className="mt-8"
               >
                 <Card className="border-primary/20 bg-black/30 backdrop-blur-md">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-gradient text-xl">Watch Now</CardTitle>
-                    <CardDescription>High quality streaming with Vidora</CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-4 pb-3">
+                  <CardContent className="space-y-4 p-4">
+                    <CardTitle className="text-gradient text-xl mb-4">Watch Options</CardTitle>
+                    
+                    {/* Primary button for Vidora */}
                     <Button 
-                      onClick={handleWatchClick}
+                      onClick={() => handleWatchClick()}
                       className="w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-4 py-6 shadow-lg hover:shadow-primary/30 transition-all"
                     >
                       <Play size={22} className="ml-1" />
                       Watch with Vidora
+                    </Button>
+                    
+                    {/* Secondary button for VidSrc */}
+                    <Button 
+                      onClick={() => handleWatchClick('vidsrc')}
+                      variant="outline"
+                      className="w-full text-white gap-2 rounded-full px-4 py-4 border-primary/30 hover:border-primary/50 transition-all"
+                    >
+                      <Film size={20} />
+                      Watch with VidSrc
                     </Button>
                   </CardContent>
                 </Card>
@@ -258,6 +301,12 @@ const MovieDetail = () => {
                   <Calendar size={16} className="text-white/80" />
                   <span>{releaseYear}</span>
                 </div>
+                
+                {/* Media type indicator */}
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                  <Film size={16} className="text-purple-400" />
+                  <span>Movie</span>
+                </div>
               </motion.div>
               
               <motion.div 
@@ -295,7 +344,7 @@ const MovieDetail = () => {
                 className="flex flex-wrap gap-4 mt-8"
               >
                 <Button
-                  onClick={handleWatchClick}
+                  onClick={() => handleWatchClick()}
                   className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-8 py-6 text-lg font-medium shadow-lg hover:shadow-primary/30 transition-all"
                 >
                   <Play size={22} className="ml-1" />

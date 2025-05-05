@@ -13,17 +13,22 @@ import { Progress } from "./ui/progress";
 // Storage key for watch progress - for local client-side favorites
 const STORAGE_KEY = 'watch_progress';
 
+// Define a type for the watch history items that includes Vidora's structure
+type WatchHistoryItem = (Movie | TVShow) & { 
+  progress?: number; 
+  lastEpisode?: { 
+    season: number; 
+    episode: number;
+    name?: string;
+  };
+  media_type?: string;
+  type?: string;
+};
+
 const RecentlyWatched: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  const [watchHistory, setWatchHistory] = useState<(Movie | TVShow & { 
-    progress?: number; 
-    lastEpisode?: { 
-      season: number; 
-      episode: number;
-      name?: string;
-    } 
-  })[]>([]);
+  const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { theme } = useTheme();
 
@@ -37,14 +42,7 @@ const RecentlyWatched: React.FC = () => {
       try {
         setIsLoading(true);
         // Get watch history from local service
-        let history = await getWatchHistory(currentUser) as unknown as (Movie | TVShow & {
-          progress?: number;
-          lastEpisode?: {
-            season: number;
-            episode: number;
-            name?: string;
-          }
-        })[];
+        let history = await getWatchHistory(currentUser) as WatchHistoryItem[];
 
         // Also check Vidora's local storage for additional items
         try {
@@ -55,7 +53,8 @@ const RecentlyWatched: React.FC = () => {
             const itemId = parseInt(id);
             if (isNaN(itemId)) return null;
             
-            return {
+            // Create a properly typed object
+            const item: WatchHistoryItem = {
               id: itemId,
               type: data.type || 'movie',
               title: data.title || 'Unknown Title',
@@ -67,13 +66,21 @@ const RecentlyWatched: React.FC = () => {
                 episode: data.episode || 1,
                 name: data.episode_title || `Episode ${data.episode || 1}`
               } : undefined,
-              media_type: data.type || 'movie'
+              media_type: data.type || 'movie',
+              // Add minimum required TVShow properties
+              backdrop_path: null,
+              overview: '',
+              vote_average: 0,
+              first_air_date: '',
+              genre_ids: []
             };
-          }).filter(Boolean);
+            
+            return item;
+          }).filter(Boolean) as WatchHistoryItem[];
           
           // Merge with our history (prioritizing our own data)
           const existingIds = new Set(history.map(item => item.id));
-          const uniqueVidoraItems = vidoraItems.filter((item: any) => !existingIds.has(item.id));
+          const uniqueVidoraItems = vidoraItems.filter(item => !existingIds.has(item.id));
           
           history = [...history, ...uniqueVidoraItems];
         } catch (error) {
@@ -116,7 +123,7 @@ const RecentlyWatched: React.FC = () => {
     );
   }
 
-  const handleContinueWatching = (item: any) => {
+  const handleContinueWatching = (item: WatchHistoryItem) => {
     if (item.type === 'tv' && item.lastEpisode) {
       navigate(`/watch/tv/${item.id}/${item.lastEpisode.season}/${item.lastEpisode.episode}`);
     } else {
@@ -147,7 +154,7 @@ const RecentlyWatched: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {watchHistory.slice(0, 6).map((item: any, index) => {
+          {watchHistory.slice(0, 6).map((item, index) => {
             const mediaType = item.media_type || item.type || "movie";
             return (
               <div key={`${mediaType}-${item.id}-${index}`} className="relative">

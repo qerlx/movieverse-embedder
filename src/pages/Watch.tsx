@@ -9,9 +9,45 @@ import { useAuth } from "@/contexts/AuthContext";
 import { addToWatchHistory } from "@/lib/watchService";
 
 // Vidora theme color - vibrant purple that matches theme
-const VIDORA_THEME_COLOR = "8B5CF6"; // Changed to a purple color
+const VIDORA_THEME_COLOR = "8B5CF6"; // Purple color
 // Storage key for watch progress
 const STORAGE_KEY = 'watch_progress';
+
+// Video sources definition
+interface VideoSource {
+  id: string;
+  name: string;
+  getUrl: (type: string, id: string, season?: string, episode?: string) => string;
+}
+
+const videoSources: VideoSource[] = [
+  {
+    id: "vidora",
+    name: "Vidora",
+    getUrl: (type, id, season, episode) => {
+      const baseUrl = type === "movie" 
+        ? `https://vidora.su/movie/${id}?autoplay=true&colour=${VIDORA_THEME_COLOR}`
+        : `https://vidora.su/tv/${id}/${season}/${episode}?autoplay=true&colour=${VIDORA_THEME_COLOR}&autonextepisode=true`;
+      
+      // Ensure the URL is properly formed with encoded parameters
+      const backbuttonUrl = encodeURIComponent(`${window.location.origin}/${type}/${id}`);
+      const logoUrl = encodeURIComponent(`${window.location.origin}/placeholder.svg`);
+      
+      return `${baseUrl}&backbutton=${backbuttonUrl}&pausescreen=true&logo=${logoUrl}`;
+    }
+  },
+  {
+    id: "vidsrc",
+    name: "VidSrc",
+    getUrl: (type, id, season, episode) => {
+      if (type === "movie") {
+        return `https://vidsrc.cc/v2/embed/movie/${id}`;
+      } else {
+        return `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`;
+      }
+    }
+  }
+];
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -27,7 +63,8 @@ const Watch = () => {
   // Content info
   const [title, setTitle] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [vidoraUrl, setVidoraUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [activeSource, setActiveSource] = useState<VideoSource>(videoSources[0]);
   
   // Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -45,6 +82,22 @@ const Watch = () => {
       } else {
         navigate('/');
       }
+    }
+  };
+
+  // Handle switching video source
+  const switchVideoSource = (source: VideoSource) => {
+    setIsLoading(true);
+    setActiveSource(source);
+    
+    if (type && id) {
+      const url = source.getUrl(type, id, season, episode);
+      setVideoUrl(url);
+      
+      // Small delay to ensure proper loading state
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
     }
   };
 
@@ -97,24 +150,12 @@ const Watch = () => {
         setIsLoading(true);
         const itemId = parseInt(id);
         
-        // Build Vidora parameters
-        let backbuttonUrl;
-        if (type === "movie") {
-          backbuttonUrl = `${window.location.origin}/movie/${id}`;
-        } else {
-          backbuttonUrl = `${window.location.origin}/tv/${id}`;
-        }
-        
-        // Ensure the URL is properly encoded
-        const encodedBackbuttonUrl = encodeURIComponent(backbuttonUrl);
-        const logoUrl = encodeURIComponent(`${window.location.origin}/placeholder.svg`);
-        
         if (type === "movie") {
           const movieData = await getMovieDetails(itemId);
           setTitle(movieData.title);
           
-          // Set URL for Vidora with properly formatted parameters
-          setVidoraUrl(`https://vidora.su/movie/${itemId}?autoplay=true&colour=${VIDORA_THEME_COLOR}&backbutton=${encodedBackbuttonUrl}&pausescreen=true&logo=${logoUrl}`);
+          // Set URL using the active source
+          setVideoUrl(activeSource.getUrl(type, id));
 
           if (currentUser) {
             try {
@@ -137,8 +178,8 @@ const Watch = () => {
           
           setTitle(`${tvData.name} - S${season} E${episode}`);
           
-          // Set URL for Vidora with properly formatted parameters and built-in next episode support
-          setVidoraUrl(`https://vidora.su/tv/${itemId}/${season}/${episode}?autoplay=true&colour=${VIDORA_THEME_COLOR}&backbutton=${encodedBackbuttonUrl}&pausescreen=true&autonextepisode=true&logo=${logoUrl}`);
+          // Set URL using the active source
+          setVideoUrl(activeSource.getUrl(type, id, season, episode));
 
           try {
             // Get episode details if available
@@ -189,13 +230,13 @@ const Watch = () => {
     };
 
     fetchDetails();
-  }, [id, type, season, episode, navigate, currentUser]);
+  }, [id, type, season, episode, navigate, currentUser, activeSource]);
 
   return (
     <div className="min-h-screen bg-black">
       <div className="h-screen w-screen relative">
-        {/* Back button - faint and positioned top-left */}
-        <div className="absolute top-6 left-6 z-50">
+        {/* Back button and source switchers */}
+        <div className="absolute top-6 left-0 right-0 z-50 flex justify-between px-6">
           <Button
             variant="ghost"
             size="sm"
@@ -205,17 +246,34 @@ const Watch = () => {
             <ArrowLeft size={20} className="mr-2" />
             <span>Back</span>
           </Button>
+          
+          <div className="flex gap-2">
+            {videoSources.map((source) => (
+              <Button 
+                key={source.id}
+                size="sm"
+                variant={activeSource.id === source.id ? "default" : "outline"}
+                onClick={() => switchVideoSource(source)}
+                className={`
+                  ${activeSource.id === source.id ? 'bg-purple-600 hover:bg-purple-700' : 'bg-black/30 text-white border-white/20'}
+                  rounded-full transition-all
+                `}
+              >
+                {source.name}
+              </Button>
+            ))}
+          </div>
         </div>
         
         {/* Loading indicator */}
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black z-40">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
         
-        {/* Vidora Player - full screen iframe with proper styling */}
-        {vidoraUrl && (
+        {/* Video Player iframe */}
+        {videoUrl && (
           <div
             ref={playerContainerRef}
             className="w-full h-full"
@@ -223,7 +281,7 @@ const Watch = () => {
           >
             <iframe
               ref={iframeRef}
-              src={vidoraUrl}
+              src={videoUrl}
               title={title}
               frameBorder="0"
               allowFullScreen

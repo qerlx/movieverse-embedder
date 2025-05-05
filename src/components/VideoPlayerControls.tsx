@@ -13,6 +13,7 @@ interface VideoPlayerControlsProps {
   onVolumeChange?: (value: number) => void;
   onToggleMute?: () => void;
   isMuted?: boolean;
+  activeSource?: string;
 }
 
 const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
@@ -23,6 +24,7 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
   onGoBack,
   onToggleMute,
   isMuted = false,
+  activeSource = 'vidora'
 }) => {
   // Volume icon based on current level
   const getVolumeIcon = () => {
@@ -46,7 +48,12 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
           <span className="ml-1">Back</span>
         </Button>
         
-        <h1 className="ml-3 text-base font-medium text-white truncate">{title}</h1>
+        <h1 className="ml-3 text-base font-medium text-white truncate">
+          {title}
+          {activeSource !== 'vidora' && (
+            <span className="ml-2 opacity-70 text-sm">({activeSource})</span>
+          )}
+        </h1>
       </div>
       
       {/* Bottom controls */}

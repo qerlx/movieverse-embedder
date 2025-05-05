@@ -24,6 +24,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
 }) => {
   const navigate = useNavigate();
   
+  // Ensure we handle both null and undefined poster paths
   const posterPath = item.poster_path 
     ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
     : "/placeholder.svg";
@@ -73,7 +74,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
       )}
       
       <div className="aspect-[2/3] relative overflow-hidden rounded-lg">
-        {/* Media Type Indicator */}
+        {/* Media Type Indicator - Always visible now */}
         <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm flex items-center">
           {type === 'tv' ? (
             <Tv size={12} className="text-purple-400 mr-1" />
@@ -85,16 +86,24 @@ const MovieCard: React.FC<MovieCardProps> = ({
           </span>
         </div>
 
-        {/* Poster Image */}
+        {/* Poster Image with error handler */}
         <img 
           src={posterPath} 
           alt={title}
           className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
           loading={priority ? "eager" : "lazy"}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            if (target.src !== '/placeholder.svg') {
+              target.src = '/placeholder.svg';
+            }
+          }}
         />
 
-        {/* Overlay with gradient */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-t from-black via-black/50 to-transparent transition-opacity duration-200"></div>
+        {/* Overlay with gradient - simplified for better performance */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 
+                        sm:transition-opacity sm:duration-200 
+                        lg:opacity-0 lg:group-hover:opacity-100"></div>
         
         {/* Rating indicator */}
         {item.vote_average > 0 && (
@@ -104,8 +113,18 @@ const MovieCard: React.FC<MovieCardProps> = ({
           </div>
         )}
         
-        {/* Play button overlay with gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all duration-200">
+        {/* Mobile-friendly title - always visible on mobile, hidden on desktop unless hovered */}
+        <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black to-transparent 
+                       sm:hidden lg:block lg:opacity-0 lg:group-hover:opacity-100 lg:transition-opacity lg:duration-200">
+          <h3 className="text-xs sm:text-sm font-medium text-white line-clamp-1 text-shadow">
+            {title}
+          </h3>
+        </div>
+        
+        {/* Play button overlay - hidden on mobile, visible on hover for desktop */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent 
+                       hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100 flex-col items-center justify-center 
+                       sm:transition-all sm:duration-200">
           <button
             onClick={handlePlayClick}
             className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-500/90 text-white hover:bg-purple-600 shadow-lg mb-2 transition-transform"
