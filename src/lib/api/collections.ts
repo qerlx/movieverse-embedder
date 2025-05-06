@@ -55,7 +55,7 @@ export const processCollection = (collection: Collection): MovieCollection => {
 
 // Get popular movie collections
 export const getPopularCollections = async (): Promise<CollectionListItem[]> => {
-  // This would typically be an API call, but for demo purposes we're hardcoding popular collections
+  // Add MCU collection as the first item to feature it prominently
   return [
     {
       id: 84979,
@@ -106,4 +106,16 @@ export const getPopularCollections = async (): Promise<CollectionListItem[]> => 
       item_count: 5
     }
   ];
+};
+
+// Create a dedicated function to fetch the MCU collection directly
+export const getMCUCollection = async (): Promise<MovieCollection> => {
+  try {
+    const MCU_COLLECTION_ID = 84979;
+    const collection = await getCollection(MCU_COLLECTION_ID);
+    return processCollection(collection);
+  } catch (error) {
+    console.error('Error fetching MCU collection:', error);
+    throw error;
+  }
 };

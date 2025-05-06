@@ -12,6 +12,7 @@ import NotFound from "@/pages/NotFound";
 import Layout from "@/components/Layout";
 import Collections from "@/pages/Collections";
 import CollectionDetail from "@/pages/CollectionDetail";
+import MCUCollection from "@/pages/MCUCollection";
 
 import "./App.css";
 
@@ -30,6 +31,7 @@ function App() {
         <Route path="profile" element={<UserProfile />} />
         <Route path="collections" element={<Collections />} />
         <Route path="collection/:id" element={<CollectionDetail />} />
+        <Route path="collection/mcu" element={<MCUCollection />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

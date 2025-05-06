@@ -37,6 +37,15 @@ const CollectionShowcase = () => {
     return null;
   }
 
+  // Function to navigate to the correct collection page
+  const handleCollectionClick = (collectionId: number) => {
+    if (collectionId === 84979) {
+      navigate('/collection/mcu');
+    } else {
+      navigate(`/collection/${collectionId}`);
+    }
+  };
+
   return (
     <section className="py-8">
       <div className="flex justify-between items-center mb-6">
@@ -59,7 +68,7 @@ const CollectionShowcase = () => {
           <motion.div
             key={collection.id}
             className="relative overflow-hidden rounded-lg cursor-pointer group"
-            onClick={() => navigate(`/collection/${collection.id}`)}
+            onClick={() => handleCollectionClick(collection.id)}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
@@ -84,6 +93,12 @@ const CollectionShowcase = () => {
                   {collection.item_count} Movies
                 </div>
               </div>
+              
+              {collection.id === 84979 && (
+                <div className="absolute top-2 right-2 bg-purple-500/90 text-white text-xs px-2 py-0.5 rounded-full">
+                  Featured
+                </div>
+              )}
             </div>
           </motion.div>
         ))}

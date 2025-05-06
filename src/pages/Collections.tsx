@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { getPopularCollections } from '@/lib/api/collections';
 import { Film, FolderArchive } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 const Collections = () => {
   const navigate = useNavigate();
@@ -46,6 +47,10 @@ const Collections = () => {
     );
   }
 
+  // Feature the MCU collection first
+  const mcuCollection = collections.find(c => c.id === 84979);
+  const otherCollections = collections.filter(c => c.id !== 84979);
+
   return (
     <div className="min-h-screen pb-20">
       <div className="container mx-auto px-4 py-8">
@@ -63,6 +68,63 @@ const Collections = () => {
             Each collection brings together related films for a complete viewing experience.
           </p>
         </motion.div>
+
+        {/* Featured Collection - MCU */}
+        {mcuCollection && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mb-12"
+          >
+            <h2 className="text-2xl font-bold mb-6 flex items-center">
+              <Film className="h-6 w-6 mr-2 text-purple-500" />
+              <span className="bg-gradient-to-r from-purple-500 to-purple-300 bg-clip-text text-transparent">
+                Featured Collection
+              </span>
+            </h2>
+            
+            <div 
+              className="relative rounded-xl overflow-hidden cursor-pointer group"
+              onClick={() => navigate(`/collection/mcu`)}
+            >
+              <div 
+                className="aspect-video md:aspect-[21/9] relative overflow-hidden" 
+                style={{
+                  backgroundImage: mcuCollection.backdrop_path 
+                    ? `url(https://image.tmdb.org/t/p/original${mcuCollection.backdrop_path})` 
+                    : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent"></div>
+                
+                <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-end md:justify-center md:max-w-2xl">
+                  <h3 className="text-2xl md:text-4xl font-bold text-white mb-2 md:mb-4">
+                    {mcuCollection.name}
+                  </h3>
+                  <div className="flex items-center text-white/80 text-sm mb-3">
+                    <Film className="mr-1.5 h-4 w-4 text-purple-400" />
+                    <span>{mcuCollection.item_count} Movies</span>
+                  </div>
+                  <p className="text-white/70 text-sm md:text-base line-clamp-3 md:line-clamp-4 mb-4">{mcuCollection.description}</p>
+                  <Button 
+                    className="w-fit bg-purple-600 hover:bg-purple-700 text-white"
+                    size="sm"
+                  >
+                    Explore the MCU
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+        
+        <h2 className="text-2xl font-bold my-6 flex items-center">
+          <FolderArchive className="h-6 w-6 mr-2 text-primary" />
+          All Collections
+        </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {collections.map((collection, index) => (
@@ -78,7 +140,13 @@ const Collections = () => {
               onHoverStart={() => setHoveredCardId(collection.id)}
               onHoverEnd={() => setHoveredCardId(null)}
               className="cursor-pointer relative overflow-hidden rounded-xl"
-              onClick={() => navigate(`/collection/${collection.id}`)}
+              onClick={() => {
+                if (collection.id === 84979) {
+                  navigate('/collection/mcu');
+                } else {
+                  navigate(`/collection/${collection.id}`);
+                }
+              }}
             >
               <div className="aspect-video relative overflow-hidden">
                 <img 
