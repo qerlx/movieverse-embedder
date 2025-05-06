@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { Film, Tv, Home, Menu, Search, User, Heart, Clock, X } from "lucide-react";
+import { Film, Tv, Home, Menu, Search, User, Heart, Clock, X, FolderArchive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "./ui/logo";
 import SearchBar from "./SearchBar";
@@ -79,9 +79,13 @@ const Layout = () => {
           <Film size={18} />
           <span>Movies</span>
         </NavLink>
-        <NavLink to="/tv-shows" className={getLinkStyle}>
+        <NavLink to="/tv" className={getLinkStyle}>
           <Tv size={18} />
           <span>TV Shows</span>
+        </NavLink>
+        <NavLink to="/collections" className={getLinkStyle}>
+          <FolderArchive size={18} />
+          <span>Collections</span>
         </NavLink>
         {currentUser && (
           <>

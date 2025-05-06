@@ -1,38 +1,36 @@
 
-import * as React from "react"
+import { useState, useEffect } from 'react';
 
-const MOBILE_BREAKPOINT = 768
+// A hook to determine if the viewport is mobile
+export const useMediaQuery = (query: string): boolean => {
+  const [matches, setMatches] = useState(false);
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
-
-  return !!isMobile
-}
-
-// Alias for compatibility
-export const useMediaQuery = (query: string) => {
-  const [matches, setMatches] = React.useState(false)
-
-  React.useEffect(() => {
-    const media = window.matchMedia(query)
-    if (media.matches !== matches) {
-      setMatches(media.matches)
-    }
+  useEffect(() => {
+    const media = window.matchMedia(query);
     
-    const listener = () => setMatches(media.matches)
-    media.addEventListener("change", listener)
-    return () => media.removeEventListener("change", listener)
-  }, [matches, query])
+    // Update the state initially
+    setMatches(media.matches);
+    
+    // Define a callback for media query change events
+    const listener = (e: MediaQueryListEvent) => {
+      setMatches(e.matches);
+    };
+    
+    // Add the callback as a listener for changes to the media query
+    media.addEventListener('change', listener);
+    
+    // Remove the listener when the hook is unmounted
+    return () => {
+      media.removeEventListener('change', listener);
+    };
+  }, [query]);
 
-  return matches
-}
+  return matches;
+};
+
+// Convenience hook for mobile detection
+export const useIsMobile = (): boolean => {
+  return useMediaQuery('(max-width: 768px)');
+};
+
+export default useIsMobile;

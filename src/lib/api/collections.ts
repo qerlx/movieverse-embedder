@@ -55,7 +55,8 @@ export const processCollection = (collection: Collection): MovieCollection => {
 
 // Get popular movie collections
 export const getPopularCollections = async (): Promise<CollectionListItem[]> => {
-  // Add MCU collection as the first item to feature it prominently
+  // For now, return hardcoded collections to avoid API rate limits
+  // In a production app, this would fetch from the API
   return [
     {
       id: 84979,
