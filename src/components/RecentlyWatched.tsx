@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getWatchHistory } from "@/lib/watchService";
-import { Movie, TVShow, MediaItem } from "@/types";
+import { Movie, TVShow } from "@/types";
 import MovieCard from "./MovieCard";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
@@ -166,49 +166,22 @@ const RecentlyWatched: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {watchHistory.slice(0, 6).map((item, index) => {
             const mediaType = item.media_type || item.type || "movie";
-            
-            // Fix: Create a compatible Movie or TVShow object instead of MediaItem
-            let mediaItem: Movie | TVShow;
-            
-            if (mediaType === "tv") {
-              mediaItem = {
-                id: item.id,
-                name: item.name || item.title || "",
-                poster_path: item.poster_path || null,
-                backdrop_path: item.backdrop_path || null,
-                overview: item.overview || "",
-                vote_average: item.vote_average || 0,
-                first_air_date: item.first_air_date || "",
-                popularity: 0,
-                vote_count: 0,
-                original_language: "",
-                origin_country: [],
-                media_type: "tv",
-                progress: item.progress
-              } as TVShow;
-            } else {
-              mediaItem = {
-                id: item.id,
-                title: item.title || "",
-                poster_path: item.poster_path || null,
-                backdrop_path: item.backdrop_path || null,
-                overview: item.overview || "",
-                vote_average: item.vote_average || 0,
-                release_date: item.release_date || "",
-                popularity: 0,
-                vote_count: 0,
-                original_language: "",
-                adult: false,
-                video: false,
-                media_type: "movie",
-                progress: item.progress
-              } as Movie;
-            }
-            
             return (
               <div key={`${mediaType}-${item.id}-${index}`} className="relative">
                 <MovieCard 
-                  item={mediaItem}
+                  item={{
+                    id: item.id,
+                    title: item.title || item.name || "Unknown",
+                    name: item.name || item.title || "Unknown",
+                    poster_path: item.poster_path || null,
+                    backdrop_path: item.backdrop_path || null,
+                    overview: item.overview || "",
+                    vote_average: item.vote_average || 0,
+                    release_date: item.release_date || "",
+                    first_air_date: item.first_air_date || "",
+                    genre_ids: item.genre_ids || [],
+                    progress: item.progress,
+                  }}
                   type={mediaType === "tv" ? "tv" : "movie"} 
                   priority={true} 
                 />

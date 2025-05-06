@@ -78,25 +78,15 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         onClick={handleToggleFavorite}
         className={cn(
           "flex items-center justify-center rounded-full w-9 h-9",
-          isLoading ? "opacity-50 cursor-not-allowed" : "",
           isFavorited 
             ? "bg-primary/20 text-primary hover:bg-primary/30" 
             : "bg-black/40 text-white/70 hover:bg-black/60 hover:text-white"
         )}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        title={isFavorited ? "Remove from favorites" : "Add to favorites"}
       >
         <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.div 
-              key="loading" 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin"
-            />
-          ) : isFavorited ? (
+          {isFavorited ? (
             <motion.div
               key="filled"
               initial={{ scale: 0 }}
@@ -134,15 +124,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       )}
     >
       <AnimatePresence mode="wait">
-        {isLoading ? (
-          <motion.div 
-            key="button-loading" 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }}
-            className="mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin"
-          />
-        ) : isFavorited ? (
+        {isFavorited ? (
           <motion.span
             key="filled-heart"
             initial={{ scale: 0, rotate: -30 }}

@@ -1,56 +1,81 @@
 
-import React from "react";
-import { NavLink } from "react-router-dom";
-import { Home, Film, Tv, Search, User, FolderArchive } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { Home, Film, Tv, UserCircle, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const MobileNavigation = () => {
-  const { currentUser } = useAuth();
-
-  const getLinkStyle = ({ isActive }: { isActive: boolean }) => {
-    return cn(
-      "flex flex-col items-center justify-center text-xs font-medium py-2",
-      isActive 
-        ? "text-primary" 
-        : "text-muted-foreground"
-    );
-  };
+  const items = [
+    { to: "/", icon: Home, label: "Home" },
+    { to: "/search", icon: Search, label: "Search" },
+    { to: "/movies", icon: Film, label: "Movies" },
+    { to: "/tv-shows", icon: Tv, label: "TV" },
+    { to: "/profile", icon: UserCircle, label: "Profile" }
+  ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-t border-white/10 md:hidden">
-      <div className="grid grid-cols-5 px-2">
-        <NavLink to="/" className={getLinkStyle}>
-          <Home size={20} className="mb-1" />
-          <span>Home</span>
-        </NavLink>
-        <NavLink to="/movies" className={getLinkStyle}>
-          <Film size={20} className="mb-1" />
-          <span>Movies</span>
-        </NavLink>
-        <NavLink to="/tv" className={getLinkStyle}>
-          <Tv size={20} className="mb-1" />
-          <span>TV</span>
-        </NavLink>
-        <NavLink to="/collections" className={getLinkStyle}>
-          <FolderArchive size={20} className="mb-1" />
-          <span>Collections</span>
-        </NavLink>
-        <NavLink to={currentUser ? "/profile" : "/search"} className={getLinkStyle}>
-          {currentUser ? (
-            <>
-              <User size={20} className="mb-1" />
-              <span>Profile</span>
-            </>
-          ) : (
-            <>
-              <Search size={20} className="mb-1" />
-              <span>Search</span>
-            </>
-          )}
-        </NavLink>
+    <motion.div 
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="fixed bottom-0 left-0 right-0 z-40 w-full frosted-navbar border-t border-white/10 h-16 bg-black/60 backdrop-blur-md"
+    >
+      <div className="h-full grid grid-cols-5 gap-1">
+        {items.map((item) => {
+          const IconComponent = item.icon;
+          
+          return (
+            <NavLink 
+              key={item.to} 
+              to={item.to} 
+              className={({ isActive }) => cn(
+                "flex flex-col items-center justify-center relative overflow-hidden",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              {({ isActive }) => (
+                <>
+                  <div className="relative">
+                    <IconComponent 
+                      className={cn(
+                        "transition-all duration-300", 
+                        isActive ? "text-primary" : "text-muted-foreground"
+                      )} 
+                      size={20} 
+                    />
+                    
+                    {isActive && (
+                      <motion.div 
+                        layoutId="activeNavDot"
+                        className="absolute -bottom-1 left-1/2 w-1 h-1 bg-primary rounded-full"
+                        style={{ transform: "translateX(-50%)" }}
+                        transition={{ type: "spring", stiffness: 500 }}
+                      />
+                    )}
+                  </div>
+                  
+                  <span className={cn(
+                    "text-xs mt-1 transition-colors duration-300",
+                    isActive ? "font-medium text-primary" : "font-normal"
+                  )}>
+                    {item.label}
+                  </span>
+                  
+                  {isActive && (
+                    <motion.div 
+                      layoutId="activeNavIndicator"
+                      className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-primary/60 via-primary to-primary/60"
+                      transition={{ type: "spring", stiffness: 500 }}
+                    />
+                  )}
+                </>
+              )}
+            </NavLink>
+          );
+        })}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
