@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMediaQuery } from '@/hooks/use-mobile';
-import { FavoriteButton } from '@/components/FavoriteButton';
+import FavoriteButton from '@/components/FavoriteButton';
 import MovieCard from '@/components/MovieCard';
 import { Movie } from '@/types';
 
@@ -98,7 +98,7 @@ const CollectionDetail = () => {
       <div 
         className="w-full h-[50vh] relative overflow-hidden"
         style={{
-          backgroundImage: collection.backdrop_path 
+          backgroundImage: collection?.backdrop_path 
             ? `url(https://image.tmdb.org/t/p/original${collection.backdrop_path})` 
             : 'none',
           backgroundSize: 'cover',
@@ -123,23 +123,23 @@ const CollectionDetail = () => {
               Back to Collections
             </Button>
             
-            <h1 className="text-4xl md:text-5xl font-bold mb-2 text-white">{collection.name}</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-2 text-white">{collection?.name}</h1>
             
             <div className="flex flex-wrap items-center gap-4 mt-4 text-white/90">
               <div className="flex items-center">
                 <Star className="mr-1 h-4 w-4 text-yellow-500" />
-                <span>{collection.average_rating.toFixed(1)}</span>
+                <span>{collection?.average_rating.toFixed(1)}</span>
               </div>
               
               <div className="flex items-center">
                 <Film className="mr-1 h-4 w-4 text-primary/80" />
-                <span>{collection.item_count} Movies</span>
+                <span>{collection?.item_count} Movies</span>
               </div>
               
               <div className="flex items-center">
                 <Calendar className="mr-1 h-4 w-4 text-primary/80" />
                 <span>
-                  {getYearFromDate(collection.first_release_date)} - {getYearFromDate(collection.last_release_date)}
+                  {getYearFromDate(collection?.first_release_date || '')} - {getYearFromDate(collection?.last_release_date || '')}
                 </span>
               </div>
             </div>
@@ -156,7 +156,7 @@ const CollectionDetail = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            {collection.description}
+            {collection?.description}
           </motion.p>
         </div>
       </div>

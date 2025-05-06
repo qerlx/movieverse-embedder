@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { getPopularCollections } from '@/lib/api/collections';
-import { FolderArchive, ChevronRight } from 'lucide-react';
+import { FolderArchive, ChevronRight, Film } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -54,7 +54,7 @@ const CollectionShowcase = () => {
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {collections.slice(0, 6).map((collection, i) => (
           <motion.div
             key={collection.id}
@@ -79,7 +79,8 @@ const CollectionShowcase = () => {
               
               <div className="absolute bottom-0 left-0 w-full p-4">
                 <h3 className="text-xl font-bold text-white mb-1">{collection.name}</h3>
-                <div className="text-white/70 text-sm">
+                <div className="text-white/70 text-sm flex items-center">
+                  <Film className="h-3.5 w-3.5 mr-1 text-primary/80" />
                   {collection.item_count} Movies
                 </div>
               </div>

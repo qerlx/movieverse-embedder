@@ -1,6 +1,6 @@
 
 import { API_OPTIONS, TMDB_BASE_URL } from "../api";
-import { Collection, MovieCollection } from "@/types/collections";
+import { Collection, MovieCollection, CollectionListItem } from "@/types/collections";
 import { Movie } from "@/types";
 
 // Get a TMDb list by ID (e.g., MCU Collection is list 84979)
@@ -23,7 +23,7 @@ export const getCollection = async (listId: number): Promise<Collection> => {
 
 // Process a raw collection into a more usable format with calculated stats
 export const processCollection = (collection: Collection): MovieCollection => {
-  const movies = collection.items as Movie[];
+  const movies = collection.items.filter(item => 'title' in item) as Movie[];
   
   // Calculate average rating
   const totalRating = movies.reduce((sum, movie) => sum + movie.vote_average, 0);

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getWatchHistory } from "@/lib/watchService";
-import { Movie, TVShow } from "@/types";
+import { Movie, TVShow, MediaItem } from "@/types";
 import MovieCard from "./MovieCard";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
@@ -166,22 +166,24 @@ const RecentlyWatched: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {watchHistory.slice(0, 6).map((item, index) => {
             const mediaType = item.media_type || item.type || "movie";
+            // Create a MediaItem compatible with MovieCard
+            const mediaItem: MediaItem = {
+              id: item.id,
+              title: item.title || "",
+              name: item.name || "",
+              poster_path: item.poster_path || null,
+              backdrop_path: item.backdrop_path || null,
+              overview: item.overview || "",
+              vote_average: item.vote_average || 0,
+              release_date: item.release_date || "",
+              first_air_date: item.first_air_date || "",
+              media_type: mediaType as "movie" | "tv"
+            };
+            
             return (
               <div key={`${mediaType}-${item.id}-${index}`} className="relative">
                 <MovieCard 
-                  item={{
-                    id: item.id,
-                    title: item.title || item.name || "Unknown",
-                    name: item.name || item.title || "Unknown",
-                    poster_path: item.poster_path || null,
-                    backdrop_path: item.backdrop_path || null,
-                    overview: item.overview || "",
-                    vote_average: item.vote_average || 0,
-                    release_date: item.release_date || "",
-                    first_air_date: item.first_air_date || "",
-                    genre_ids: item.genre_ids || [],
-                    progress: item.progress,
-                  }}
+                  item={mediaItem}
                   type={mediaType === "tv" ? "tv" : "movie"} 
                   priority={true} 
                 />
