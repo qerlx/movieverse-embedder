@@ -23,6 +23,8 @@ const Search = lazy(() => import("./pages/Search"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
 const AIRecommendations = lazy(() => import("./components/AIRecommendations"));
 const AIAutomation = lazy(() => import("./components/AIAutomation"));
+const Collections = lazy(() => import("./pages/Collections"));
+const CollectionDetail = lazy(() => import("./pages/CollectionDetail"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -63,6 +65,12 @@ const AnimatedRoutes = () => {
           } />
           <Route path="ai-automation" element={
             <Suspense fallback={<PageLoader />}><AIAutomation /></Suspense>
+          } />
+          <Route path="collections" element={
+            <Suspense fallback={<PageLoader />}><Collections /></Suspense>
+          } />
+          <Route path="collection/:id" element={
+            <Suspense fallback={<PageLoader />}><CollectionDetail /></Suspense>
           } />
         </Route>
         <Route path="/watch/:type/:id" element={<Watch />} />
