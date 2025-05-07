@@ -23,9 +23,15 @@ const badgeVariants = cva(
         info: 
           "border-transparent bg-blue-500/20 text-blue-500 border border-blue-500/30",
         premium: 
-          "border-transparent bg-gradient-to-r from-amber-400 to-orange-500 text-black font-bold",
+          "border-transparent bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 text-black font-bold",
         glass: 
-          "border-white/20 bg-white/10 backdrop-blur-sm text-white"
+          "border-white/20 bg-white/10 backdrop-blur-sm text-white",
+        fancy:
+          "border-transparent bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white font-bold",
+        movie:
+          "border-transparent bg-blue-600/30 text-blue-400 border border-blue-500/40",
+        collection:
+          "border-transparent bg-purple-600/30 text-purple-400 border border-purple-500/40"
       },
     },
     defaultVariants: {

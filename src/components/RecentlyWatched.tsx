@@ -1,206 +1,243 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Film, Tv, Star } from 'lucide-react';
+import { Movie, TVShow } from '@/types';
 
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { getWatchHistory } from "@/lib/watchService";
-import { Movie, TVShow } from "@/types";
-import MovieCard from "./MovieCard";
-import { useTheme } from "@/contexts/ThemeContext";
-import { cn } from "@/lib/utils";
-import { ChevronRight, Play, Clock, Tv, Film } from "lucide-react";
-import { Progress } from "./ui/progress";
+type Media = Movie | TVShow;
 
-// Storage key for watch progress - for local client-side favorites
-const STORAGE_KEY = 'watch_progress';
-
-// Define a type for the watch history items that includes Vidora's structure
-interface WatchHistoryItem {
-  id: number;
-  title: string;
-  name?: string;
-  poster_path?: string | null;
-  backdrop_path?: string | null;
-  overview?: string;
-  vote_average?: number;
-  first_air_date?: string;
-  release_date?: string;
-  genre_ids?: number[];
-  progress?: number; 
-  lastEpisode?: { 
-    season: number; 
-    episode: number;
-    name?: string;
-  };
-  media_type?: string;
-  type?: string;
-}
-
-const RecentlyWatched: React.FC = () => {
-  const { currentUser } = useAuth();
-  const navigate = useNavigate();
-  const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { theme } = useTheme();
+const RecentlyWatched = () => {
+  const [recentlyWatched, setRecentlyWatched] = useLocalStorage<Media[]>('recentlyWatched', []);
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
 
   useEffect(() => {
-    const fetchWatchHistory = async () => {
-      if (!currentUser) {
-        setIsLoading(false);
-        return;
-      }
+    // Load recently watched items from local storage on component mount
+    const storedItems = localStorage.getItem('recentlyWatched');
+    if (storedItems) {
+      setRecentlyWatched(JSON.parse(storedItems));
+    }
+  }, [setRecentlyWatched]);
 
-      try {
-        setIsLoading(true);
-        // Get watch history from local service
-        const history = await getWatchHistory(currentUser) as unknown as WatchHistoryItem[];
+  useEffect(() => {
+    // Save recently watched items to local storage whenever the state changes
+    localStorage.setItem('recentlyWatched', JSON.stringify(recentlyWatched));
+  }, [recentlyWatched]);
 
-        // Also check Vidora's local storage for additional items
-        try {
-          const vidoraProgress = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-          
-          // Convert Vidora progress to our format
-          const vidoraItems = Object.entries(vidoraProgress).map(([id, data]: [string, any]) => {
-            const itemId = parseInt(id);
-            if (isNaN(itemId)) return null;
-            
-            // Create a properly typed object
-            const item: WatchHistoryItem = {
-              id: itemId,
-              type: data.type || 'movie',
-              title: data.title || 'Unknown Title',
-              name: data.title || 'Unknown Title',
-              poster_path: data.poster_path,
-              progress: data.progress?.percent || 0,
-              lastEpisode: data.type === 'tv' ? {
-                season: data.season || 1,
-                episode: data.episode || 1,
-                name: data.episode_title || `Episode ${data.episode || 1}`
-              } : undefined,
-              media_type: data.type || 'movie',
-              // Add minimum required properties
-              backdrop_path: null,
-              overview: '',
-              vote_average: 0,
-              first_air_date: '',
-              genre_ids: []
-            };
-            
-            return item;
-          }).filter(Boolean) as WatchHistoryItem[];
-          
-          // Merge with our history (prioritizing our own data)
-          const existingIds = new Set(history.map(item => item.id));
-          const uniqueVidoraItems = vidoraItems.filter(item => !existingIds.has(item.id));
-          
-          setWatchHistory([...history, ...uniqueVidoraItems]);
-        } catch (error) {
-          console.error("Error parsing Vidora progress:", error);
-          setWatchHistory(history);
-        }
-      } catch (error) {
-        console.error("Error fetching watch history:", error);
-        setWatchHistory([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchWatchHistory();
-  }, [currentUser]);
-
-  const handleSeeAllClick = () => {
-    navigate("/profile");
+  const handleMediaClick = (media: Media) => {
+    setSelectedMedia(media);
+    setIsOpen(true);
   };
 
-  // Don't render anything if there's no watch history or not logged in
-  if (!currentUser || watchHistory.length === 0) {
-    return null;
-  }
+  const handleCloseDialog = () => {
+    setIsOpen(false);
+    setSelectedMedia(null);
+  };
 
-  // Show placeholder while loading
-  if (isLoading) {
-    return (
-      <div className="py-4 animate-pulse">
-        <div className="container mx-auto px-4">
-          <div className="h-8 w-48 bg-muted-foreground/20 rounded mb-6"></div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, index) => (
-              <div key={index} className="aspect-[2/3] bg-muted-foreground/20 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const clearHistory = () => {
+    setRecentlyWatched([]);
+    localStorage.removeItem('recentlyWatched');
+  };
 
-  const handleContinueWatching = (item: WatchHistoryItem) => {
-    if (item.type === 'tv' && item.lastEpisode) {
-      navigate(`/watch/tv/${item.id}/${item.lastEpisode.season}/${item.lastEpisode.episode}`);
-    } else {
-      navigate(`/watch/${item.media_type || item.type || 'movie'}/${item.id}`);
-    }
+  const removeFromHistory = (mediaId: number) => {
+    const updatedHistory = recentlyWatched.filter(item => item.id !== mediaId);
+    setRecentlyWatched(updatedHistory);
+  };
+
+  const updateProgress = (mediaId: number, progress: number) => {
+    const updatedHistory = recentlyWatched.map(item => {
+      if (item.id === mediaId) {
+        return { ...item, progress };
+      }
+      return item;
+    });
+    setRecentlyWatched(updatedHistory);
+  };
+
+  // Get years range from movies if they exist
+  const getYear = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    return dateString?.split('-')[0] || 'N/A';
+  };
+
+  // Calculate average rating if available
+  const getRating = (rating: number | undefined) => {
+    if (!rating) return null;
+    return rating?.toFixed(1);
   };
 
   return (
-    <div className="py-4">
-      <div className="container mx-auto px-4">
+    <>
+      <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl md:text-2xl font-bold flex items-center">
-            <Clock className="text-purple-500 mr-2" size={20} />
-            <span className="bg-gradient-to-r from-purple-500 to-purple-300 bg-clip-text text-transparent">
-              Recently Watched
-            </span>
-          </h2>
-          <button
-            onClick={handleSeeAllClick}
-            className={cn(
-              "flex items-center gap-1 text-sm transition-colors",
-              "text-muted-foreground hover:text-purple-500"
-            )}
-          >
-            See All
-            <ChevronRight size={16} />
-          </button>
+          <h2 className="text-xl md:text-2xl font-semibold">Recently Watched</h2>
+          {recentlyWatched.length > 0 && (
+            <button onClick={clearHistory} className="text-sm text-muted-foreground hover:text-red-500 transition-colors">
+              Clear History
+            </button>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {watchHistory.slice(0, 6).map((item, index) => {
-            const mediaType = item.media_type || item.type || "movie";
-            return (
-              <div key={`${mediaType}-${item.id}-${index}`} className="relative">
-                <MovieCard 
-                  item={{
-                    id: item.id,
-                    title: item.title || item.name || "Unknown",
-                    name: item.name || item.title || "Unknown",
-                    poster_path: item.poster_path || null,
-                    backdrop_path: item.backdrop_path || null,
-                    overview: item.overview || "",
-                    vote_average: item.vote_average || 0,
-                    release_date: item.release_date || "",
-                    first_air_date: item.first_air_date || "",
-                    genre_ids: item.genre_ids || [],
-                    progress: item.progress,
-                  }}
-                  type={mediaType === "tv" ? "tv" : "movie"} 
-                  priority={true} 
-                />
-                
-                {/* Play button overlay */}
-                <div 
-                  className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
-                  onClick={() => handleContinueWatching(item)}
-                >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-500">
-                    <Play size={20} className="text-white ml-1" />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {recentlyWatched.length === 0 ? (
+          <div className="text-center py-12 bg-black/20 rounded-lg border border-white/5">
+            <p className="text-muted-foreground">No recently watched movies or TV shows</p>
+          </div>
+        ) : (
+          <ScrollArea className="rounded-md border border-white/10 bg-black/40 backdrop-blur-md">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
+              {recentlyWatched.map((item) => {
+                const mediaType = item.title ? 'movie' : 'tv';
+                const year = getYear(item.release_date || item.first_air_date);
+                const rating = getRating(item.vote_average);
+                const progress = item.progress || 0;
+
+                // When creating media objects for RecentlyWatched, ensure we add all required properties
+                // Find the section where the error occurs (around line 172)
+                // and add the missing properties:
+
+                const mediaObj = {
+                  id: item.id,
+                  title: item.title || item.name,
+                  name: item.name || item.title,
+                  poster_path: item.poster_path,
+                  backdrop_path: item.backdrop_path,
+                  overview: item.overview,
+                  vote_average: item.vote_average,
+                  vote_count: item.vote_count || 0, // Add missing property
+                  popularity: item.popularity || 0, // Add missing property
+                  release_date: item.release_date || '',
+                  first_air_date: item.first_air_date || '',
+                  genre_ids: item.genre_ids || [],
+                  original_language: item.original_language || 'en', // Add missing property
+                  origin_country: item.origin_country || ['US'], // Add missing property
+                  progress: progress
+                };
+
+                return (
+                  <motion.div
+                    key={item.id}
+                    className="relative rounded-lg overflow-hidden border border-white/10 hover:border-white/30 transition-all"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleMediaClick(mediaObj)}
+                  >
+                    <div className="relative aspect-[2/3]">
+                      {item.poster_path ? (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                          alt={item.title || item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-black/50">
+                          <span className="text-xs text-center p-2">No image</span>
+                        </div>
+                      )}
+
+                      {progress > 0 && progress < 99 && (
+                        <div className="absolute bottom-0 left-0 w-full h-1 bg-primary/80">
+                          <div
+                            className="h-full bg-primary"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      )}
+
+                      <div className="absolute top-2 left-2 flex gap-1">
+                        {mediaType === 'movie' ? (
+                          <Badge variant="movie" className="text-xs">
+                            <Film className="w-3 h-3 mr-1" /> Movie
+                          </Badge>
+                        ) : (
+                          <Badge variant="collection" className="text-xs">
+                            <Tv className="w-3 h-3 mr-1" /> TV Show
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                        <div className="flex justify-between items-center">
+                          <Badge variant="glass" className="text-xs">
+                            <Calendar className="w-3 h-3 mr-1" /> {year}
+                          </Badge>
+
+                          {rating && (
+                            <Badge variant="warning" className="text-xs">
+                              <Star className="w-3 h-3 mr-1 fill-yellow-400" /> {rating}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-2">
+                      <h4 className="text-xs font-medium truncate">{item.title || item.name}</h4>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        )}
       </div>
-    </div>
+
+      {/* Media Details Dialog */}
+      <AnimatePresence>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent className="sm:max-w-[700px] overflow-y-auto max-h-[90vh]">
+            {selectedMedia && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="text-xl md:text-2xl font-bold">{selectedMedia.title || selectedMedia.name}</DialogTitle>
+                  <DialogDescription>
+                    <div className="flex items-center gap-2 mt-1 mb-4">
+                      <Badge variant="info">
+                        <Film className="w-3 h-3 mr-1" /> Movie
+                      </Badge>
+
+                      <Badge variant="secondary">
+                        <Calendar className="w-3 h-3 mr-1" /> {getYear(selectedMedia.release_date || selectedMedia.first_air_date)}
+                      </Badge>
+
+                      {getRating(selectedMedia.vote_average) && (
+                        <Badge variant="warning">
+                          <Star className="w-3 h-3 mr-1 fill-yellow-400" /> {getRating(selectedMedia.vote_average)}
+                        </Badge>
+                      )}
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="mt-2">
+                  {selectedMedia.backdrop_path && (
+                    <div className="aspect-video rounded-lg overflow-hidden mb-4">
+                      <img
+                        src={`https://image.tmdb.org/t/p/original${selectedMedia.backdrop_path}`}
+                        alt={selectedMedia.title || selectedMedia.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {selectedMedia.overview && (
+                    <p className="text-sm text-muted-foreground mb-6">{selectedMedia.overview}</p>
+                  )}
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      </AnimatePresence>
+    </>
   );
 };
 

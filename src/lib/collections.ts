@@ -33,69 +33,40 @@ export async function searchCollections(query: string) {
   }
 }
 
-// Special function to fetch MCU collection
-// Since MCU is a list (84979) and not a standard collection, we need to handle it differently
-export async function fetchMCUCollection(): Promise<Collection> {
+// Function to fetch the MCU list from TMDb
+export async function fetchMCUList() {
   try {
-    // This is a placeholder - in a real implementation, you would either:
-    // 1. Create a custom MCU collection on the backend
-    // 2. Use a TMDB list and transform it to match the Collection type
-    // For simplicity, we'll create a mock MCU collection here
+    const url = 'https://api.themoviedb.org/3/list/84979?language=en-US&page=1';
+    const response = await fetch(url, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch MCU list');
+    const data = await response.json();
+    
+    // Transform the list data into Collection format for consistency
     return {
       id: 84979,
       name: "Marvel Cinematic Universe",
       overview: "The Marvel Cinematic Universe (MCU) is an American media franchise and shared universe centered on a series of superhero films produced by Marvel Studios.",
-      poster_path: "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg", // Iron Man poster as representative
-      backdrop_path: "/rO0LncgjszG43IaPZnBJWPiNJgZ.jpg", // Classic Avengers backdrop
-      parts: [
-        // These would typically come from the actual API
-        // Just including a few representative MCU films
-        {
-          id: 1726,
-          title: "Iron Man",
-          poster_path: "/78lPtwv72eTNqFW9COBYI0dWDJa.jpg",
-          backdrop_path: "/rO0LncgjszG43IaPZnBJWPiNJgZ.jpg",
-          release_date: "2008-05-02",
-          overview: "Tony Stark builds an armored suit to fight the throes of evil.",
-          vote_average: 7.6,
-          vote_count: 25000,
-          popularity: 80.5,
-          adult: false,
-          video: false,
-          original_language: "en"
-        },
-        {
-          id: 299536,
-          title: "Avengers: Infinity War",
-          poster_path: "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
-          backdrop_path: "/lmZFxXgJE3vgrciwuDib0N8CfQo.jpg",
-          release_date: "2018-04-27",
-          overview: "The Avengers must stop Thanos from collecting the Infinity Stones.",
-          vote_average: 8.3,
-          vote_count: 28000,
-          popularity: 85.7,
-          adult: false,
-          video: false,
-          original_language: "en"
-        },
-        {
-          id: 299534,
-          title: "Avengers: Endgame",
-          poster_path: "/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
-          backdrop_path: "/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg",
-          release_date: "2019-04-26",
-          overview: "The Avengers embark on a final mission to defeat Thanos once and for all.",
-          vote_average: 8.4,
-          vote_count: 24000,
-          popularity: 90.2,
-          adult: false,
-          video: false,
-          original_language: "en"
-        }
-      ]
+      poster_path: data.items[0]?.poster_path || "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
+      backdrop_path: data.items[0]?.backdrop_path || "/rO0LncgjszG43IaPZnBJWPiNJgZ.jpg",
+      parts: data.items.map(item => ({
+        id: item.id,
+        title: item.title,
+        poster_path: item.poster_path,
+        backdrop_path: item.backdrop_path,
+        release_date: item.release_date,
+        overview: item.overview,
+        vote_average: item.vote_average,
+        vote_count: item.vote_count || 0,
+        popularity: item.popularity || 0,
+        adult: item.adult || false,
+        video: item.video || false,
+        original_language: item.original_language || "en"
+      }))
     };
   } catch (error) {
-    console.error("Error creating MCU collection:", error);
+    console.error("Error fetching MCU list:", error);
     throw error;
   }
 }
+
+// Remove the old fetchMCUCollection function as we're replacing it with fetchMCUList
