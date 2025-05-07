@@ -56,7 +56,13 @@ export async function fetchMCUCollection(): Promise<Collection> {
           poster_path: "/78lPtwv72eTNqFW9COBYI0dWDJa.jpg",
           backdrop_path: "/rO0LncgjszG43IaPZnBJWPiNJgZ.jpg",
           release_date: "2008-05-02",
-          overview: "Tony Stark builds an armored suit to fight the throes of evil."
+          overview: "Tony Stark builds an armored suit to fight the throes of evil.",
+          vote_average: 7.6,
+          vote_count: 25000,
+          popularity: 80.5,
+          adult: false,
+          video: false,
+          original_language: "en"
         },
         {
           id: 299536,
@@ -64,7 +70,13 @@ export async function fetchMCUCollection(): Promise<Collection> {
           poster_path: "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
           backdrop_path: "/lmZFxXgJE3vgrciwuDib0N8CfQo.jpg",
           release_date: "2018-04-27",
-          overview: "The Avengers must stop Thanos from collecting the Infinity Stones."
+          overview: "The Avengers must stop Thanos from collecting the Infinity Stones.",
+          vote_average: 8.3,
+          vote_count: 28000,
+          popularity: 85.7,
+          adult: false,
+          video: false,
+          original_language: "en"
         },
         {
           id: 299534,
@@ -72,7 +84,13 @@ export async function fetchMCUCollection(): Promise<Collection> {
           poster_path: "/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
           backdrop_path: "/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg",
           release_date: "2019-04-26",
-          overview: "The Avengers embark on a final mission to defeat Thanos once and for all."
+          overview: "The Avengers embark on a final mission to defeat Thanos once and for all.",
+          vote_average: 8.4,
+          vote_count: 24000,
+          popularity: 90.2,
+          adult: false,
+          video: false,
+          original_language: "en"
         }
       ]
     };

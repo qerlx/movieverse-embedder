@@ -11,6 +11,7 @@ import {
 import { Collection, Movie } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Calendar, Film, Star } from 'lucide-react';
 
 type CollectionShowcaseProps = {
   collection: Collection;
@@ -47,6 +48,20 @@ const CollectionShowcase = ({
     return firstYear === lastYear ? firstYear : `${firstYear} - ${lastYear}`;
   };
 
+  // Calculate average rating if available
+  const getAverageRating = () => {
+    if (!collection.parts || collection.parts.length === 0) return null;
+    
+    const moviesWithRatings = collection.parts.filter(movie => movie.vote_average);
+    if (moviesWithRatings.length === 0) return null;
+    
+    const sum = moviesWithRatings.reduce((total, movie) => total + movie.vote_average, 0);
+    return (sum / moviesWithRatings.length).toFixed(1);
+  };
+
+  const avgRating = getAverageRating();
+  const yearRange = getYearRange();
+
   const imgSrc = collection.poster_path
     ? `https://image.tmdb.org/t/p/w500${collection.poster_path}`
     : collection.backdrop_path
@@ -75,19 +90,29 @@ const CollectionShowcase = ({
           
           {showMovieCount && collection.parts && (
             <Badge 
-              className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm border-white/10" 
-              variant="outline"
+              variant="glass" 
+              className="absolute top-2 right-2 backdrop-blur-sm" 
             >
-              {collection.parts.length} {collection.parts.length === 1 ? 'movie' : 'movies'}
+              <Film className="w-3 h-3 mr-1" /> {collection.parts.length}
             </Badge>
           )}
         </div>
         
         <div className="p-2">
           <h3 className="font-medium text-sm truncate">{collection.name}</h3>
-          {showYearRange && (
-            <p className="text-xs text-muted-foreground mt-1">{getYearRange()}</p>
-          )}
+          <div className="flex items-center justify-between mt-1">
+            {showYearRange && yearRange !== 'N/A' && (
+              <span className="text-xs text-muted-foreground flex items-center">
+                <Calendar className="w-3 h-3 mr-1" /> {yearRange}
+              </span>
+            )}
+            
+            {avgRating && (
+              <span className="text-xs text-yellow-400 flex items-center">
+                <Star className="w-3 h-3 mr-1 fill-yellow-400" /> {avgRating}
+              </span>
+            )}
+          </div>
         </div>
       </motion.div>
 
@@ -98,14 +123,25 @@ const CollectionShowcase = ({
             <DialogHeader>
               <DialogTitle className="text-xl md:text-2xl font-bold">{collection.name}</DialogTitle>
               <DialogDescription>
-                {collection.parts && (
-                  <div className="flex items-center gap-2 mt-1 mb-4">
-                    <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary">
-                      {collection.parts.length} {collection.parts.length === 1 ? 'Movie' : 'Movies'}
+                <div className="flex items-center gap-2 mt-1 mb-4">
+                  {collection.parts && (
+                    <Badge variant="info">
+                      <Film className="w-3 h-3 mr-1" /> {collection.parts.length} {collection.parts.length === 1 ? 'Movie' : 'Movies'}
                     </Badge>
-                    {showYearRange && <Badge variant="outline">{getYearRange()}</Badge>}
-                  </div>
-                )}
+                  )}
+                  
+                  {yearRange !== 'N/A' && (
+                    <Badge variant="secondary">
+                      <Calendar className="w-3 h-3 mr-1" /> {yearRange}
+                    </Badge>
+                  )}
+                  
+                  {avgRating && (
+                    <Badge variant="warning">
+                      <Star className="w-3 h-3 mr-1 fill-yellow-400" /> {avgRating}
+                    </Badge>
+                  )}
+                </div>
               </DialogDescription>
             </DialogHeader>
 
@@ -135,9 +171,10 @@ const CollectionShowcase = ({
                         return dateA - dateB;
                       })
                       .map((movie: Movie) => (
-                        <div 
+                        <motion.div 
                           key={movie.id} 
                           className="rounded overflow-hidden border border-white/10 hover:border-white/30 transition-all"
+                          whileHover={{ scale: 1.05 }}
                           onClick={(e) => {
                             e.stopPropagation();
                             setIsOpen(false);
@@ -157,19 +194,25 @@ const CollectionShowcase = ({
                                 <span className="text-xs text-center p-2">No image</span>
                               </div>
                             )}
-                            {movie.release_date && (
-                              <Badge 
-                                className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm border-white/10" 
-                                variant="outline"
-                              >
-                                {movie.release_date.split('-')[0]}
-                              </Badge>
-                            )}
+                            
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                              <div className="flex justify-between items-center">
+                                <Badge variant="glass" className="text-xs">
+                                  {movie.release_date?.split('-')[0]}
+                                </Badge>
+                                
+                                {movie.vote_average > 0 && (
+                                  <Badge variant="warning" className="text-xs">
+                                    <Star className="w-3 h-3 mr-1 fill-yellow-400" /> {movie.vote_average.toFixed(1)}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
                           </div>
                           <div className="p-2">
                             <h4 className="text-xs font-medium truncate">{movie.title}</h4>
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
                   </div>
                 </>

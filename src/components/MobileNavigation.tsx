@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Film, Tv, UserCircle, Search } from 'lucide-react';
+import { Home, Film, Tv, Search, LibraryBig } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -11,7 +11,7 @@ const MobileNavigation = () => {
     { to: "/search", icon: Search, label: "Search" },
     { to: "/movies", icon: Film, label: "Movies" },
     { to: "/tv-shows", icon: Tv, label: "TV" },
-    { to: "/collections", icon: Film, label: "Collections" },
+    { to: "/collections", icon: LibraryBig, label: "Collections" },
   ];
 
   return (

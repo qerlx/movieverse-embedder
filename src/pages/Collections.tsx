@@ -22,7 +22,7 @@ const Collections = () => {
   // Featured collection IDs
   const featuredCollectionIds = [
     573436, // Spider-Verse
-    // 84979,  // MCU (special handling as it's a list)
+    84979,  // MCU (special handling as it's a list)
     328,    // Jurassic Park
     1241,   // Harry Potter
     119,    // Lord of the Rings
@@ -36,7 +36,7 @@ const Collections = () => {
       setIsLoading(true);
       try {
         // Fetch all regular collections
-        const collectionsPromises = featuredCollectionIds.map(id => fetchCollection(id));
+        const collectionsPromises = featuredCollectionIds.filter(id => id !== 84979).map(id => fetchCollection(id));
         
         // Fetch MCU collection separately (it's handled differently)
         const mcuPromise = fetchMCUCollection();
@@ -118,7 +118,7 @@ const Collections = () => {
         <section className="mb-12">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl md:text-2xl font-semibold">Featured Collections</h2>
-            <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary">
+            <Badge variant="glass" className="text-xs">
               {featuredCollections.length} Collections
             </Badge>
           </div>
