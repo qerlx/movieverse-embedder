@@ -1,4 +1,3 @@
-
 // TMDb API Types
 export interface Movie {
   id: number;
@@ -193,4 +192,14 @@ export interface ContinueWatchingItem {
     episode: number;
     name?: string;
   };
+}
+
+// Collection types
+export interface Collection {
+  id: number;
+  name: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  parts?: Movie[];
 }

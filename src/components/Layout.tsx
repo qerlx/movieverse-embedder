@@ -83,6 +83,10 @@ const Layout = () => {
           <Tv size={18} />
           <span>TV Shows</span>
         </NavLink>
+        <NavLink to="/collections" className={getLinkStyle}>
+          <Film size={18} />
+          <span>Collections</span>
+        </NavLink>
         {currentUser && (
           <>
             <NavLink to="/profile" className={getLinkStyle}>

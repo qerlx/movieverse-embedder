@@ -11,7 +11,7 @@ const MobileNavigation = () => {
     { to: "/search", icon: Search, label: "Search" },
     { to: "/movies", icon: Film, label: "Movies" },
     { to: "/tv-shows", icon: Tv, label: "TV" },
-    { to: "/profile", icon: UserCircle, label: "Profile" }
+    { to: "/collections", icon: Film, label: "Collections" },
   ];
 
   return (

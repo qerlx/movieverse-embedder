@@ -21,6 +21,7 @@ const MovieDetail = lazy(() => import("./pages/MovieDetail"));
 const TVShowDetail = lazy(() => import("./pages/TVShowDetail"));
 const Search = lazy(() => import("./pages/Search"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Collections = lazy(() => import("./pages/Collections"));
 const AIRecommendations = lazy(() => import("./components/AIRecommendations"));
 const AIAutomation = lazy(() => import("./components/AIAutomation"));
 
@@ -45,6 +46,9 @@ const AnimatedRoutes = () => {
           } />
           <Route path="tv-shows" element={
             <Suspense fallback={<PageLoader />}><TVShows /></Suspense>
+          } />
+          <Route path="collections" element={
+            <Suspense fallback={<PageLoader />}><Collections /></Suspense>
           } />
           <Route path="movie/:id" element={
             <Suspense fallback={<PageLoader />}><MovieDetail /></Suspense>
