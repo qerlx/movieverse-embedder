@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -12,27 +13,57 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Film, Tv, Star } from 'lucide-react';
-import { Movie, TVShow } from '@/types';
 
-type Media = Movie | TVShow;
+// Define a combined type for both Movie and TV Show content
+interface MediaCommon {
+  id: number;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  overview: string;
+  vote_average: number;
+  vote_count: number;
+  popularity: number;
+  adult?: boolean;
+  video?: boolean;
+  original_language: string;
+  genre_ids?: number[];
+  progress?: number;
+}
+
+interface MovieMedia extends MediaCommon {
+  title: string;
+  release_date: string;
+  name?: never;
+  first_air_date?: never;
+  origin_country?: never;
+}
+
+interface TVShowMedia extends MediaCommon {
+  name: string;
+  first_air_date: string;
+  title?: never;
+  release_date?: never;
+  origin_country: string[];
+}
+
+type Media = MovieMedia | TVShowMedia;
 
 const RecentlyWatched = () => {
   const [recentlyWatched, setRecentlyWatched] = useLocalStorage<Media[]>('recentlyWatched', []);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
 
-  useEffect(() => {
-    // Load recently watched items from local storage on component mount
-    const storedItems = localStorage.getItem('recentlyWatched');
-    if (storedItems) {
-      setRecentlyWatched(JSON.parse(storedItems));
-    }
-  }, [setRecentlyWatched]);
+  // Get years range from movies if they exist
+  const getYear = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    return dateString?.split('-')[0] || 'N/A';
+  };
 
-  useEffect(() => {
-    // Save recently watched items to local storage whenever the state changes
-    localStorage.setItem('recentlyWatched', JSON.stringify(recentlyWatched));
-  }, [recentlyWatched]);
+  // Calculate average rating if available
+  const getRating = (rating: number | undefined) => {
+    if (!rating) return null;
+    return rating?.toFixed(1);
+  };
 
   const handleMediaClick = (media: Media) => {
     setSelectedMedia(media);
@@ -64,18 +95,6 @@ const RecentlyWatched = () => {
     setRecentlyWatched(updatedHistory);
   };
 
-  // Get years range from movies if they exist
-  const getYear = (dateString: string | undefined) => {
-    if (!dateString) return 'N/A';
-    return dateString?.split('-')[0] || 'N/A';
-  };
-
-  // Calculate average rating if available
-  const getRating = (rating: number | undefined) => {
-    if (!rating) return null;
-    return rating?.toFixed(1);
-  };
-
   return (
     <>
       <div className="container mx-auto px-4 py-6">
@@ -96,32 +115,12 @@ const RecentlyWatched = () => {
           <ScrollArea className="rounded-md border border-white/10 bg-black/40 backdrop-blur-md">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
               {recentlyWatched.map((item) => {
-                const mediaType = item.title ? 'movie' : 'tv';
-                const year = getYear(item.release_date || item.first_air_date);
+                const mediaType = 'title' in item ? 'movie' : 'tv';
+                const title = 'title' in item ? item.title : item.name;
+                const releaseDate = 'release_date' in item ? item.release_date : item.first_air_date;
+                const year = getYear(releaseDate);
                 const rating = getRating(item.vote_average);
                 const progress = item.progress || 0;
-
-                // When creating media objects for RecentlyWatched, ensure we add all required properties
-                // Find the section where the error occurs (around line 172)
-                // and add the missing properties:
-
-                const mediaObj = {
-                  id: item.id,
-                  title: item.title || item.name,
-                  name: item.name || item.title,
-                  poster_path: item.poster_path,
-                  backdrop_path: item.backdrop_path,
-                  overview: item.overview,
-                  vote_average: item.vote_average,
-                  vote_count: item.vote_count || 0, // Add missing property
-                  popularity: item.popularity || 0, // Add missing property
-                  release_date: item.release_date || '',
-                  first_air_date: item.first_air_date || '',
-                  genre_ids: item.genre_ids || [],
-                  original_language: item.original_language || 'en', // Add missing property
-                  origin_country: item.origin_country || ['US'], // Add missing property
-                  progress: progress
-                };
 
                 return (
                   <motion.div
@@ -129,13 +128,13 @@ const RecentlyWatched = () => {
                     className="relative rounded-lg overflow-hidden border border-white/10 hover:border-white/30 transition-all"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => handleMediaClick(mediaObj)}
+                    onClick={() => handleMediaClick(item)}
                   >
                     <div className="relative aspect-[2/3]">
                       {item.poster_path ? (
                         <img
                           src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-                          alt={item.title || item.name}
+                          alt={title}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -180,7 +179,7 @@ const RecentlyWatched = () => {
                       </div>
                     </div>
                     <div className="p-2">
-                      <h4 className="text-xs font-medium truncate">{item.title || item.name}</h4>
+                      <h4 className="text-xs font-medium truncate">{title}</h4>
                     </div>
                   </motion.div>
                 );
@@ -197,15 +196,19 @@ const RecentlyWatched = () => {
             {selectedMedia && (
               <>
                 <DialogHeader>
-                  <DialogTitle className="text-xl md:text-2xl font-bold">{selectedMedia.title || selectedMedia.name}</DialogTitle>
+                  <DialogTitle className="text-xl md:text-2xl font-bold">
+                    {'title' in selectedMedia ? selectedMedia.title : selectedMedia.name}
+                  </DialogTitle>
                   <DialogDescription>
                     <div className="flex items-center gap-2 mt-1 mb-4">
                       <Badge variant="info">
-                        <Film className="w-3 h-3 mr-1" /> Movie
+                        <Film className="w-3 h-3 mr-1" /> 
+                        {'title' in selectedMedia ? 'Movie' : 'TV Show'}
                       </Badge>
 
                       <Badge variant="secondary">
-                        <Calendar className="w-3 h-3 mr-1" /> {getYear(selectedMedia.release_date || selectedMedia.first_air_date)}
+                        <Calendar className="w-3 h-3 mr-1" /> 
+                        {getYear('release_date' in selectedMedia ? selectedMedia.release_date : selectedMedia.first_air_date)}
                       </Badge>
 
                       {getRating(selectedMedia.vote_average) && (
@@ -222,7 +225,7 @@ const RecentlyWatched = () => {
                     <div className="aspect-video rounded-lg overflow-hidden mb-4">
                       <img
                         src={`https://image.tmdb.org/t/p/original${selectedMedia.backdrop_path}`}
-                        alt={selectedMedia.title || selectedMedia.name}
+                        alt={'title' in selectedMedia ? selectedMedia.title : selectedMedia.name}
                         className="w-full h-full object-cover"
                       />
                     </div>

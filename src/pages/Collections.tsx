@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Loader, Filter } from "lucide-react";
+import { Search, Loader, Filter, LibraryBig } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -103,13 +103,16 @@ const Collections = () => {
       >
         {/* Page Header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-              Movie Collections
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Explore curated film collections and franchises
-            </p>
+          <div className="flex items-center gap-3">
+            <LibraryBig className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                Movie Collections
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Explore curated film collections and franchises
+              </p>
+            </div>
           </div>
           
           <div className="mt-4 md:mt-0">
@@ -122,11 +125,11 @@ const Collections = () => {
         {/* Featured Collections */}
         <Card className="border-white/10 bg-black/40 backdrop-blur-md mb-12">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl md:text-2xl font-semibold">Featured Collections</h2>
-              <Badge variant="glass" className="flex items-center gap-1">
+              <Badge variant="fancy" className="flex items-center gap-1 px-3 py-1">
                 <Filter size={14} />
-                Popular
+                Popular Franchises
               </Badge>
             </div>
 

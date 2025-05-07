@@ -33,9 +33,10 @@ export async function searchCollections(query: string) {
   }
 }
 
-// Function to fetch the MCU list from TMDb
+// Function to fetch the MCU list from TMDb with the updated ID
 export async function fetchMCUList() {
   try {
+    // Use the correct MCU list ID: 84979
     const url = 'https://api.themoviedb.org/3/list/84979?language=en-US&page=1';
     const response = await fetch(url, API_OPTIONS);
     if (!response.ok) throw new Error('Failed to fetch MCU list');
@@ -68,5 +69,3 @@ export async function fetchMCUList() {
     throw error;
   }
 }
-
-// Remove the old fetchMCUCollection function as we're replacing it with fetchMCUList
