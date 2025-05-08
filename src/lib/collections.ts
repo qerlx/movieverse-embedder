@@ -21,22 +21,10 @@ export async function fetchCollection(id: number): Promise<Collection> {
   }
 }
 
-export async function searchCollections(query: string) {
-  try {
-    const url = `https://api.themoviedb.org/3/search/collection?query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`;
-    const response = await fetch(url, API_OPTIONS);
-    if (!response.ok) throw new Error(`Failed to search collections for "${query}"`);
-    return await response.json();
-  } catch (error) {
-    console.error(`Error searching collections for "${query}":`, error);
-    throw error;
-  }
-}
-
 // Function to fetch the MCU list from TMDb with the updated ID
 export async function fetchMCUList() {
   try {
-    // Use the correct MCU list ID: 84979
+    // Use the MCU list ID: 84979
     const url = 'https://api.themoviedb.org/3/list/84979?language=en-US&page=1';
     const response = await fetch(url, API_OPTIONS);
     if (!response.ok) throw new Error('Failed to fetch MCU list');
