@@ -3,9 +3,10 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
-import { addToFavorites, removeFromFavorites, checkIsFavorite } from '@/lib/favorites';
+import { addToFavorites, removeFromFavorites, checkIsFavorite } from '@/lib/watchService';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from "sonner";
 
 interface FavoriteButtonProps {
   itemId: number;
@@ -52,20 +53,31 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast.error("Please sign in to add favorites");
+      return;
+    }
     
     try {
       setIsLoading(true);
       
       if (isFavorited) {
-        await removeFromFavorites(currentUser.uid, itemId, itemType);
+        await removeFromFavorites(currentUser, itemId, itemType);
         setIsFavorited(false);
+        toast.success(`Removed from favorites`);
       } else {
-        await addToFavorites(currentUser.uid, itemId, itemType, title, posterPath);
+        await addToFavorites(currentUser, {
+          id: itemId, 
+          type: itemType, 
+          title, 
+          posterPath
+        });
         setIsFavorited(true);
+        toast.success(`Added to favorites`);
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
+      toast.error("Failed to update favorites");
     } finally {
       setIsLoading(false);
     }

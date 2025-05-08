@@ -76,6 +76,7 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
       >
         {items.map((item, idx) => {
           const title = item.title || item.name || "";
+          // Fixed the posterPath handling to properly use TMDB URL
           const posterPath = item.poster_path 
             ? `https://image.tmdb.org/t/p/w500${item.poster_path}` 
             : "/placeholder.svg";

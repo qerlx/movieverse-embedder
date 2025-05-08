@@ -1,4 +1,3 @@
-
 import { User } from "firebase/auth";
 
 interface WatchProgress {
@@ -59,9 +58,13 @@ export const addToWatchHistory = async (user: User, watchData: Omit<WatchProgres
     // Store the existing item if it exists to preserve any previous data
     const existingItem = getLocalStorageCollection(userId, "watchHistory")[itemKey] || {};
     
+    // Make sure we keep the poster_path property for compatibility with ContinueWatchingRow
+    const poster_path = watchData.posterPath || existingItem.posterPath;
+    
     setLocalStorageItem(userId, "watchHistory", itemKey, {
       ...existingItem,
       ...watchData,
+      poster_path, // Add this property for compatibility
       lastWatched: Date.now()
     });
     
@@ -79,8 +82,15 @@ export const getWatchHistory = async (user: User): Promise<WatchProgress[]> => {
     const userId = user.uid;
     const watchHistoryData = getLocalStorageCollection(userId, "watchHistory");
     
-    return Object.values(watchHistoryData)
-      .sort((a: WatchProgress, b: WatchProgress) => b.lastWatched - a.lastWatched);
+    // Ensure all items have the poster_path property for compatibility
+    const items = Object.values(watchHistoryData).map((item: any) => {
+      return {
+        ...item,
+        poster_path: item.posterPath || item.poster_path || null
+      };
+    });
+    
+    return items.sort((a: WatchProgress, b: WatchProgress) => b.lastWatched - a.lastWatched);
   } catch (error) {
     console.error("Error fetching watch history:", error);
     return [];
@@ -146,6 +156,8 @@ export const addToFavorites = async (user: User, itemData: Omit<FavoriteItem, "a
     
     setLocalStorageItem(userId, "favorites", itemKey, {
       ...itemData,
+      // Also add poster_path for consistency
+      poster_path: itemData.posterPath,
       addedAt: Date.now()
     });
     
@@ -181,8 +193,15 @@ export const getFavorites = async (user: User): Promise<FavoriteItem[]> => {
     const userId = user.uid;
     const favoritesData = getLocalStorageCollection(userId, "favorites");
     
-    return Object.values(favoritesData)
-      .sort((a: FavoriteItem, b: FavoriteItem) => b.addedAt - a.addedAt);
+    // Ensure all items have the poster_path property for compatibility
+    const items = Object.values(favoritesData).map((item: any) => {
+      return {
+        ...item,
+        poster_path: item.posterPath || item.poster_path || null
+      };
+    });
+    
+    return items.sort((a: FavoriteItem, b: FavoriteItem) => b.addedAt - a.addedAt);
   } catch (error) {
     console.error("Error fetching favorites:", error);
     return [];

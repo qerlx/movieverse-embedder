@@ -28,6 +28,7 @@ interface MediaCommon {
   original_language: string;
   genre_ids?: number[];
   progress?: number;
+  posterPath?: string | null; // Adding compatability with our watchlist items
 }
 
 interface MovieMedia extends MediaCommon {
@@ -121,6 +122,12 @@ const RecentlyWatched = () => {
                 const year = getYear(releaseDate);
                 const rating = getRating(item.vote_average);
                 const progress = item.progress || 0;
+                
+                // Fix image path handling - check for both poster_path and posterPath properties
+                const posterPath = item.poster_path || item.posterPath || null;
+                const imageUrl = posterPath 
+                  ? `https://image.tmdb.org/t/p/w300${posterPath}`
+                  : "/placeholder.svg";
 
                 return (
                   <motion.div
@@ -131,17 +138,16 @@ const RecentlyWatched = () => {
                     onClick={() => handleMediaClick(item)}
                   >
                     <div className="relative aspect-[2/3]">
-                      {item.poster_path ? (
-                        <img
-                          src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
-                          alt={title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-black/50">
-                          <span className="text-xs text-center p-2">No image</span>
-                        </div>
-                      )}
+                      <img
+                        src={imageUrl}
+                        alt={title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          // Fallback to placeholder if image fails to load
+                          (e.target as HTMLImageElement).src = "/placeholder.svg";
+                        }}
+                      />
 
                       {progress > 0 && progress < 99 && (
                         <div className="absolute bottom-0 left-0 w-full h-1 bg-primary/80">
@@ -227,6 +233,10 @@ const RecentlyWatched = () => {
                         src={`https://image.tmdb.org/t/p/original${selectedMedia.backdrop_path}`}
                         alt={'title' in selectedMedia ? selectedMedia.title : selectedMedia.name}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to placeholder if image fails to load
+                          (e.target as HTMLImageElement).src = "/placeholder.svg";
+                        }}
                       />
                     </div>
                   )}
