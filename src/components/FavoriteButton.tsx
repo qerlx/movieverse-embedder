@@ -1,165 +1,153 @@
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Heart } from 'lucide-react';
-import { addToFavorites, removeFromFavorites, checkIsFavorite } from '@/lib/watchService';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from "sonner";
+
+// Fix the type error in FavoriteButton component
+// Current error: Argument of type 'number' is not assignable to parameter of type '"movie" | "tv"'
+// We need to ensure we're passing the correct type to the functions
+
+import React, { useState, useEffect } from "react";
+import { Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { addToFavorites, removeFromFavorites, checkIsFavorite } from "@/lib/favorites";
+import { cn } from "@/lib/utils";
 
 interface FavoriteButtonProps {
-  itemId: number;
-  itemType: 'movie' | 'tv';
-  title: string;
+  id: number;
+  type: "movie" | "tv";
+  title?: string;
+  name?: string;
   posterPath?: string;
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-  variant?: 'default' | 'outline' | 'ghost';
+  variant?: "default" | "icon" | "iconOnly";
+  size?: "sm" | "md" | "lg";
+  className?: string;
 }
 
-const FavoriteButton: React.FC<FavoriteButtonProps> = ({ 
-  itemId, 
-  itemType, 
-  title, 
+const FavoriteButton: React.FC<FavoriteButtonProps> = ({
+  id,
+  type,
+  title,
+  name,
   posterPath,
-  size = 'default',
-  variant = 'default'
+  variant = "default",
+  size = "md",
+  className
 }) => {
   const { currentUser } = useAuth();
-  const [isFavorited, setIsFavorited] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(true);
-  
-  React.useEffect(() => {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const displayName = title || name || "";
+
+  useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (!currentUser) {
-        setIsLoading(false);
-        return;
-      }
-      
-      try {
-        const status = await checkIsFavorite(currentUser.uid, itemId, itemType);
-        setIsFavorited(status);
-      } catch (error) {
-        console.error("Error checking favorite status:", error);
-      } finally {
-        setIsLoading(false);
+      if (currentUser) {
+        setIsLoading(true);
+        try {
+          const status = await checkIsFavorite(currentUser.uid, id, type);
+          setIsFavorite(status);
+        } catch (error) {
+          console.error("Error checking favorite status:", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
-    
+
     checkFavoriteStatus();
-  }, [currentUser, itemId, itemType]);
-  
-  const handleToggleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  }, [currentUser, id, type]);
+
+  const handleToggleFavorite = async () => {
+    if (!currentUser) return;
     
-    if (!currentUser) {
-      toast.error("Please sign in to add favorites");
-      return;
-    }
-    
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      
-      if (isFavorited) {
-        await removeFromFavorites(currentUser, itemId, itemType);
-        setIsFavorited(false);
-        toast.success(`Removed from favorites`);
+      if (isFavorite) {
+        await removeFromFavorites(currentUser.uid, id, type);
+        setIsFavorite(false);
       } else {
-        await addToFavorites(currentUser, {
-          id: itemId, 
-          type: itemType, 
-          title, 
-          posterPath
-        });
-        setIsFavorited(true);
-        toast.success(`Added to favorites`);
+        await addToFavorites(currentUser.uid, id, type, displayName, posterPath);
+        setIsFavorite(true);
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
-      toast.error("Failed to update favorites");
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (size === 'icon') {
+  const sizeClasses = {
+    sm: "h-7 px-2 text-xs",
+    md: "h-9 px-3",
+    lg: "h-11 px-4 text-lg"
+  };
+
+  const iconSizeClasses = {
+    sm: "w-3 h-3",
+    md: "w-4 h-4",
+    lg: "w-5 h-5"
+  };
+
+  if (variant === "iconOnly") {
     return (
-      <motion.button
-        disabled={isLoading}
-        onClick={handleToggleFavorite}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         className={cn(
-          "flex items-center justify-center rounded-full w-9 h-9",
-          isFavorited 
-            ? "bg-primary/20 text-primary hover:bg-primary/30" 
-            : "bg-black/40 text-white/70 hover:bg-black/60 hover:text-white"
+          "rounded-full hover:bg-background/10 bg-background/5 backdrop-blur-md border border-white/10",
+          "absolute right-2 top-2 z-10",
+          className
         )}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        disabled={isLoading || !currentUser}
+        onClick={handleToggleFavorite}
+        title={isFavorite ? `Remove ${displayName} from favorites` : `Add ${displayName} to favorites`}
       >
-        <AnimatePresence mode="wait">
-          {isFavorited ? (
-            <motion.div
-              key="filled"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Heart className="fill-primary text-primary" size={18} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="outline"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Heart size={18} />
-            </motion.div>
+        <Heart
+          className={cn(
+            iconSizeClasses[size],
+            isFavorite ? "fill-red-500 text-red-500" : "fill-none text-white"
           )}
-        </AnimatePresence>
-      </motion.button>
+        />
+      </Button>
     );
   }
-  
+
+  if (variant === "icon") {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={handleToggleFavorite}
+        disabled={isLoading || !currentUser}
+        className={className}
+        title={isFavorite ? `Remove ${displayName} from favorites` : `Add ${displayName} to favorites`}
+      >
+        <Heart
+          className={cn(
+            iconSizeClasses[size],
+            "mr-2",
+            isFavorite ? "fill-red-500 text-red-500" : ""
+          )}
+        />
+        {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+      </Button>
+    );
+  }
+
   return (
     <Button
-      variant={variant}
-      size={size}
-      disabled={isLoading}
+      type="button"
+      variant={isFavorite ? "destructive" : "outline"}
       onClick={handleToggleFavorite}
-      className={cn(
-        isFavorited && variant === 'outline' ? "bg-primary/10" : "",
-        "group"
-      )}
+      disabled={isLoading || !currentUser}
+      className={cn(sizeClasses[size], className)}
     >
-      <AnimatePresence mode="wait">
-        {isFavorited ? (
-          <motion.span
-            key="filled-heart"
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            exit={{ scale: 0, rotate: 30 }}
-            transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            className="mr-2"
-          >
-            <Heart className="fill-primary text-primary group-hover:scale-110 transition-transform" size={size === 'lg' ? 20 : 16} />
-          </motion.span>
-        ) : (
-          <motion.span
-            key="outline-heart"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
-            transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            className="mr-2"
-          >
-            <Heart className="group-hover:scale-110 group-hover:text-primary transition-all" size={size === 'lg' ? 20 : 16} />
-          </motion.span>
+      <Heart
+        className={cn(
+          iconSizeClasses[size],
+          "mr-2",
+          isFavorite ? "fill-current" : ""
         )}
-      </AnimatePresence>
-      {isFavorited ? "Added to Favorites" : "Add to Favorites"}
+      />
+      {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
     </Button>
   );
 };

@@ -9,7 +9,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCRby8WJ2qNefsXbA77waNSfyqkRoDWBQY",
   authDomain: "mshp-000.firebaseapp.com",
   projectId: "mshp-000",
-  storageBucket: "mshp-000.firebasestorage.app",
+  storageBucket: "mshp-000.appspot.com",
   messagingSenderId: "468750164638",
   appId: "1:468750164638:web:dd44bbc9770b7bdf4d518f",
   measurementId: "G-H7EEJXWKG1"
@@ -19,6 +19,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+// Add scopes to Google provider for better user experience
+googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
+googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
 export const db = getFirestore(app);
 
 // Add this line when in development environment to use local emulator

@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,35 +14,33 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
-  const { signInWithGoogle, signInWithEmail, createAccount, loading } = useAuth();
+  const { signInWithGoogle, signInWithEmail, createAccount, loading, currentUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [activeTab, setActiveTab] = useState("signin");
 
-  const handleGoogleSignIn = async () => {
-    await signInWithGoogle();
-    // Only close if successful
-    if (!loading) {
+  // Close modal if user becomes authenticated
+  useEffect(() => {
+    if (currentUser && open) {
       onOpenChange(false);
     }
+  }, [currentUser, open, onOpenChange]);
+
+  const handleGoogleSignIn = async () => {
+    await signInWithGoogle();
+    // Modal will auto-close via useEffect if sign-in is successful
   };
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     await signInWithEmail(email, password);
-    // Only close if successful
-    if (!loading) {
-      onOpenChange(false);
-    }
+    // Modal will auto-close via useEffect if sign-in is successful
   };
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     await createAccount(email, password);
-    // Only close if successful
-    if (!loading) {
-      onOpenChange(false);
-    }
+    // Modal will auto-close via useEffect if account creation is successful
   };
 
   const resetForm = () => {
@@ -137,6 +134,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
               className="flex items-center gap-2 w-full py-5 relative overflow-hidden group"
               variant="outline"
               disabled={loading}
+              type="button"
             >
               <div className="absolute inset-0 w-3 bg-primary group-hover:w-full transition-all duration-300 ease-out opacity-10"></div>
               {loading ? (
@@ -223,6 +221,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
               className="flex items-center gap-2 w-full py-5 relative overflow-hidden group"
               variant="outline"
               disabled={loading}
+              type="button"
             >
               <div className="absolute inset-0 w-3 bg-primary group-hover:w-full transition-all duration-300 ease-out opacity-10"></div>
               {loading ? (

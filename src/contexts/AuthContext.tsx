@@ -6,7 +6,8 @@ import {
   signOut as firebaseSignOut, 
   onAuthStateChanged,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  AuthError
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { toast } from "sonner";
@@ -46,11 +47,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     try {
       setLoading(true);
-      await signInWithPopup(auth, googleProvider);
-      toast.success("Successfully signed in with Google!");
+      const result = await signInWithPopup(auth, googleProvider);
+      // Check if successful
+      if (result.user) {
+        toast.success("Successfully signed in with Google!");
+      }
     } catch (error) {
-      console.error("Error signing in with Google", error);
-      toast.error("Failed to sign in with Google. Please try email login instead.");
+      const authError = error as AuthError;
+      console.error("Error signing in with Google", authError);
+      
+      // Handle specific Google sign-in errors
+      if (authError.code === 'auth/popup-closed-by-user') {
+        toast.error("Sign-in cancelled. You closed the popup.");
+      } else if (authError.code === 'auth/network-request-failed') {
+        toast.error("Network error. Please check your connection and try again.");
+      } else {
+        toast.error("Failed to sign in with Google. Please try email login instead.");
+      }
     } finally {
       setLoading(false);
     }
@@ -59,11 +72,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithEmail = async (email: string, password: string) => {
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
-      toast.success("Successfully signed in!");
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      // Check if successful
+      if (result.user) {
+        toast.success("Successfully signed in!");
+      }
     } catch (error) {
-      console.error("Error signing in with email", error);
-      toast.error("Invalid email or password. Please try again.");
+      const authError = error as AuthError;
+      console.error("Error signing in with email", authError);
+      
+      // Handle specific email sign-in errors
+      if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password') {
+        toast.error("Invalid email or password. Please try again.");
+      } else if (authError.code === 'auth/too-many-requests') {
+        toast.error("Too many failed login attempts. Please try again later or reset your password.");
+      } else {
+        toast.error("Failed to sign in. Please check your credentials and try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -72,14 +97,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createAccount = async (email: string, password: string) => {
     try {
       setLoading(true);
-      await createUserWithEmailAndPassword(auth, email, password);
-      toast.success("Account successfully created!");
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      // Check if successful
+      if (result.user) {
+        toast.success("Account successfully created!");
+      }
     } catch (error: any) {
       console.error("Error creating account", error);
       if (error.code === "auth/email-already-in-use") {
         toast.error("Email already in use. Try signing in instead.");
       } else if (error.code === "auth/weak-password") {
         toast.error("Password is too weak. Please use a stronger password.");
+      } else if (error.code === "auth/invalid-email") {
+        toast.error("Invalid email format. Please check your email address.");
       } else {
         toast.error("Failed to create account. Please try again.");
       }
