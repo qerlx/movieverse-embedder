@@ -5,6 +5,7 @@ interface WatchProgress {
   type: "movie" | "tv";
   title: string;
   posterPath: string | null;
+  poster_path?: string | null; // For compatibility
   progress?: number; // For movies: percentage watched
   lastEpisode?: {   // For TV shows
     season: number;
@@ -20,6 +21,7 @@ interface FavoriteItem {
   type: "movie" | "tv";
   title: string;
   posterPath: string | null;
+  poster_path?: string | null; // For compatibility
   addedAt: number; // timestamp
 }
 
@@ -58,13 +60,14 @@ export const addToWatchHistory = async (user: User, watchData: Omit<WatchProgres
     // Store the existing item if it exists to preserve any previous data
     const existingItem = getLocalStorageCollection(userId, "watchHistory")[itemKey] || {};
     
-    // Make sure we keep the poster_path property for compatibility with ContinueWatchingRow
-    const poster_path = watchData.posterPath || existingItem.posterPath;
+    // Make sure we keep both poster_path and posterPath properties for compatibility
+    const posterPath = watchData.posterPath || existingItem.posterPath || null;
     
     setLocalStorageItem(userId, "watchHistory", itemKey, {
       ...existingItem,
       ...watchData,
-      poster_path, // Add this property for compatibility
+      posterPath: posterPath,
+      poster_path: posterPath, // Add this property for compatibility
       lastWatched: Date.now()
     });
     
@@ -132,9 +135,12 @@ export const updateWatchProgress = async (user: User, type: "movie" | "tv", id: 
     const itemKey = `${type}_${id}`;
     const existingData = getLocalStorageCollection(userId, "watchHistory")[itemKey] || {};
     
+    // Make sure we keep both posterPath and poster_path fields
     setLocalStorageItem(userId, "watchHistory", itemKey, {
       ...existingData,
       progress,
+      posterPath: existingData.posterPath || null,
+      poster_path: existingData.posterPath || existingData.poster_path || null,
       lastWatched: Date.now()
     });
     
@@ -154,10 +160,11 @@ export const addToFavorites = async (user: User, itemData: Omit<FavoriteItem, "a
     const userId = user.uid;
     const itemKey = `${itemData.type}_${itemData.id}`;
     
+    // Make sure we set both posterPath and poster_path fields for compatibility
     setLocalStorageItem(userId, "favorites", itemKey, {
       ...itemData,
-      // Also add poster_path for consistency
-      poster_path: itemData.posterPath,
+      posterPath: itemData.posterPath || null,
+      poster_path: itemData.posterPath || null, // Add this property for compatibility
       addedAt: Date.now()
     });
     

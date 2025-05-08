@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import HeroSlider from "@/components/HeroSlider";
 import CategoryRow from "@/components/CategoryRow";
@@ -16,6 +15,7 @@ import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { getWatchHistory } from "@/lib/watchService";
+import { ContinueWatchingItem } from "@/components/ContinueWatchingRow";
 
 const Index = () => {
   const { currentUser } = useAuth();
@@ -24,7 +24,7 @@ const Index = () => {
   const [popularMovies, setPopularMovies] = useState([]);
   const [trendingTVShows, setTrendingTVShows] = useState([]);
   const [popularTVShows, setPopularTVShows] = useState([]);
-  const [continueWatchingItems, setContinueWatchingItems] = useState([]);
+  const [continueWatchingItems, setContinueWatchingItems] = useState<ContinueWatchingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -55,7 +55,14 @@ const Index = () => {
           try {
             const watchHistory = await getWatchHistory(currentUser);
             if (watchHistory && watchHistory.length > 0) {
-              setContinueWatchingItems(watchHistory.slice(0, 6));
+              // Ensure each item has both poster_path and posterPath properties
+              const formattedWatchHistory = watchHistory.map(item => ({
+                ...item,
+                poster_path: item.poster_path || item.posterPath || null,
+                posterPath: item.posterPath || item.poster_path || null
+              }));
+              
+              setContinueWatchingItems(formattedWatchHistory.slice(0, 6));
             }
           } catch (error) {
             console.error("Error fetching watch history:", error);
