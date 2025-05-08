@@ -475,12 +475,12 @@ const TVShowDetail = () => {
                 
                 {currentUser && (
                   <FavoriteButton
-                    itemId={parseInt(id!)}
-                    itemType="tv"
-                    title={tvShow.name}
-                    posterPath={tvShow.poster_path}
-                    size="lg"
-                    variant="outline"
+                    id={show.id} 
+                    type="tv" 
+                    name={show.name}
+                    posterPath={show.poster_path}
+                    variant="default" // Changed from "outline" to "default"
+                    className="w-full flex-1"
                   />
                 )}
               </motion.div>

@@ -16,7 +16,7 @@ interface FavoriteButtonProps {
   title?: string;
   name?: string;
   posterPath?: string;
-  variant?: "default" | "icon" | "iconOnly";
+  variant?: "default" | "icon" | "iconOnly" | "outline";
   size?: "sm" | "md" | "lg";
   className?: string;
 }
@@ -125,6 +125,27 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
             iconSizeClasses[size],
             "mr-2",
             isFavorite ? "fill-red-500 text-red-500" : ""
+          )}
+        />
+        {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+      </Button>
+    );
+  }
+  
+  if (variant === "outline") {
+    return (
+      <Button
+        type="button"
+        variant={isFavorite ? "destructive" : "outline"}
+        onClick={handleToggleFavorite}
+        disabled={isLoading || !currentUser}
+        className={cn(sizeClasses[size], className)}
+      >
+        <Heart
+          className={cn(
+            iconSizeClasses[size],
+            "mr-2",
+            isFavorite ? "fill-current" : ""
           )}
         />
         {isFavorite ? "Remove from Favorites" : "Add to Favorites"}

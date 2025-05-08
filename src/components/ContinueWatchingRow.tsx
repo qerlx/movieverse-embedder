@@ -1,9 +1,10 @@
 
 import React from "react";
-import { Clock, ChevronLeft, ChevronRight } from "lucide-react"; 
-import { motion } from "framer-motion";
+import { Clock } from "lucide-react"; 
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import ContinueWatchingCard from "./ContinueWatchingCard";
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
 
 // Define a clearer type for the items
 export interface ContinueWatchingItem {
@@ -12,6 +13,7 @@ export interface ContinueWatchingItem {
   title?: string;
   name?: string;
   poster_path: string | null;
+  posterPath?: string | null;
   progress?: number;
   lastEpisode?: {
     season: number;
@@ -25,50 +27,6 @@ interface ContinueWatchingProps {
 }
 
 const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
-  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
-  const [showLeftArrow, setShowLeftArrow] = React.useState(false);
-  const [showRightArrow, setShowRightArrow] = React.useState(true);
-  
-  // Check scroll position to show/hide arrows
-  const checkScrollPosition = () => {
-    if (!scrollContainerRef.current) return;
-    
-    const container = scrollContainerRef.current;
-    setShowLeftArrow(container.scrollLeft > 20);
-    setShowRightArrow(container.scrollLeft < (container.scrollWidth - container.clientWidth - 20));
-  };
-  
-  React.useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener("scroll", checkScrollPosition);
-      // Initial check
-      checkScrollPosition();
-    }
-    
-    return () => {
-      if (container) {
-        container.removeEventListener("scroll", checkScrollPosition);
-      }
-    };
-  }, [items]);
-  
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      const scrollAmount = container.clientWidth * 0.75;
-      container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
-    }
-  };
-  
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      const scrollAmount = container.clientWidth * 0.75;
-      container.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    }
-  };
-  
   if (!items || items.length === 0) {
     return null;
   }
@@ -80,39 +38,72 @@ const ContinueWatchingRow: React.FC<ContinueWatchingProps> = ({ items }) => {
         Continue Watching
       </h2>
       
-      <div className="relative mx-4 group">
-        {/* Navigation arrows */}
-        {showLeftArrow && (
-          <button
-            onClick={scrollLeft}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/90 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft size={18} />
-          </button>
-        )}
-        
-        {showRightArrow && (
-          <button
-            onClick={scrollRight}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/90 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Scroll right"
-          >
-            <ChevronRight size={18} />
-          </button>
-        )}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {items.map((item) => {
+          const title = item.title || item.name || "";
+          // Ensure we're using the correct poster path property
+          const posterPath = item.poster_path || item.posterPath || null;
+          const imageUrl = posterPath 
+            ? `https://image.tmdb.org/t/p/w342${posterPath}`
+            : "/placeholder.svg";
+          const progress = item.progress || 0;
 
-        <div
-          ref={scrollContainerRef}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 overflow-x-auto py-4 no-scrollbar scroll-smooth carousel snap-x snap-mandatory"
-          style={{ display: "flex" }}
-        >
-          {items.map((item) => (
-            <div key={`${item.type}-${item.id}`} className="w-full min-w-[300px] sm:min-w-[350px] flex-shrink-0 snap-start">
-              <ContinueWatchingCard item={item} />
-            </div>
-          ))}
-        </div>
+          return (
+            <Card key={`${item.type}-${item.id}`} className="overflow-hidden group hover:shadow-md hover:shadow-purple-400/10 transition-all">
+              <Link
+                to={item.type === 'tv' && item.lastEpisode 
+                  ? `/watch/tv/${item.id}/${item.lastEpisode.season}/${item.lastEpisode.episode}`
+                  : `/watch/${item.type}/${item.id}`
+                }
+                className="block"
+              >
+                <div className="relative aspect-[2/3]">
+                  <img
+                    src={imageUrl}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/placeholder.svg";
+                    }}
+                  />
+                  
+                  {/* Episode badge */}
+                  {item.type === 'tv' && item.lastEpisode && (
+                    <div className="absolute bottom-2 left-2 px-2 py-1 text-xs font-medium rounded-md bg-purple-500/80 backdrop-blur-sm text-white">
+                      S{item.lastEpisode.season}:E{item.lastEpisode.episode}
+                    </div>
+                  )}
+                  
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 flex items-end justify-center transition-opacity p-4">
+                    <div className="text-center">
+                      <span className="bg-purple-500/90 text-white text-xs px-2 py-1 rounded-full">
+                        Resume
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Progress bar */}
+                {progress > 0 && (
+                  <Progress 
+                    value={progress} 
+                    className="h-1 w-full bg-gray-200 dark:bg-gray-700" 
+                  />
+                )}
+              </Link>
+              
+              <CardContent className="p-2">
+                <h3 className="font-medium text-sm line-clamp-1">{title}</h3>
+                {item.type === 'tv' && item.lastEpisode?.name && (
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                    "{item.lastEpisode.name}"
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
     </div>
   );

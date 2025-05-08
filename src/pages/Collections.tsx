@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Loader, LibraryBig } from "lucide-react";
@@ -236,11 +235,12 @@ const MovieCard = ({ movie }: { movie: Movie }) => {
           
           <div className="absolute top-2 right-2">
             <FavoriteButton 
-              itemId={movie.id} 
-              itemType="movie" 
+              id={movie.id}
+              type="movie"
               title={movie.title}
               posterPath={movie.poster_path}
-              size="icon" 
+              variant="iconOnly" // Changed from "icon" to "iconOnly"
+              size="sm"
             />
           </div>
           

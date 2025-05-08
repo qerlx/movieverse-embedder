@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -336,12 +335,12 @@ const MovieDetail = () => {
                 
                 {currentUser && (
                   <FavoriteButton
-                    itemId={parseInt(id!)}
-                    itemType="movie"
+                    id={movie.id} 
+                    type="movie" 
                     title={movie.title}
                     posterPath={movie.poster_path}
-                    size="lg"
-                    variant="outline"
+                    variant="default" // Changed from "outline" to "default"
+                    className="w-full flex-1"
                   />
                 )}
               </motion.div>
