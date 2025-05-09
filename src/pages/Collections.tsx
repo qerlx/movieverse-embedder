@@ -1,19 +1,15 @@
-
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Loader, LibraryBig } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import CollectionShowcase from "@/components/CollectionShowcase";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { 
-  fetchCollection, 
-  fetchMCUList, 
-  fetchDCUList, 
-  fetchStarWarsCollection,
-  fetchPixarCollection
-} from "@/lib/collections";
-import type { Collection } from "@/types";
+import { fetchCollection, fetchMCUList } from "@/lib/collections";
+import type { Collection, Movie } from "@/types";
+import FavoriteButton from "@/components/FavoriteButton";
+import { Link } from "react-router-dom";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const Collections = () => {
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -25,6 +21,7 @@ const Collections = () => {
     328,    // Jurassic Park
     1241,   // Harry Potter
     119,    // Lord of the Rings
+    10,     // Star Wars
     263,    // The Dark Knight
     131635, // Hunger Games
     86311,  // Avengers
@@ -38,13 +35,8 @@ const Collections = () => {
     const loadFeaturedCollections = async () => {
       setIsLoading(true);
       try {
-        // Fetch special collections
-        const [mcuCollection, dcuCollection, starWarsCollection, pixarCollection] = await Promise.all([
-          fetchMCUList(),
-          fetchDCUList(),
-          fetchStarWarsCollection(),
-          fetchPixarCollection(),
-        ]);
+        // Fetch MCU list separately as it's handled differently
+        const mcuCollection = await fetchMCUList();
         
         // Fetch all regular collections
         const collectionsPromises = featuredCollectionIds.map(id => fetchCollection(id));
@@ -52,14 +44,8 @@ const Collections = () => {
         // Wait for all collections to load
         const collections = await Promise.all(collectionsPromises);
         
-        // Combine special collections with regular ones
-        const allCollections = [
-          mcuCollection, 
-          dcuCollection,
-          starWarsCollection,
-          pixarCollection,
-          ...collections
-        ];
+        // Combine MCU with other collections
+        const allCollections = [mcuCollection, ...collections];
         
         // Sort alphabetically by name
         allCollections.sort((a, b) => a.name.localeCompare(b.name));
@@ -107,24 +93,172 @@ const Collections = () => {
 
         {/* Collections Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            {Array(10).fill(0).map((_, index) => (
-              <Skeleton key={index} className="aspect-[2/3] rounded-lg" />
+          <div className="grid grid-cols-1 gap-8">
+            {Array(4).fill(0).map((_, index) => (
+              <Card key={index} className="border-white/10 bg-black/40 backdrop-blur-md">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-16 w-12 rounded-md" />
+                    <div>
+                      <Skeleton className="h-7 w-48 mb-2" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-[200px] w-full rounded-lg" />
+                </CardContent>
+              </Card>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          <div className="grid grid-cols-1 gap-8">
             {collections.map((collection) => (
-              <CollectionShowcase 
-                key={collection.id} 
-                collection={collection} 
-                showMovieCount 
-                showYearRange
-              />
+              <CollectionCard key={collection.id} collection={collection} />
             ))}
           </div>
         )}
       </motion.div>
+    </div>
+  );
+};
+
+// Separate component for each collection card
+const CollectionCard = ({ collection }: { collection: Collection }) => {
+  // Sort parts by release date
+  const sortedParts = [...collection.parts].sort((a, b) => {
+    const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
+    const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
+    return dateA - dateB;
+  });
+
+  // Get years range
+  const firstYear = sortedParts[0]?.release_date?.split('-')[0] || 'N/A';
+  const lastYear = sortedParts[sortedParts.length - 1]?.release_date?.split('-')[0] || 'N/A';
+  
+  // Calculate average rating
+  const moviesWithRatings = collection.parts.filter(movie => movie.vote_average);
+  const avgRating = moviesWithRatings.length 
+    ? (moviesWithRatings.reduce((total, movie) => total + movie.vote_average, 0) / moviesWithRatings.length).toFixed(1)
+    : null;
+
+  return (
+    <Card className="border-white/10 bg-black/40 backdrop-blur-md overflow-hidden">
+      <CardContent className="p-6">
+        {/* Collection Header */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="shrink-0">
+            <div className="relative aspect-[2/3] h-32 sm:h-40 rounded-md overflow-hidden border border-white/10">
+              {collection.poster_path ? (
+                <img 
+                  src={`https://image.tmdb.org/t/p/w342${collection.poster_path}`}
+                  alt={collection.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-black/50 flex items-center justify-center">
+                  <span className="text-xs text-center p-2">No image</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold mb-2">{collection.name}</h2>
+            
+            <div className="flex flex-wrap gap-2 mb-3">
+              <Badge variant="collection">
+                {collection.parts.length} {collection.parts.length === 1 ? 'Movie' : 'Movies'}
+              </Badge>
+              
+              {firstYear !== 'N/A' && (
+                <Badge variant="secondary">
+                  {firstYear === lastYear ? firstYear : `${firstYear} - ${lastYear}`}
+                </Badge>
+              )}
+              
+              {avgRating && (
+                <Badge variant="warning">
+                  ★ {avgRating}
+                </Badge>
+              )}
+            </div>
+            
+            {collection.overview && (
+              <p className="text-sm text-muted-foreground line-clamp-3">
+                {collection.overview}
+              </p>
+            )}
+          </div>
+        </div>
+        
+        {/* Movies Carousel */}
+        <div className="my-4">
+          <h3 className="text-lg font-medium mb-3">Movies in this collection</h3>
+          <Carousel className="w-full">
+            <CarouselContent className="-ml-4">
+              {sortedParts.map((movie: Movie) => (
+                <CarouselItem key={movie.id} className="pl-4 md:basis-1/3 lg:basis-1/4">
+                  <MovieCard movie={movie} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <div className="mt-4 flex justify-end gap-2">
+              <CarouselPrevious className="static translate-y-0" />
+              <CarouselNext className="static translate-y-0" />
+            </div>
+          </Carousel>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Individual movie card component
+const MovieCard = ({ movie }: { movie: Movie }) => {
+  const releaseYear = movie.release_date ? movie.release_date.split('-')[0] : 'TBA';
+  
+  return (
+    <div className="rounded-md overflow-hidden border border-white/10 bg-black/20 hover:border-white/30 transition-all h-full flex flex-col">
+      <Link to={`/movie/${movie.id}`} className="block relative">
+        <div className="aspect-[2/3] bg-black/40 relative">
+          {movie.poster_path ? (
+            <img 
+              src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`} 
+              alt={movie.title}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full w-full bg-black/50">
+              <span className="text-xs text-center p-2">No image</span>
+            </div>
+          )}
+          
+          <div className="absolute top-2 right-2">
+            <FavoriteButton 
+              id={movie.id}
+              type="movie"
+              title={movie.title}
+              posterPath={movie.poster_path}
+              variant="iconOnly" // Changed from "icon" to "iconOnly"
+              size="sm"
+            />
+          </div>
+          
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-6 pb-2 px-2">
+            <div className="flex justify-between items-center">
+              <Badge variant="glass" className="text-xs">{releaseYear}</Badge>
+              {movie.vote_average > 0 && (
+                <Badge variant="warning" className="text-xs">★ {movie.vote_average.toFixed(1)}</Badge>
+              )}
+            </div>
+          </div>
+        </div>
+      </Link>
+      <div className="p-3 flex-1 flex flex-col">
+        <Link to={`/movie/${movie.id}`} className="hover:text-primary transition-colors">
+          <h4 className="font-medium text-sm line-clamp-2">{movie.title}</h4>
+        </Link>
+      </div>
     </div>
   );
 };
