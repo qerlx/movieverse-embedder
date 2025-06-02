@@ -40,12 +40,8 @@ const CollectionCard: React.FC<CollectionCardProps> = ({ collection }) => {
     : "/placeholder.svg";
 
   const handleClick = () => {
-    // Navigate to the first movie in the collection or search for the collection
-    if (collection.parts && collection.parts.length > 0) {
-      navigate(`/movie/${collection.parts[0].id}`);
-    } else {
-      navigate(`/movies?search=${encodeURIComponent(collection.name)}`);
-    }
+    // Navigate to collection detail page
+    navigate(`/collection/${collection.id}`);
   };
 
   return (
@@ -78,11 +74,11 @@ const CollectionCard: React.FC<CollectionCardProps> = ({ collection }) => {
             </Badge>
           </div>
           
-          {/* Play Button Overlay */}
+          {/* View Collection Button Overlay */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="bg-purple-600/90 hover:bg-purple-700 rounded-lg px-6 py-3 flex items-center space-x-2 backdrop-blur-sm">
-              <Play className="w-5 h-5 text-white fill-white" />
-              <span className="text-white font-medium">Play</span>
+              <Film className="w-5 h-5 text-white" />
+              <span className="text-white font-medium">View Collection</span>
             </div>
           </div>
           
