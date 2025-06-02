@@ -208,14 +208,14 @@ const CollectionCard = ({
             
             <div className="flex items-center gap-2">
               {yearRange !== 'N/A' && (
-                <Badge variant="secondary" size="sm">
+                <Badge variant="secondary" className="text-xs">
                   <Calendar className="w-3 h-3 mr-1" />
                   {yearRange}
                 </Badge>
               )}
               
               {avgRating && (
-                <Badge variant="warning" size="sm">
+                <Badge variant="warning" className="text-xs">
                   <Star className="w-3 h-3 mr-1 fill-yellow-400" />
                   {avgRating}
                 </Badge>

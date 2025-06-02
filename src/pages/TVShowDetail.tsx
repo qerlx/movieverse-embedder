@@ -9,12 +9,27 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { fetchTVShowDetails, fetchTVShowCredits, fetchSimilarTVShows, fetchTVShowImages } from "@/lib/api";
-import type { TVShow, Person, TVShowImages } from "@/types";
+import { getTVShowDetails, fetchTVShowCredits, fetchSimilarTVShows, fetchTVShowImages } from "@/lib/api";
+import type { TVShow } from "@/types";
 import FavoriteButton from "@/components/FavoriteButton";
 import CategoryRow from "@/components/CategoryRow";
 import WatchProviders from "@/components/WatchProviders";
 import EpisodeSelector from "@/components/EpisodeSelector";
+
+// Define types for the missing data structures
+interface Person {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+}
+
+interface TVShowImages {
+  logos: Array<{
+    file_path: string;
+    iso_639_1: string | null;
+  }>;
+}
 
 const TVShowDetail = () => {
   const { id } = useParams();
@@ -34,7 +49,7 @@ const TVShowDetail = () => {
       setIsLoading(true);
       try {
         const [showData, creditsData, similarData, imagesData] = await Promise.all([
-          fetchTVShowDetails(parseInt(id)),
+          getTVShowDetails(parseInt(id)),
           fetchTVShowCredits(parseInt(id)),
           fetchSimilarTVShows(parseInt(id)),
           fetchTVShowImages(parseInt(id))
@@ -103,10 +118,7 @@ const TVShowDetail = () => {
   const logoUrl = logoImage ? `https://image.tmdb.org/t/p/w500${logoImage.file_path}` : null;
 
   const firstAirYear = show.first_air_date ? new Date(show.first_air_date).getFullYear() : null;
-  const lastAirYear = show.last_air_date ? new Date(show.last_air_date).getFullYear() : null;
-  const yearRange = firstAirYear && lastAirYear && firstAirYear !== lastAirYear 
-    ? `${firstAirYear} - ${lastAirYear}` 
-    : firstAirYear?.toString() || 'TBA';
+  const yearDisplay = firstAirYear?.toString() || 'TBA';
 
   return (
     <div className="min-h-screen">
@@ -201,20 +213,13 @@ const TVShowDetail = () => {
                 <div className="flex flex-wrap gap-4 items-center">
                   <Badge variant="secondary" className="text-sm">
                     <Calendar className="mr-1 h-3 w-3" />
-                    {yearRange}
+                    {yearDisplay}
                   </Badge>
                   
                   {show.vote_average > 0 && (
                     <Badge variant="warning" className="text-sm">
                       <Star className="mr-1 h-3 w-3 fill-yellow-400" />
                       {show.vote_average.toFixed(1)}
-                    </Badge>
-                  )}
-                  
-                  {show.episode_run_time?.[0] && (
-                    <Badge variant="outline" className="text-sm">
-                      <Clock className="mr-1 h-3 w-3" />
-                      ~{show.episode_run_time[0]} min
                     </Badge>
                   )}
                   
@@ -242,15 +247,6 @@ const TVShowDetail = () => {
                     {show.overview}
                   </p>
                 )}
-
-                {/* Episode Selector */}
-                <EpisodeSelector
-                  show={show}
-                  selectedSeason={selectedSeason}
-                  selectedEpisode={selectedEpisode}
-                  onSeasonChange={setSelectedSeason}
-                  onEpisodeChange={setSelectedEpisode}
-                />
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-4">
@@ -323,24 +319,6 @@ const TVShowDetail = () => {
           <Card>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {show.created_by && show.created_by.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Created By</h3>
-                    <p className="text-muted-foreground">
-                      {show.created_by.map(creator => creator.name).join(', ')}
-                    </p>
-                  </div>
-                )}
-                
-                {show.networks && show.networks.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Network</h3>
-                    <p className="text-muted-foreground">
-                      {show.networks.map(network => network.name).join(', ')}
-                    </p>
-                  </div>
-                )}
-                
                 {show.origin_country && show.origin_country.length > 0 && (
                   <div>
                     <h3 className="font-semibold mb-2">Country</h3>
@@ -356,13 +334,6 @@ const TVShowDetail = () => {
                     <p className="text-muted-foreground capitalize">
                       {show.original_language}
                     </p>
-                  </div>
-                )}
-                
-                {show.status && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Status</h3>
-                    <p className="text-muted-foreground">{show.status}</p>
                   </div>
                 )}
                 

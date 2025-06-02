@@ -318,3 +318,49 @@ export const getMovieEmbedUrl = (tmdbId: number): string => {
 export const getTVShowEmbedUrl = (tmdbId: number, season: number, episode: number): string => {
   return `${EMBED_BASE_URL}/tv/${tmdbId}/${season}/${episode}`;
 };
+
+// Add missing TV show functions that were referenced
+export const fetchTVShowDetails = getTVShowDetails;
+export const fetchTVShowCredits = async (id: number) => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/tv/${id}/credits`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch TV show credits');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching TV show credits:', error);
+    throw error;
+  }
+};
+
+export const fetchSimilarTVShows = async (id: number) => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/tv/${id}/similar`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch similar TV shows');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching similar TV shows:', error);
+    throw error;
+  }
+};
+
+export const fetchTVShowImages = async (id: number) => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/tv/${id}/images`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch TV show images');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching TV show images:', error);
+    throw error;
+  }
+};
+
+export const fetchMovieImages = async (id: number) => {
+  try {
+    const response = await fetch(`${TMDB_BASE_URL}/movie/${id}/images`, API_OPTIONS);
+    if (!response.ok) throw new Error('Failed to fetch movie images');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching movie images:', error);
+    throw error;
+  }
+};
