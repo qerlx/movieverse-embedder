@@ -1,18 +1,15 @@
 
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LibraryBig, Film, Calendar, Star, Play } from "lucide-react";
+import { LibraryBig } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { fetchCollection, fetchMCUList } from "@/lib/collections";
+import CollectionCard from "@/components/CollectionCard";
 import type { Collection } from "@/types";
 
 const Collections = () => {
-  const navigate = useNavigate();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -81,12 +78,6 @@ const Collections = () => {
     loadFeaturedCollections();
   }, []);
 
-  const handleCollectionClick = (collection: Collection) => {
-    // For now, we'll navigate to the movies page with a search for the collection name
-    // In a real app, you'd have a dedicated collection detail page
-    navigate(`/movies?search=${encodeURIComponent(collection.name)}`);
-  };
-
   return (
     <div className="min-h-screen pb-24">
       <motion.div
@@ -118,15 +109,11 @@ const Collections = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array(12).fill(0).map((_, index) => (
-              <Card key={index} className="overflow-hidden">
+              <div key={index} className="overflow-hidden">
                 <div className="aspect-[16/9] relative">
-                  <Skeleton className="w-full h-full rounded-none" />
+                  <Skeleton className="w-full h-full rounded-lg" />
                 </div>
-                <CardContent className="p-4">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
-                </CardContent>
-              </Card>
+              </div>
             ))}
           </div>
         ) : (
@@ -134,121 +121,13 @@ const Collections = () => {
             {collections.map((collection) => (
               <CollectionCard 
                 key={collection.id} 
-                collection={collection} 
-                onClick={() => handleCollectionClick(collection)}
+                collection={collection}
               />
             ))}
           </div>
         )}
       </motion.div>
     </div>
-  );
-};
-
-// Individual collection card component
-const CollectionCard = ({ 
-  collection, 
-  onClick 
-}: { 
-  collection: Collection;
-  onClick: () => void;
-}) => {
-  // Sort parts by release date to get year range
-  const sortedParts = [...(collection.parts || [])].sort((a, b) => {
-    const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
-    const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
-    return dateA - dateB;
-  });
-
-  // Get years range
-  const firstYear = sortedParts[0]?.release_date?.split('-')[0] || 'N/A';
-  const lastYear = sortedParts[sortedParts.length - 1]?.release_date?.split('-')[0] || 'N/A';
-  const yearRange = firstYear === lastYear ? firstYear : `${firstYear} - ${lastYear}`;
-  
-  // Calculate average rating
-  const moviesWithRatings = (collection.parts || []).filter(movie => movie.vote_average);
-  const avgRating = moviesWithRatings.length 
-    ? (moviesWithRatings.reduce((total, movie) => total + movie.vote_average, 0) / moviesWithRatings.length).toFixed(1)
-    : null;
-
-  // Use backdrop for card image, fallback to poster
-  const imageUrl = collection.backdrop_path 
-    ? `https://image.tmdb.org/t/p/w780${collection.backdrop_path}`
-    : collection.poster_path
-    ? `https://image.tmdb.org/t/p/w500${collection.poster_path}`
-    : "/placeholder.svg";
-
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="cursor-pointer"
-      onClick={onClick}
-    >
-      <Card className="overflow-hidden border-white/10 bg-black/40 backdrop-blur-md hover:border-white/30 transition-all group">
-        {/* Collection Image */}
-        <div className="aspect-[16/9] relative overflow-hidden">
-          <img
-            src={imageUrl}
-            alt={collection.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "/placeholder.svg";
-            }}
-          />
-          
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-          
-          {/* Movie Count Badge */}
-          <div className="absolute top-3 right-3">
-            <Badge variant="glass" className="backdrop-blur-sm">
-              <Film className="w-3 h-3 mr-1" />
-              {collection.parts?.length || 0} {(collection.parts?.length || 0) === 1 ? 'Movie' : 'Movies'}
-            </Badge>
-          </div>
-          
-          {/* Play Button Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="bg-primary/90 rounded-full p-3">
-              <Play className="w-8 h-8 text-white fill-white" />
-            </div>
-          </div>
-          
-          {/* Title Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
-              {collection.name}
-            </h3>
-            
-            <div className="flex items-center gap-2">
-              {yearRange !== 'N/A' && (
-                <Badge variant="secondary" className="text-xs">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  {yearRange}
-                </Badge>
-              )}
-              
-              {avgRating && (
-                <Badge variant="warning" className="text-xs">
-                  <Star className="w-3 h-3 mr-1 fill-yellow-400" />
-                  {avgRating}
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {/* Card Content */}
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary p-0">
-              View Collection →
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
   );
 };
 

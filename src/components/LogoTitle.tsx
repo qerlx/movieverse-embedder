@@ -21,8 +21,8 @@ const LogoTitle: React.FC<LogoTitleProps> = ({
   id, 
   title, 
   type, 
-  className = "max-w-md max-h-32 object-contain mb-2",
-  fallbackClassName = "text-4xl md:text-6xl font-bold text-white mb-2"
+  className = "max-w-xs sm:max-w-sm md:max-w-md max-h-16 sm:max-h-20 md:max-h-24 object-contain mb-2",
+  fallbackClassName = "text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-2"
 }) => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
