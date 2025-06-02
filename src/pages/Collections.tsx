@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LibraryBig, Film, Calendar, Star } from "lucide-react";
+import { LibraryBig, Film, Calendar, Star, Play } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,13 +50,21 @@ const Collections = () => {
         const mcuCollection = await fetchMCUList();
         
         // Fetch all regular collections
-        const collectionsPromises = featuredCollectionIds.map(id => fetchCollection(id));
+        const collectionsPromises = featuredCollectionIds.map(async (id) => {
+          try {
+            return await fetchCollection(id);
+          } catch (error) {
+            console.error(`Failed to fetch collection ${id}:`, error);
+            return null;
+          }
+        });
         
         // Wait for all collections to load
-        const collections = await Promise.all(collectionsPromises);
+        const collectionsResults = await Promise.all(collectionsPromises);
+        const validCollections = collectionsResults.filter(collection => collection !== null);
         
         // Combine MCU with other collections
-        const allCollections = [mcuCollection, ...collections];
+        const allCollections = [mcuCollection, ...validCollections];
         
         // Sort alphabetically by name
         allCollections.sort((a, b) => a.name.localeCompare(b.name));
@@ -108,7 +116,7 @@ const Collections = () => {
 
         {/* Collections Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array(12).fill(0).map((_, index) => (
               <Card key={index} className="overflow-hidden">
                 <div className="aspect-[16/9] relative">
@@ -122,7 +130,7 @@ const Collections = () => {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {collections.map((collection) => (
               <CollectionCard 
                 key={collection.id} 
@@ -146,7 +154,7 @@ const CollectionCard = ({
   onClick: () => void;
 }) => {
   // Sort parts by release date to get year range
-  const sortedParts = [...collection.parts].sort((a, b) => {
+  const sortedParts = [...(collection.parts || [])].sort((a, b) => {
     const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
     const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
     return dateA - dateB;
@@ -158,7 +166,7 @@ const CollectionCard = ({
   const yearRange = firstYear === lastYear ? firstYear : `${firstYear} - ${lastYear}`;
   
   // Calculate average rating
-  const moviesWithRatings = collection.parts.filter(movie => movie.vote_average);
+  const moviesWithRatings = (collection.parts || []).filter(movie => movie.vote_average);
   const avgRating = moviesWithRatings.length 
     ? (moviesWithRatings.reduce((total, movie) => total + movie.vote_average, 0) / moviesWithRatings.length).toFixed(1)
     : null;
@@ -196,8 +204,15 @@ const CollectionCard = ({
           <div className="absolute top-3 right-3">
             <Badge variant="glass" className="backdrop-blur-sm">
               <Film className="w-3 h-3 mr-1" />
-              {collection.parts.length} {collection.parts.length === 1 ? 'Movie' : 'Movies'}
+              {collection.parts?.length || 0} {(collection.parts?.length || 0) === 1 ? 'Movie' : 'Movies'}
             </Badge>
+          </div>
+          
+          {/* Play Button Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="bg-primary/90 rounded-full p-3">
+              <Play className="w-8 h-8 text-white fill-white" />
+            </div>
           </div>
           
           {/* Title Overlay */}

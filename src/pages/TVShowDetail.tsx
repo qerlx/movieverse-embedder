@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -14,6 +13,7 @@ import type { TVShow } from "@/types";
 import FavoriteButton from "@/components/FavoriteButton";
 import CategoryRow from "@/components/CategoryRow";
 import WatchProviders from "@/components/WatchProviders";
+import LogoTitle from "@/components/LogoTitle";
 import EpisodeSelector from "@/components/EpisodeSelector";
 
 // Define types for the missing data structures
@@ -186,27 +186,15 @@ const TVShowDetail = () => {
 
               {/* Info */}
               <div className="flex-1 space-y-6">
-                {/* Title - Use logo if available, otherwise text */}
+                {/* Title - Use LogoTitle component */}
                 <div>
-                  {logoUrl ? (
-                    <img 
-                      src={logoUrl} 
-                      alt={show.name}
-                      className="max-w-md max-h-32 object-contain mb-2"
-                      onError={(e) => {
-                        // Fallback to text title if logo fails to load
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        const textTitle = document.createElement('h1');
-                        textTitle.className = 'text-4xl md:text-6xl font-bold text-white mb-2';
-                        textTitle.textContent = show.name;
-                        (e.target as HTMLImageElement).parentNode?.appendChild(textTitle);
-                      }}
-                    />
-                  ) : (
-                    <h1 className="text-4xl md:text-6xl font-bold text-white mb-2">
-                      {show.name}
-                    </h1>
-                  )}
+                  <LogoTitle 
+                    id={show.id}
+                    title={show.name}
+                    type="tv"
+                    className="max-w-md max-h-32 object-contain mb-2"
+                    fallbackClassName="text-4xl md:text-6xl font-bold text-white mb-2"
+                  />
                 </div>
 
                 {/* Metadata */}
