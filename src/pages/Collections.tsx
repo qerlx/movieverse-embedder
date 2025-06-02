@@ -1,21 +1,22 @@
+
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader, LibraryBig } from "lucide-react";
+import { LibraryBig, Film, Calendar, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { fetchCollection, fetchMCUList } from "@/lib/collections";
-import type { Collection, Movie } from "@/types";
-import FavoriteButton from "@/components/FavoriteButton";
-import { Link } from "react-router-dom";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import type { Collection } from "@/types";
 
 const Collections = () => {
+  const navigate = useNavigate();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Featured collection IDs
+  // Featured collection IDs with more variety
   const featuredCollectionIds = [
     573436, // Spider-Verse
     328,    // Jurassic Park
@@ -29,6 +30,16 @@ const Collections = () => {
     9485,   // Fast & Furious
     295,    // Pirates of the Caribbean
     2344,   // The Matrix
+    748,    // X-Men
+    422834, // Godzilla MonsterVerse
+    87359,  // Mission: Impossible
+    8091,   // Alien
+    1709,   // Scream
+    91361,  // Halloween
+    8945,   // Mad Max
+    434,    // Lethal Weapon
+    1582,   // Tremors
+    86066,  // Sherlock Holmes
   ];
 
   useEffect(() => {
@@ -62,6 +73,12 @@ const Collections = () => {
     loadFeaturedCollections();
   }, []);
 
+  const handleCollectionClick = (collection: Collection) => {
+    // For now, we'll navigate to the movies page with a search for the collection name
+    // In a real app, you'd have a dedicated collection detail page
+    navigate(`/movies?search=${encodeURIComponent(collection.name)}`);
+  };
+
   return (
     <div className="min-h-screen pb-24">
       <motion.div
@@ -71,48 +88,47 @@ const Collections = () => {
         className="container mx-auto px-4 pt-6 pb-16"
       >
         {/* Page Header */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
+        <div className="mb-8 text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
             <LibraryBig className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                Movie Collections
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Explore popular film franchises and series
-              </p>
-            </div>
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+              Collections
+            </h1>
           </div>
+          <p className="text-muted-foreground">
+            Explore popular film franchises and series
+          </p>
           
-          <div className="mt-4 md:mt-0">
-            <Badge variant="premium" className="text-xs py-1.5">
+          {!isLoading && (
+            <Badge variant="premium" className="text-xs py-1.5 mt-4">
               {collections.length} Featured Collections
             </Badge>
-          </div>
+          )}
         </div>
 
         {/* Collections Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-8">
-            {Array(4).fill(0).map((_, index) => (
-              <Card key={index} className="border-white/10 bg-black/40 backdrop-blur-md">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <Skeleton className="h-16 w-12 rounded-md" />
-                    <div>
-                      <Skeleton className="h-7 w-48 mb-2" />
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                  </div>
-                  <Skeleton className="h-[200px] w-full rounded-lg" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array(12).fill(0).map((_, index) => (
+              <Card key={index} className="overflow-hidden">
+                <div className="aspect-[16/9] relative">
+                  <Skeleton className="w-full h-full rounded-none" />
+                </div>
+                <CardContent className="p-4">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2" />
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {collections.map((collection) => (
-              <CollectionCard key={collection.id} collection={collection} />
+              <CollectionCard 
+                key={collection.id} 
+                collection={collection} 
+                onClick={() => handleCollectionClick(collection)}
+              />
             ))}
           </div>
         )}
@@ -121,9 +137,15 @@ const Collections = () => {
   );
 };
 
-// Separate component for each collection card
-const CollectionCard = ({ collection }: { collection: Collection }) => {
-  // Sort parts by release date
+// Individual collection card component
+const CollectionCard = ({ 
+  collection, 
+  onClick 
+}: { 
+  collection: Collection;
+  onClick: () => void;
+}) => {
+  // Sort parts by release date to get year range
   const sortedParts = [...collection.parts].sort((a, b) => {
     const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
     const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
@@ -133,6 +155,7 @@ const CollectionCard = ({ collection }: { collection: Collection }) => {
   // Get years range
   const firstYear = sortedParts[0]?.release_date?.split('-')[0] || 'N/A';
   const lastYear = sortedParts[sortedParts.length - 1]?.release_date?.split('-')[0] || 'N/A';
+  const yearRange = firstYear === lastYear ? firstYear : `${firstYear} - ${lastYear}`;
   
   // Calculate average rating
   const moviesWithRatings = collection.parts.filter(movie => movie.vote_average);
@@ -140,126 +163,77 @@ const CollectionCard = ({ collection }: { collection: Collection }) => {
     ? (moviesWithRatings.reduce((total, movie) => total + movie.vote_average, 0) / moviesWithRatings.length).toFixed(1)
     : null;
 
+  // Use backdrop for card image, fallback to poster
+  const imageUrl = collection.backdrop_path 
+    ? `https://image.tmdb.org/t/p/w780${collection.backdrop_path}`
+    : collection.poster_path
+    ? `https://image.tmdb.org/t/p/w500${collection.poster_path}`
+    : "/placeholder.svg";
+
   return (
-    <Card className="border-white/10 bg-black/40 backdrop-blur-md overflow-hidden">
-      <CardContent className="p-6">
-        {/* Collection Header */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="shrink-0">
-            <div className="relative aspect-[2/3] h-32 sm:h-40 rounded-md overflow-hidden border border-white/10">
-              {collection.poster_path ? (
-                <img 
-                  src={`https://image.tmdb.org/t/p/w342${collection.poster_path}`}
-                  alt={collection.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-black/50 flex items-center justify-center">
-                  <span className="text-xs text-center p-2">No image</span>
-                </div>
-              )}
-            </div>
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="cursor-pointer"
+      onClick={onClick}
+    >
+      <Card className="overflow-hidden border-white/10 bg-black/40 backdrop-blur-md hover:border-white/30 transition-all group">
+        {/* Collection Image */}
+        <div className="aspect-[16/9] relative overflow-hidden">
+          <img
+            src={imageUrl}
+            alt={collection.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/placeholder.svg";
+            }}
+          />
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          
+          {/* Movie Count Badge */}
+          <div className="absolute top-3 right-3">
+            <Badge variant="glass" className="backdrop-blur-sm">
+              <Film className="w-3 h-3 mr-1" />
+              {collection.parts.length} {collection.parts.length === 1 ? 'Movie' : 'Movies'}
+            </Badge>
           </div>
           
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-2">{collection.name}</h2>
+          {/* Title Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
+              {collection.name}
+            </h3>
             
-            <div className="flex flex-wrap gap-2 mb-3">
-              <Badge variant="collection">
-                {collection.parts.length} {collection.parts.length === 1 ? 'Movie' : 'Movies'}
-              </Badge>
-              
-              {firstYear !== 'N/A' && (
-                <Badge variant="secondary">
-                  {firstYear === lastYear ? firstYear : `${firstYear} - ${lastYear}`}
+            <div className="flex items-center gap-2">
+              {yearRange !== 'N/A' && (
+                <Badge variant="secondary" size="sm">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  {yearRange}
                 </Badge>
               )}
               
               {avgRating && (
-                <Badge variant="warning">
-                  ★ {avgRating}
+                <Badge variant="warning" size="sm">
+                  <Star className="w-3 h-3 mr-1 fill-yellow-400" />
+                  {avgRating}
                 </Badge>
               )}
             </div>
-            
-            {collection.overview && (
-              <p className="text-sm text-muted-foreground line-clamp-3">
-                {collection.overview}
-              </p>
-            )}
           </div>
         </div>
         
-        {/* Movies Carousel */}
-        <div className="my-4">
-          <h3 className="text-lg font-medium mb-3">Movies in this collection</h3>
-          <Carousel className="w-full">
-            <CarouselContent className="-ml-4">
-              {sortedParts.map((movie: Movie) => (
-                <CarouselItem key={movie.id} className="pl-4 md:basis-1/3 lg:basis-1/4">
-                  <MovieCard movie={movie} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <div className="mt-4 flex justify-end gap-2">
-              <CarouselPrevious className="static translate-y-0" />
-              <CarouselNext className="static translate-y-0" />
-            </div>
-          </Carousel>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Individual movie card component
-const MovieCard = ({ movie }: { movie: Movie }) => {
-  const releaseYear = movie.release_date ? movie.release_date.split('-')[0] : 'TBA';
-  
-  return (
-    <div className="rounded-md overflow-hidden border border-white/10 bg-black/20 hover:border-white/30 transition-all h-full flex flex-col">
-      <Link to={`/movie/${movie.id}`} className="block relative">
-        <div className="aspect-[2/3] bg-black/40 relative">
-          {movie.poster_path ? (
-            <img 
-              src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`} 
-              alt={movie.title}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full w-full bg-black/50">
-              <span className="text-xs text-center p-2">No image</span>
-            </div>
-          )}
-          
-          <div className="absolute top-2 right-2">
-            <FavoriteButton 
-              id={movie.id}
-              type="movie"
-              title={movie.title}
-              posterPath={movie.poster_path}
-              variant="iconOnly" // Changed from "icon" to "iconOnly"
-              size="sm"
-            />
+        {/* Card Content */}
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary p-0">
+              View Collection →
+            </Button>
           </div>
-          
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-6 pb-2 px-2">
-            <div className="flex justify-between items-center">
-              <Badge variant="glass" className="text-xs">{releaseYear}</Badge>
-              {movie.vote_average > 0 && (
-                <Badge variant="warning" className="text-xs">★ {movie.vote_average.toFixed(1)}</Badge>
-              )}
-            </div>
-          </div>
-        </div>
-      </Link>
-      <div className="p-3 flex-1 flex flex-col">
-        <Link to={`/movie/${movie.id}`} className="hover:text-primary transition-colors">
-          <h4 className="font-medium text-sm line-clamp-2">{movie.title}</h4>
-        </Link>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 
