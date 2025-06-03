@@ -1,5 +1,5 @@
 
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Movie, TVShow } from "@/types";
 import { cn } from "@/lib/utils";
@@ -23,10 +23,12 @@ const MovieCard: React.FC<MovieCardProps> = memo(({
   index = 0
 }) => {
   const navigate = useNavigate();
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   const posterPath = item.poster_path 
     ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-    : "/placeholder.svg";
+    : null;
     
   const title = "title" in item ? item.title : item.name;
   
@@ -84,18 +86,34 @@ const MovieCard: React.FC<MovieCardProps> = memo(({
         </div>
 
         {/* Poster Image */}
-        <img 
-          src={posterPath} 
-          alt={title || 'Poster'}
-          className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110"
-          loading={priority ? "eager" : "lazy"}
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            if (target.src !== '/placeholder.svg') {
-              target.src = '/placeholder.svg';
-            }
-          }}
-        />
+        {posterPath && !imageError ? (
+          <>
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+            <img 
+              src={posterPath} 
+              alt={title || 'Poster'}
+              className={cn(
+                "w-full h-full object-cover transition-all duration-300",
+                "group-hover:scale-110",
+                imageLoaded ? "opacity-100" : "opacity-0"
+              )}
+              loading={priority ? "eager" : "lazy"}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+            />
+          </>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-gray-400">
+            <Film size={48} className="mb-2 opacity-50" />
+            <span className="text-sm font-medium text-center px-2 leading-tight">
+              {title || 'No Title'}
+            </span>
+          </div>
+        )}
 
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent 
