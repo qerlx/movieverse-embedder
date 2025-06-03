@@ -21,8 +21,8 @@ const LogoTitle: React.FC<LogoTitleProps> = ({
   id, 
   title, 
   type, 
-  className = "w-full max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-[500px] h-auto max-h-12 sm:max-h-16 md:max-h-20 lg:max-h-24 object-contain mb-2",
-  fallbackClassName = "text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2"
+  className = "w-full max-w-[150px] sm:max-w-[200px] md:max-w-[300px] lg:max-w-[400px] h-auto max-h-8 sm:max-h-12 md:max-h-16 lg:max-h-20 object-contain mb-2",
+  fallbackClassName = "text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-2 text-center"
 }) => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,17 +67,19 @@ const LogoTitle: React.FC<LogoTitleProps> = ({
 
   if (logoUrl) {
     return (
-      <img 
-        src={logoUrl} 
-        alt={title}
-        className={className}
-        style={{ 
-          maxWidth: '100%',
-          height: 'auto',
-          objectFit: 'contain'
-        }}
-        onError={() => setLogoUrl(null)}
-      />
+      <div className="flex justify-center items-center w-full">
+        <img 
+          src={logoUrl} 
+          alt={title}
+          className={className}
+          style={{ 
+            maxWidth: '100%',
+            height: 'auto',
+            objectFit: 'contain'
+          }}
+          onError={() => setLogoUrl(null)}
+        />
+      </div>
     );
   }
 

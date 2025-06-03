@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +13,7 @@ import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
 import WatchProviders from "@/components/WatchProviders";
+import LogoTitle from "@/components/LogoTitle";
 import { motion } from "framer-motion";
 
 interface Cast {
@@ -21,12 +23,6 @@ interface Cast {
   profile_path: string | null;
 }
 
-interface VideoSource {
-  id: string;
-  name: string;
-  icon?: React.ReactNode;
-}
-
 const MovieDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -34,14 +30,6 @@ const MovieDetail = () => {
   const { currentUser } = useAuth();
   const [movie, setMovie] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Video sources list
-  const videoSources: VideoSource[] = [
-    { id: "vidora", name: "Vidora", icon: <Play size={16} className="mr-1" /> },
-    { id: "vidsrc", name: "VidSrc", icon: <Film size={16} className="mr-1" /> },
-    { id: "vidzee", name: "Vidzee", icon: <Film size={16} className="mr-1" /> },
-    { id: "vidjoy", name: "Vidjoy", icon: <Film size={16} className="mr-1" /> }
-  ];
   
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -65,22 +53,16 @@ const MovieDetail = () => {
     };
 
     fetchMovieDetails();
-    // Scroll to top when navigating to a new movie
     window.scrollTo(0, 0);
   }, [id, toast]);
 
-  // Handle watch button click for specific source
-  const handleWatchClick = (source?: string) => {
+  const handleWatchClick = () => {
     if (id) {
-      if (source) {
-        navigate(`/watch/movie/${id}?source=${source}`);
-      } else {
-        navigate(`/watch/movie/${id}`);
-      }
+      navigate(`/watch/movie/${id}`);
     }
   };
 
-  // Loading and error states
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -106,9 +88,9 @@ const MovieDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md p-8 backdrop-blur-lg bg-black/40 rounded-2xl border border-white/10">
-          <h2 className="text-2xl font-bold mb-2 purple-text-gradient">Movie Not Found</h2>
+          <h2 className="text-2xl font-bold mb-2 text-white">Movie Not Found</h2>
           <p className="text-muted-foreground mb-6">The movie you're looking for doesn't exist or has been removed.</p>
-          <Button onClick={() => navigate("/movies")} className="premium-button premium-button-primary">Browse Movies</Button>
+          <Button onClick={() => navigate("/movies")} className="bg-primary hover:bg-primary/90">Browse Movies</Button>
         </div>
       </div>
     );
@@ -152,7 +134,7 @@ const MovieDetail = () => {
               initial={{ filter: "blur(16px)", opacity: 0 }}
               animate={{ filter: "blur(0px)", opacity: 1 }}
               transition={{ duration: 1.2 }}
-              className="w-full h-[80vh] bg-cover bg-center bg-no-repeat"
+              className="w-full h-[70vh] sm:h-[80vh] bg-cover bg-center bg-no-repeat"
               style={{ backgroundImage: `url(${backdropUrl})` }}
             ></motion.div>
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent"></div>
@@ -160,16 +142,16 @@ const MovieDetail = () => {
           </div>
         )}
 
-        <div className="relative container mx-auto px-4 pt-20 pb-10 min-h-[80vh] flex flex-col justify-center">
-          <div className="flex flex-col md:flex-row gap-8 items-start">
+        <div className="relative container mx-auto px-4 pt-20 pb-10 min-h-[70vh] sm:min-h-[80vh] flex flex-col justify-center">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-center lg:items-start">
             {/* Poster */}
             <motion.div 
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="w-full max-w-xs mx-auto md:mx-0"
+              className="w-full max-w-[200px] sm:max-w-[250px] lg:max-w-xs mx-auto lg:mx-0 flex-shrink-0"
             >
-              <div className="overflow-hidden rounded-2xl shadow-2xl hover:shadow-primary/20 transition-shadow duration-300 purple-glow">
+              <div className="overflow-hidden rounded-2xl shadow-2xl hover:shadow-primary/20 transition-shadow duration-300">
                 <motion.img
                   whileHover={{ scale: 1.03 }}
                   transition={{ duration: 0.2 }}
@@ -185,38 +167,21 @@ const MovieDetail = () => {
                 />
               </div>
               
-              {/* Video Player Options Card */}
+              {/* Watch Button for Mobile/Tablet */}
               <motion.div 
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
-                className="mt-8"
+                className="mt-4 lg:hidden"
               >
-                <Card className="border-primary/20 bg-black/30 backdrop-blur-md">
-                  <CardContent className="space-y-3 p-4">
-                    <h3 className="text-gradient text-xl mb-2 font-semibold">Watch Options</h3>
-                    
-                    {/* Video source buttons */}
-                    <div className="space-y-2">
-                      {videoSources.map((source, index) => (
-                        <Button 
-                          key={source.id}
-                          onClick={() => handleWatchClick(source.id)}
-                          className={
-                            index === 0 
-                              ? "w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-4 py-6 shadow-lg hover:shadow-primary/30 transition-all" 
-                              : "w-full bg-black/60 hover:bg-black/80 text-white gap-2 rounded-full px-4 py-4 border border-primary/30 hover:border-primary/50 transition-all mt-2"
-                          }
-                          size={index === 0 ? "lg" : "default"}
-                        >
-                          {source.icon}
-                          Watch with {source.name}
-                          {index === 0 && <span className="text-xs ml-1 opacity-70">(Recommended)</span>}
-                        </Button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <Button
+                  onClick={handleWatchClick}
+                  className="w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-6 py-3 text-base font-medium shadow-lg hover:shadow-primary/30 transition-all"
+                  size="lg"
+                >
+                  <Play size={20} className="fill-white" />
+                  Watch Now
+                </Button>
               </motion.div>
               
               <motion.div 
@@ -234,27 +199,33 @@ const MovieDetail = () => {
               initial={{ x: -30, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex-1"
+              className="flex-1 text-center lg:text-left"
             >
-              <motion.h1 
+              <motion.div 
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6 }}
-                className="cinematic-title text-4xl md:text-6xl font-bold mb-4 text-white text-shadow"
+                className="mb-4"
               >
-                {movie.title}
-              </motion.h1>
+                <LogoTitle
+                  id={movie.id}
+                  title={movie.title}
+                  type="movie"
+                  className="w-full max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-[500px] h-auto max-h-10 sm:max-h-14 md:max-h-18 lg:max-h-22 object-contain mb-2 mx-auto lg:mx-0"
+                  fallbackClassName="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 text-center lg:text-left"
+                />
+              </motion.div>
               
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                className="flex flex-wrap gap-3 mb-6"
+                className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6 justify-center lg:justify-start"
               >
                 {movie.genres?.map((genre: any) => (
                   <span
                     key={genre.id}
-                    className="px-3 py-1 rounded-full text-sm backdrop-blur-sm bg-black/30 border border-white/10 text-white/90"
+                    className="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm backdrop-blur-sm bg-black/30 border border-white/10 text-white/90"
                   >
                     {genre.name}
                   </span>
@@ -265,28 +236,27 @@ const MovieDetail = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="flex flex-wrap gap-6 mb-6 text-sm"
+                className="flex flex-wrap gap-3 sm:gap-6 mb-4 sm:mb-6 text-xs sm:text-sm justify-center lg:justify-start"
               >
                 {movie.vote_average > 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
-                    <Star size={16} className="text-yellow-400" />
+                  <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                    <Star size={14} className="text-yellow-400" />
                     <span className="font-medium">{movie.vote_average.toFixed(1)}/10</span>
                   </div>
                 )}
                 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
-                  <Clock size={16} className="text-white/80" />
+                <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                  <Clock size={14} className="text-white/80" />
                   <span>{formattedRuntime}</span>
                 </div>
                 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
-                  <Calendar size={16} className="text-white/80" />
+                <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                  <Calendar size={14} className="text-white/80" />
                   <span>{releaseYear}</span>
                 </div>
                 
-                {/* Media type indicator */}
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
-                  <Film size={16} className="text-purple-400" />
+                <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                  <Film size={14} className="text-purple-400" />
                   <span>Movie</span>
                 </div>
               </motion.div>
@@ -295,10 +265,10 @@ const MovieDetail = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
-                className="mb-6 max-w-2xl"
+                className="mb-4 sm:mb-6 max-w-2xl mx-auto lg:mx-0"
               >
-                <h2 className="text-xl font-semibold mb-2 text-white/90">Overview</h2>
-                <p className="text-white/70 leading-relaxed">{movie.overview}</p>
+                <h2 className="text-lg sm:text-xl font-semibold mb-2 text-white/90">Overview</h2>
+                <p className="text-sm sm:text-base text-white/70 leading-relaxed">{movie.overview}</p>
               </motion.div>
               
               {directors.length > 0 && (
@@ -306,12 +276,12 @@ const MovieDetail = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.6 }}
-                  className="mb-8"
+                  className="mb-6 sm:mb-8"
                 >
-                  <h2 className="text-xl font-semibold mb-2 text-white/90">Director</h2>
-                  <div className="flex flex-wrap gap-2">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-2 text-white/90">Director</h2>
+                  <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
                     {directors.map((director: any) => (
-                      <span key={director.id} className="text-white/70">
+                      <span key={director.id} className="text-sm sm:text-base text-white/70">
                         {director.name}
                       </span>
                     ))}
@@ -323,13 +293,14 @@ const MovieDetail = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.7 }}
-                className="flex flex-wrap gap-4 mt-8"
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8 justify-center lg:justify-start"
               >
+                {/* Desktop Watch Button */}
                 <Button
-                  onClick={() => handleWatchClick()}
-                  className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-8 py-6 text-lg font-medium shadow-lg hover:shadow-primary/30 transition-all"
+                  onClick={handleWatchClick}
+                  className="hidden lg:flex bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-6 sm:px-8 py-3 sm:py-6 text-base sm:text-lg font-medium shadow-lg hover:shadow-primary/30 transition-all"
                 >
-                  <Play size={22} className="ml-1" />
+                  <Play size={20} className="fill-white" />
                   Watch Now
                 </Button>
                 
@@ -339,8 +310,8 @@ const MovieDetail = () => {
                     type="movie" 
                     title={movie.title}
                     posterPath={movie.poster_path}
-                    variant="default" // Changed from "outline" to "default"
-                    className="w-full flex-1"
+                    variant="default"
+                    className="flex-1 sm:flex-none"
                   />
                 )}
               </motion.div>
@@ -355,36 +326,36 @@ const MovieDetail = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="py-12 bg-gradient-to-b from-transparent to-black/30"
+          className="py-8 sm:py-12 bg-gradient-to-b from-transparent to-black/30"
         >
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-8 purple-text-gradient">
+            <h2 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-center lg:text-left text-white">
               Featured Cast
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-5">
               {topCast.map((person: Cast, index) => (
                 <motion.div 
                   key={person.id} 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.1 * index }}
-                  className="premium-card hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
+                  className="bg-black/40 rounded-lg overflow-hidden hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
                 >
                   {person.profile_path ? (
                     <img
                       src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
                       alt={person.name}
-                      className="w-full h-48 object-cover object-center"
+                      className="w-full h-32 sm:h-48 object-cover object-center"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-48 flex items-center justify-center bg-black/50">
-                      <span className="text-muted-foreground">No Photo</span>
+                    <div className="w-full h-32 sm:h-48 flex items-center justify-center bg-black/50">
+                      <span className="text-xs sm:text-sm text-muted-foreground">No Photo</span>
                     </div>
                   )}
-                  <div className="p-4">
-                    <h3 className="font-medium text-sm line-clamp-1">{person.name}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                  <div className="p-2 sm:p-4">
+                    <h3 className="font-medium text-xs sm:text-sm line-clamp-1 text-white">{person.name}</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1 mt-1">
                       {person.character}
                     </p>
                   </div>
@@ -401,7 +372,7 @@ const MovieDetail = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="py-12"
+          className="py-8 sm:py-12"
         >
           <CategoryRow
             title="More Like This"
