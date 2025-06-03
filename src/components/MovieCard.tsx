@@ -1,5 +1,5 @@
 
-import React, { memo, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Movie, TVShow } from "@/types";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ interface MovieCardProps {
   index?: number;
 }
 
-const MovieCard: React.FC<MovieCardProps> = memo(({ 
+const MovieCard: React.FC<MovieCardProps> = ({ 
   item, 
   type, 
   className,
@@ -23,12 +23,11 @@ const MovieCard: React.FC<MovieCardProps> = memo(({
   index = 0
 }) => {
   const navigate = useNavigate();
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
   
+  // Ensure we handle both null and undefined poster paths
   const posterPath = item.poster_path 
-    ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-    : null;
+    ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+    : "/placeholder.svg";
     
   const title = "title" in item ? item.title : item.name;
   
@@ -42,37 +41,39 @@ const MovieCard: React.FC<MovieCardProps> = memo(({
     e.preventDefault();
     if (!item.id) return;
     
+    // Direct navigation to Vidora player
     if (type === "movie") {
       navigate(`/watch/movie/${item.id}`);
     } else {
+      // For TV shows, navigate to first episode
       navigate(`/watch/tv/${item.id}/1/1`);
     }
   };
   
+  // Check if we have progress information (for continue watching)
   const hasProgress = (item as any).progress !== undefined;
   
   return (
     <div 
       className={cn(
-        "relative w-full group cursor-pointer",
-        "transition-transform duration-200 ease-out",
-        "hover:scale-105 hover:z-10",
+        "relative h-full w-full group",
+        "cursor-pointer shadow-md hover:shadow-lg hover:shadow-purple-900/20 transition-all duration-300",
         className
       )}
       onClick={handleClick}
     >
-      {/* Rank indicator */}
+      {/* Rank indicator for ranked lists */}
       {isRanked && (
-        <div className="absolute -left-1 -top-1 z-20 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full opacity-90"></div>
-          <div className="absolute inset-0.5 bg-black/90 rounded-full"></div>
-          <span className="relative text-xs sm:text-sm font-black text-purple-400 z-10">
+        <div className="absolute -left-2 -top-2 z-10 h-10 w-10 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full blur-[2px] opacity-90"></div>
+          <div className="absolute inset-0.5 bg-black/80 rounded-full"></div>
+          <span className="relative text-base font-black text-purple-400">
             {index + 1}
           </span>
         </div>
       )}
       
-      <div className="aspect-[2/3] relative overflow-hidden rounded-lg bg-gray-900 shadow-lg">
+      <div className="aspect-[2/3] relative overflow-hidden rounded-lg">
         {/* Media Type Indicator */}
         <div className="absolute top-2 right-2 z-10 px-2 py-1 rounded-md bg-black/70 backdrop-blur-sm flex items-center">
           {type === 'tv' ? (
@@ -86,56 +87,40 @@ const MovieCard: React.FC<MovieCardProps> = memo(({
         </div>
 
         {/* Poster Image */}
-        {posterPath && !imageError ? (
-          <>
-            {!imageLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-                <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            )}
-            <img 
-              src={posterPath} 
-              alt={title || 'Poster'}
-              className={cn(
-                "w-full h-full object-cover transition-all duration-300",
-                "group-hover:scale-110",
-                imageLoaded ? "opacity-100" : "opacity-0"
-              )}
-              loading={priority ? "eager" : "lazy"}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-            />
-          </>
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-gray-400">
-            <Film size={48} className="mb-2 opacity-50" />
-            <span className="text-sm font-medium text-center px-2 leading-tight">
-              {title || 'No Title'}
-            </span>
-          </div>
-        )}
+        <img 
+          src={posterPath} 
+          alt={title}
+          className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
+          loading={priority ? "eager" : "lazy"}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            if (target.src !== '/placeholder.svg') {
+              target.src = '/placeholder.svg';
+            }
+          }}
+        />
 
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent 
-                      opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent 
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         
-        {/* Rating */}
-        {item.vote_average && item.vote_average > 0 && (
+        {/* Rating indicator */}
+        {item.vote_average > 0 && (
           <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-black/70 backdrop-blur-sm flex items-center">
-            <Star size={10} className="text-yellow-500 mr-1 fill-yellow-500" />
+            <Star size={12} className="text-yellow-500 mr-1 fill-yellow-500" />
             <span className="text-xs font-medium text-white">{item.vote_average.toFixed(1)}</span>
           </div>
         )}
         
-        {/* Info overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
-          <h3 className="text-sm font-semibold text-white mb-3 line-clamp-2 text-center leading-tight">
+        {/* Title and Play Button - Shows on hover */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+          <h3 className="text-sm font-semibold text-white mb-3 line-clamp-2">
             {title}
           </h3>
           
           <button
             onClick={handlePlayClick}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 font-medium text-sm"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 font-medium"
           >
             <Play className="w-4 h-4 fill-white" />
             <span>Play</span>
@@ -143,7 +128,7 @@ const MovieCard: React.FC<MovieCardProps> = memo(({
         </div>
       </div>
       
-      {/* Progress bar */}
+      {/* Progress bar for watched items */}
       {hasProgress && (
         <div className="absolute bottom-0 left-0 right-0">
           <div className="h-1 w-full bg-black/50 rounded-b-lg overflow-hidden">
@@ -156,8 +141,6 @@ const MovieCard: React.FC<MovieCardProps> = memo(({
       )}
     </div>
   );
-});
-
-MovieCard.displayName = 'MovieCard';
+};
 
 export default MovieCard;

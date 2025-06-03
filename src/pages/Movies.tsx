@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { Movie, Genre } from "@/types";
 import MovieCard from "@/components/MovieCard";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +11,7 @@ import {
   getMovieGenres 
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
+import { ChevronDown, Filter } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,12 +31,12 @@ const Movies = () => {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
 
-  // Fetch movie genres on mount
+  // Fetch movie genres
   useEffect(() => {
     const fetchGenres = async () => {
       try {
         const data = await getMovieGenres();
-        setGenres(data.genres || []);
+        setGenres(data.genres);
       } catch (error) {
         console.error("Error fetching movie genres:", error);
       }
@@ -45,90 +45,66 @@ const Movies = () => {
     fetchGenres();
   }, []);
 
-  // Fetch movies when dependencies change
-  const fetchMovies = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      console.log(`Fetching ${category} movies, page ${currentPage}`);
-      
-      let response;
-      if (category === "genre" && selectedGenre) {
-        response = await getMoviesByGenre(selectedGenre.id, currentPage);
-      } else {
-        switch (category) {
-          case "popular":
-            response = await getPopularMovies(currentPage);
-            break;
-          case "now_playing":
-            response = await getNowPlayingMovies(currentPage);
-            break;
-          case "top_rated":
-            response = await getTopRatedMovies(currentPage);
-            break;
-          default:
-            response = await getPopularMovies(currentPage);
-        }
-      }
-      
-      console.log('API Response:', response);
-      
-      if (response && response.results && Array.isArray(response.results)) {
-        // Filter out movies without essential data
-        const validMovies = response.results.filter(movie => 
-          movie && 
-          movie.id && 
-          (movie.title || movie.name) &&
-          movie.poster_path !== undefined
-        );
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        setIsLoading(true);
         
-        console.log(`Valid movies found: ${validMovies.length}`);
-        setMovies(validMovies);
-        setTotalPages(Math.min(response.total_pages || 1, 20));
-      } else {
-        console.error('Invalid response structure:', response);
-        setMovies([]);
-        setTotalPages(1);
+        let response;
+        if (category === "genre" && selectedGenre) {
+          response = await getMoviesByGenre(selectedGenre.id, currentPage);
+        } else {
+          switch (category) {
+            case "popular":
+              response = await getPopularMovies(currentPage);
+              break;
+            case "now_playing":
+              response = await getNowPlayingMovies(currentPage);
+              break;
+            case "top_rated":
+              response = await getTopRatedMovies(currentPage);
+              break;
+            default:
+              response = await getPopularMovies(currentPage);
+          }
+        }
+        
+        setMovies(response.results);
+        setTotalPages(Math.min(response.total_pages, 20)); // Limit to 20 pages max
+        
+      } catch (error) {
+        console.error("Error fetching movies:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load movies. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+        window.scrollTo(0, 0);
       }
-      
-    } catch (error) {
-      console.error("Error fetching movies:", error);
-      setMovies([]);
-      toast({
-        title: "Error",
-        description: "Failed to load movies. Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-      window.scrollTo(0, 0);
-    }
+    };
+
+    fetchMovies();
   }, [category, currentPage, selectedGenre, toast]);
 
-  useEffect(() => {
-    fetchMovies();
-  }, [fetchMovies]);
-
-  const changeCategory = useCallback((newCategory: "popular" | "now_playing" | "top_rated") => {
+  const changeCategory = (newCategory: "popular" | "now_playing" | "top_rated") => {
     setCategory(newCategory);
     setSelectedGenre(null);
     setCurrentPage(1);
-  }, []);
+  };
 
-  const selectGenre = useCallback((genre: Genre) => {
+  const selectGenre = (genre: Genre) => {
     setSelectedGenre(genre);
     setCategory("genre");
     setCurrentPage(1);
-  }, []);
+  };
 
-  const clearGenreFilter = useCallback(() => {
+  const clearGenreFilter = () => {
     setSelectedGenre(null);
     setCategory("popular");
     setCurrentPage(1);
-  }, []);
-
-  const changePage = useCallback((newPage: number) => {
-    setCurrentPage(newPage);
-  }, []);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -139,7 +115,7 @@ const Movies = () => {
           {selectedGenre && (
             <Badge 
               variant="secondary" 
-              className="ml-2 cursor-pointer hover:bg-secondary/80"
+              className="ml-2 cursor-pointer"
               onClick={clearGenreFilter}
             >
               {selectedGenre.name} ×
@@ -151,24 +127,21 @@ const Movies = () => {
           <Button
             variant={category === "popular" && !selectedGenre ? "default" : "outline"}
             onClick={() => changeCategory("popular")}
-            className="transition-all duration-200"
-            disabled={isLoading}
+            className="transition-all duration-300"
           >
             Popular
           </Button>
           <Button
             variant={category === "now_playing" ? "default" : "outline"}
             onClick={() => changeCategory("now_playing")}
-            className="transition-all duration-200"
-            disabled={isLoading}
+            className="transition-all duration-300"
           >
             Now Playing
           </Button>
           <Button
             variant={category === "top_rated" ? "default" : "outline"}
             onClick={() => changeCategory("top_rated")}
-            className="transition-all duration-200"
-            disabled={isLoading}
+            className="transition-all duration-300"
           >
             Top Rated
           </Button>
@@ -179,7 +152,6 @@ const Movies = () => {
                 <Button 
                   variant="outline" 
                   className="gap-1"
-                  disabled={isLoading}
                 >
                   <Filter size={16} />
                   Genres
@@ -205,24 +177,14 @@ const Movies = () => {
 
       {isLoading ? (
         <div className="flex justify-center items-center min-h-[50vh]">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-muted-foreground">Loading movies...</p>
-          </div>
-        </div>
-      ) : movies.length === 0 ? (
-        <div className="flex justify-center items-center min-h-[50vh]">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">No movies found</h2>
-            <p className="text-muted-foreground">Try selecting a different category or genre.</p>
-          </div>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
             {movies.map((movie, index) => (
               <MovieCard 
-                key={`movie-${movie.id}-${index}-${category}`} 
+                key={movie.id} 
                 item={movie} 
                 type="movie" 
                 priority={index < 12}
@@ -231,33 +193,32 @@ const Movies = () => {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-12 flex justify-center">
-              <div className="flex flex-wrap gap-2 justify-center items-center">
-                <Button
-                  variant="outline"
-                  onClick={() => changePage(Math.max(currentPage - 1, 1))}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  Previous
-                </Button>
-                
-                <div className="flex items-center px-4 text-sm">
-                  <span className="text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                </div>
-                
-                <Button
-                  variant="outline"
-                  onClick={() => changePage(Math.min(currentPage + 1, totalPages))}
-                  disabled={currentPage === totalPages || isLoading}
-                >
-                  Next
-                </Button>
+          <div className="mt-12 flex justify-center">
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              
+              {/* Show current page and total */}
+              <div className="flex items-center px-4 text-sm">
+                <span className="text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
               </div>
+              
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
             </div>
-          )}
+          </div>
         </>
       )}
     </div>
