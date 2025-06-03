@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Movie, TVShow } from "@/types";
 import { cn } from "@/lib/utils";
 import { Play, Star, Tv, Film } from "lucide-react";
+import LogoTitle from "@/components/LogoTitle";
 
 interface MovieCardProps {
   item: Movie | TVShow;
@@ -101,7 +102,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
         />
 
         {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent 
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent 
                       opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         
         {/* Rating indicator */}
@@ -112,11 +113,17 @@ const MovieCard: React.FC<MovieCardProps> = ({
           </div>
         )}
         
-        {/* Title and Play Button - Shows on hover */}
+        {/* Logo Title and Play Button - Shows on hover */}
         <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-          <h3 className="text-sm font-semibold text-white mb-3 line-clamp-2">
-            {title}
-          </h3>
+          <div className="mb-3">
+            <LogoTitle
+              id={item.id}
+              title={title}
+              type={type}
+              className="max-w-full max-h-8 sm:max-h-10 object-contain"
+              fallbackClassName="text-sm font-semibold text-white line-clamp-2"
+            />
+          </div>
           
           <button
             onClick={handlePlayClick}

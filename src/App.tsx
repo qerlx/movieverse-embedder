@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,6 +21,7 @@ const TVShowDetail = lazy(() => import("./pages/TVShowDetail"));
 const Search = lazy(() => import("./pages/Search"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
 const Collections = lazy(() => import("./pages/Collections"));
+const CollectionDetail = lazy(() => import("./pages/CollectionDetail"));
 const AIRecommendations = lazy(() => import("./components/AIRecommendations"));
 const AIAutomation = lazy(() => import("./components/AIAutomation"));
 
@@ -49,6 +49,9 @@ const AnimatedRoutes = () => {
           } />
           <Route path="collections" element={
             <Suspense fallback={<PageLoader />}><Collections /></Suspense>
+          } />
+          <Route path="collections/:id" element={
+            <Suspense fallback={<PageLoader />}><CollectionDetail /></Suspense>
           } />
           <Route path="movie/:id" element={
             <Suspense fallback={<PageLoader />}><MovieDetail /></Suspense>
