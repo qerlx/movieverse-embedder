@@ -1,14 +1,11 @@
 
-// Fix the type error in FavoriteButton component
-// Current error: Argument of type 'number' is not assignable to parameter of type '"movie" | "tv"'
-// We need to ensure we're passing the correct type to the functions
-
 import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToFavorites, removeFromFavorites, checkIsFavorite } from "@/lib/favorites";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface FavoriteButtonProps {
   id: number;
@@ -38,36 +35,46 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (currentUser) {
-        setIsLoading(true);
+      if (currentUser && id) {
         try {
           const status = await checkIsFavorite(currentUser.uid, id, type);
           setIsFavorite(status);
         } catch (error) {
           console.error("Error checking favorite status:", error);
-        } finally {
-          setIsLoading(false);
         }
+      } else {
+        setIsFavorite(false);
       }
     };
 
     checkFavoriteStatus();
   }, [currentUser, id, type]);
 
-  const handleToggleFavorite = async () => {
-    if (!currentUser) return;
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!currentUser) {
+      toast.error("Please sign in to manage favorites");
+      return;
+    }
+
+    if (!id || isLoading) return;
     
     setIsLoading(true);
     try {
       if (isFavorite) {
         await removeFromFavorites(currentUser.uid, id, type);
         setIsFavorite(false);
+        toast.success("Removed from favorites");
       } else {
         await addToFavorites(currentUser.uid, id, type, displayName, posterPath);
         setIsFavorite(true);
+        toast.success("Added to favorites");
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
+      toast.error("Failed to update favorites");
     } finally {
       setIsLoading(false);
     }

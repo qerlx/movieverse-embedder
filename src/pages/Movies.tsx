@@ -49,6 +49,7 @@ const Movies = () => {
   const fetchMovies = useCallback(async () => {
     try {
       setIsLoading(true);
+      console.log(`Fetching ${category} movies, page ${currentPage}`);
       
       let response;
       if (category === "genre" && selectedGenre) {
@@ -69,10 +70,22 @@ const Movies = () => {
         }
       }
       
-      if (response && response.results) {
-        setMovies(response.results);
-        setTotalPages(Math.min(response.total_pages || 1, 20)); // Limit to 20 pages max
+      console.log('API Response:', response);
+      
+      if (response && response.results && Array.isArray(response.results)) {
+        // Filter out movies without essential data
+        const validMovies = response.results.filter(movie => 
+          movie && 
+          movie.id && 
+          (movie.title || movie.name) &&
+          movie.poster_path !== undefined
+        );
+        
+        console.log(`Valid movies found: ${validMovies.length}`);
+        setMovies(validMovies);
+        setTotalPages(Math.min(response.total_pages || 1, 20));
       } else {
+        console.error('Invalid response structure:', response);
         setMovies([]);
         setTotalPages(1);
       }
@@ -209,7 +222,7 @@ const Movies = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
             {movies.map((movie, index) => (
               <MovieCard 
-                key={`${movie.id}-${index}`} 
+                key={`movie-${movie.id}-${index}-${category}`} 
                 item={movie} 
                 type="movie" 
                 priority={index < 12}
