@@ -1,87 +1,92 @@
 
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { 
-  getTVShowDetails, 
-  getTVShowSeasonDetails, 
-  getTVShowCredits, 
-  getTVShowVideos,
-  getWatchProviders
+import { useParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  getTVShowDetails,
+  getTVShowSeasonDetails,
+  fetchTVShowCredits,
+  fetchSimilarTVShows,
+  getConfiguration
 } from "@/lib/api";
 import { TVShow, Season, Episode, Cast, Video } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  Play, 
-  Star, 
   Calendar, 
   Clock, 
-  Users, 
-  ArrowLeft,
+  Star, 
+  Play, 
+  Heart,
+  Users,
   Info,
-  Globe,
+  Film,
   Tv
 } from "lucide-react";
-import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
 import AddToWatchedButton from "@/components/AddToWatchedButton";
+import EpisodeSelector from "@/components/EpisodeSelector";
 import WatchProviders from "@/components/WatchProviders";
+import MovieCard from "@/components/MovieCard";
 
 const TVShowDetail = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { id } = useParams();
+  const { currentUser } = useAuth();
   const [tvShow, setTVShow] = useState<TVShow | null>(null);
-  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [credits, setCredits] = useState<{ cast: Cast[]; crew: any[] } | null>(null);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [similar, setSimilar] = useState<TVShow[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<Season | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
-  const [cast, setCast] = useState<Cast[]>([]);
-  const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+  const [imageBaseUrl, setImageBaseUrl] = useState("https://image.tmdb.org/t/p/");
 
   useEffect(() => {
     const fetchTVShowData = async () => {
       if (!id) return;
-      
+
       try {
         setIsLoading(true);
-        const tvShowId = parseInt(id);
         
-        // Fetch main TV show details
-        const [tvShowData, creditsData, videosData] = await Promise.all([
-          getTVShowDetails(tvShowId),
-          getTVShowCredits(tvShowId),
-          getTVShowVideos(tvShowId)
-        ]);
-        
+        // Get configuration for image URLs
+        const config = await getConfiguration();
+        setImageBaseUrl(config.images.secure_base_url);
+
+        // Fetch TV show details
+        const tvShowData = await getTVShowDetails(parseInt(id));
+        console.log("TV Show Data:", tvShowData);
         setTVShow(tvShowData);
-        setCast(creditsData.cast?.slice(0, 10) || []);
-        setVideos(videosData.results?.filter((video: Video) => 
-          video.type === 'Trailer' && video.site === 'YouTube'
-        ).slice(0, 3) || []);
-        
-        // Set seasons and auto-select first season
-        if (tvShowData.seasons && tvShowData.seasons.length > 0) {
-          // Filter out season 0 (specials) and sort by season number
-          const validSeasons = tvShowData.seasons
-            .filter((season: Season) => season.season_number > 0)
-            .sort((a: Season, b: Season) => a.season_number - b.season_number);
-          
-          setSeasons(validSeasons);
-          
-          if (validSeasons.length > 0) {
-            setSelectedSeason(validSeasons[0]);
-            // Fetch episodes for first season
-            fetchSeasonEpisodes(tvShowId, validSeasons[0].season_number);
-          }
+
+        // Set videos from the TV show data
+        if (tvShowData.videos?.results) {
+          setVideos(tvShowData.videos.results);
         }
-        
+
+        // Fetch credits
+        const creditsData = await fetchTVShowCredits(parseInt(id));
+        console.log("Credits Data:", creditsData);
+        setCredits(creditsData);
+
+        // Fetch similar TV shows
+        const similarData = await fetchSimilarTVShows(parseInt(id));
+        console.log("Similar Data:", similarData);
+        if (similarData?.results) {
+          setSimilar(similarData.results);
+        }
+
+        // Set the first season as selected by default
+        if (tvShowData.seasons && tvShowData.seasons.length > 0) {
+          const firstSeason = tvShowData.seasons.find(s => s.season_number > 0) || tvShowData.seasons[0];
+          setSelectedSeason(firstSeason);
+        }
+
       } catch (error) {
-        console.error("Error fetching TV show details:", error);
-        toast.error("Failed to load TV show details");
+        console.error("Error fetching TV show data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -90,413 +95,348 @@ const TVShowDetail = () => {
     fetchTVShowData();
   }, [id]);
 
-  const fetchSeasonEpisodes = async (tvShowId: number, seasonNumber: number) => {
-    try {
-      setLoadingEpisodes(true);
-      const seasonData = await getTVShowSeasonDetails(tvShowId, seasonNumber);
-      
-      if (seasonData && seasonData.episodes) {
-        // Map episodes to ensure runtime is optional
-        const mappedEpisodes = seasonData.episodes.map((episode: any) => ({
-          ...episode,
-          runtime: episode.runtime || undefined // Make runtime optional
-        }));
-        setEpisodes(mappedEpisodes);
-      } else {
+  // Fetch episodes when selected season changes
+  useEffect(() => {
+    const fetchEpisodes = async () => {
+      if (!id || !selectedSeason) return;
+
+      try {
+        console.log(`Fetching episodes for TV show ${id}, season ${selectedSeason.season_number}`);
+        const seasonData = await getTVShowSeasonDetails(parseInt(id), selectedSeason.season_number);
+        console.log("Season Data:", seasonData);
+        
+        if (seasonData.success && seasonData.episodes) {
+          setEpisodes(seasonData.episodes);
+        } else {
+          console.error("Failed to fetch season episodes:", seasonData.status_message);
+          setEpisodes([]);
+        }
+      } catch (error) {
+        console.error("Error fetching episodes:", error);
         setEpisodes([]);
       }
-    } catch (error) {
-      console.error("Error fetching season episodes:", error);
-      toast.error("Failed to load episodes");
-      setEpisodes([]);
-    } finally {
-      setLoadingEpisodes(false);
-    }
-  };
+    };
 
-  const handleSeasonChange = (season: Season) => {
-    if (!tvShow) return;
-    
-    setSelectedSeason(season);
-    fetchSeasonEpisodes(tvShow.id, season.season_number);
-  };
+    fetchEpisodes();
+  }, [id, selectedSeason]);
 
-  const handleWatchEpisode = (episode: Episode) => {
-    if (!tvShow || !selectedSeason) return;
-    navigate(`/watch/tv/${tvShow.id}/${selectedSeason.season_number}/${episode.episode_number}`);
-  };
-
-  const handleWatchShow = () => {
-    if (!tvShow || !selectedSeason || episodes.length === 0) return;
-    // Start with first episode of selected season
-    navigate(`/watch/tv/${tvShow.id}/${selectedSeason.season_number}/1`);
-  };
-
-  if (isLoading || !tvShow) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="relative w-16 h-16"
+        >
+          <motion.div 
+            className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-primary animate-spin"
+            style={{ animationDuration: '1s' }}
+          />
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!tvShow) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">TV Show Not Found</h1>
+          <p className="text-muted-foreground">The TV show you're looking for doesn't exist.</p>
+        </div>
       </div>
     );
   }
 
   const backdropUrl = tvShow.backdrop_path 
-    ? `https://image.tmdb.org/t/p/original${tvShow.backdrop_path}`
+    ? `${imageBaseUrl}original${tvShow.backdrop_path}` 
+    : null;
+  
+  const posterUrl = tvShow.poster_path 
+    ? `${imageBaseUrl}w500${tvShow.poster_path}` 
     : null;
 
-  const posterUrl = tvShow.poster_path 
-    ? `https://image.tmdb.org/t/p/w500${tvShow.poster_path}`
-    : "/placeholder.svg";
+  const trailer = videos.find(video => video.type === "Trailer" && video.site === "YouTube");
 
-  const trailer = videos.find(video => video.type === 'Trailer');
+  const mainCast = credits?.cast?.slice(0, 10) || [];
+  const director = credits?.crew?.find(person => person.job === "Executive Producer");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative">
+      <div className="relative h-[70vh] overflow-hidden">
         {backdropUrl && (
           <div 
-            className="w-full h-[70vh] bg-cover bg-center relative"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: `url(${backdropUrl})` }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
-          </div>
+          />
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/40" />
         
-        {/* Content Overlay */}
-        <div className="absolute inset-0 flex items-end">
-          <div className="container mx-auto px-4 pb-12">
-            <div className="flex flex-col lg:flex-row gap-8 items-end">
-              {/* Poster */}
+        <div className="relative z-10 container mx-auto px-4 h-full flex items-end pb-12">
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="flex flex-col lg:flex-row items-start lg:items-end gap-8 w-full"
+          >
+            {/* Poster */}
+            {posterUrl && (
               <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
                 className="flex-shrink-0"
               >
-                <img
-                  src={posterUrl}
+                <img 
+                  src={posterUrl} 
                   alt={tvShow.name}
-                  className="w-64 h-96 object-cover rounded-lg shadow-2xl"
+                  className="w-64 h-96 object-cover rounded-lg shadow-2xl border border-border/20"
                 />
               </motion.div>
-              
-              {/* Info */}
+            )}
+
+            {/* Details */}
+            <div className="flex-1 space-y-4">
               <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="flex-1 text-white"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate(-1)}
-                  className="mb-4 text-white hover:bg-white/20"
-                >
-                  <ArrowLeft size={16} className="mr-2" />
-                  Back
-                </Button>
-                
-                <h1 className="text-4xl lg:text-6xl font-bold mb-4 text-shadow">
+                <h1 className="text-4xl lg:text-6xl font-bold text-white mb-2">
                   {tvShow.name}
                 </h1>
-                
-                <div className="flex flex-wrap items-center gap-4 mb-6">
-                  <div className="flex items-center gap-2">
-                    <Star className="text-yellow-400 fill-yellow-400" size={20} />
-                    <span className="text-lg font-semibold">
-                      {tvShow.vote_average.toFixed(1)}
-                    </span>
-                  </div>
-                  
-                  {tvShow.first_air_date && (
-                    <div className="flex items-center gap-2">
-                      <Calendar size={16} />
-                      <span>{new Date(tvShow.first_air_date).getFullYear()}</span>
-                    </div>
-                  )}
-                  
-                  {tvShow.number_of_seasons && (
-                    <div className="flex items-center gap-2">
-                      <Tv size={16} />
-                      <span>{tvShow.number_of_seasons} Season{tvShow.number_of_seasons !== 1 ? 's' : ''}</span>
-                    </div>
-                  )}
-                  
-                  {tvShow.status && (
-                    <Badge variant="secondary" className="bg-primary/20 text-white border-primary/30">
-                      {tvShow.status}
-                    </Badge>
-                  )}
+                {tvShow.original_name !== tvShow.name && (
+                  <p className="text-xl text-white/80 mb-4">
+                    {tvShow.original_name}
+                  </p>
+                )}
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="flex flex-wrap items-center gap-4 text-white/90"
+              >
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{new Date(tvShow.first_air_date).getFullYear()}</span>
                 </div>
-                
-                <p className="text-lg mb-8 max-w-3xl leading-relaxed text-gray-200">
-                  {tvShow.overview}
-                </p>
-                
-                <div className="flex flex-wrap gap-4">
-                  <Button
-                    size="lg"
-                    onClick={handleWatchShow}
-                    className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 rounded-full"
-                  >
-                    <Play size={20} className="mr-2 fill-white" />
-                    Watch Now
-                  </Button>
-                  
-                  <FavoriteButton
-                    id={tvShow.id}
-                    type="tv"
-                    name={tvShow.name}
-                    posterPath={tvShow.poster_path}
-                    variant="outline"
-                    size="lg"
-                    className="bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-8 py-3"
-                  />
-                  
-                  <AddToWatchedButton
-                    id={tvShow.id}
-                    type="tv"
-                    title={tvShow.name}
-                    posterPath={tvShow.poster_path}
-                    variant="outline"
-                    size="lg"
-                    className="bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-8 py-3"
-                  />
+                <div className="flex items-center gap-2">
+                  <Tv className="w-4 h-4" />
+                  <span>{tvShow.number_of_seasons} Season{tvShow.number_of_seasons !== 1 ? 's' : ''}</span>
+                </div>
+                {tvShow.number_of_episodes && (
+                  <div className="flex items-center gap-2">
+                    <Film className="w-4 h-4" />
+                    <span>{tvShow.number_of_episodes} Episodes</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span>{tvShow.vote_average.toFixed(1)}</span>
                 </div>
               </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                {tvShow.genres && tvShow.genres.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {tvShow.genres.map(genre => (
+                      <Badge key={genre.id} variant="secondary" className="text-xs">
+                        {genre.name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-white/90 text-lg max-w-2xl leading-relaxed">
+                  {tvShow.overview}
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="flex flex-wrap gap-4 pt-4"
+              >
+                <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
+                  <a href={`/watch/tv/${tvShow.id}/1/1`}>
+                    <Play className="mr-2 h-5 w-5" />
+                    Watch Now
+                  </a>
+                </Button>
+                
+                {currentUser && (
+                  <>
+                    <FavoriteButton
+                      itemId={tvShow.id}
+                      itemType="tv"
+                      itemTitle={tvShow.name}
+                      itemPosterPath={tvShow.poster_path}
+                      variant="outline"
+                      size="lg"
+                      className="bg-black/30 backdrop-blur-sm text-white border-white/20 hover:bg-white/10"
+                    />
+                    <AddToWatchedButton
+                      variant="outline"
+                      size="lg"
+                      className="bg-black/30 backdrop-blur-sm text-white border-white/20 hover:bg-white/10"
+                    />
+                  </>
+                )}
+
+                {trailer && (
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={() => window.open(`https://www.youtube.com/watch?v=${trailer.key}`, '_blank')}
+                    className="bg-black/30 backdrop-blur-sm text-white border-white/20 hover:bg-white/10"
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    Trailer
+                  </Button>
+                )}
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
-      
+
       {/* Content Tabs */}
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="episodes" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="episodes">Episodes</TabsTrigger>
+            <TabsTrigger value="cast">Cast & Crew</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="cast">Cast</TabsTrigger>
-            <TabsTrigger value="watch">Watch Options</TabsTrigger>
+            <TabsTrigger value="similar">Similar</TabsTrigger>
           </TabsList>
-          
-          {/* Episodes Tab */}
-          <TabsContent value="episodes" className="space-y-6">
-            {/* Season Selector */}
-            {seasons.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                {seasons.map((season) => (
-                  <Button
-                    key={season.id}
-                    variant={selectedSeason?.id === season.id ? "default" : "outline"}
-                    onClick={() => handleSeasonChange(season)}
-                    className="rounded-full"
-                  >
-                    Season {season.season_number}
-                  </Button>
-                ))}
-              </div>
-            )}
-            
-            {/* Episodes Grid */}
-            {loadingEpisodes ? (
-              <div className="flex justify-center py-12">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : episodes.length > 0 ? (
-              <div className="grid gap-4">
-                {episodes.map((episode, index) => (
-                  <Card key={episode.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <CardContent className="p-0">
-                      <div className="flex flex-col sm:flex-row">
-                        <div className="relative flex-shrink-0">
-                          <img
-                            src={episode.still_path 
-                              ? `https://image.tmdb.org/t/p/w300${episode.still_path}`
-                              : "/placeholder.svg"
-                            }
-                            alt={episode.name}
-                            className="w-full sm:w-48 h-32 object-cover"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handleWatchEpisode(episode)}
-                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white rounded-full"
-                          >
-                            <Play size={16} className="fill-white" />
-                          </Button>
-                        </div>
-                        
-                        <div className="flex-1 p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-semibold text-lg">
-                              {episode.episode_number}. {episode.name}
-                            </h3>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              {episode.runtime && (
-                                <div className="flex items-center gap-1">
-                                  <Clock size={14} />
-                                  <span>{episode.runtime}min</span>
-                                </div>
-                              )}
-                              {episode.vote_average > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                                  <span>{episode.vote_average.toFixed(1)}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {episode.air_date && new Date(episode.air_date).toLocaleDateString()}
-                          </p>
-                          
-                          <p className="text-sm leading-relaxed">
-                            {episode.overview || "No description available."}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No episodes available for this season.</p>
-              </div>
-            )}
+
+          <TabsContent value="episodes" className="mt-6">
+            <EpisodeSelector
+              tvShowId={parseInt(id!)}
+              seasons={tvShow.seasons || []}
+              selectedSeason={selectedSeason}
+              onSeasonChange={setSelectedSeason}
+              episodes={episodes}
+            />
           </TabsContent>
-          
-          {/* Details Tab */}
-          <TabsContent value="details" className="space-y-6">
-            <div className="grid lg:grid-cols-2 gap-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Info size={20} />
-                    Show Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">Overview</h4>
-                    <p className="text-muted-foreground leading-relaxed">{tvShow.overview}</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-semibold mb-1">First Air Date</h4>
-                      <p className="text-muted-foreground">
-                        {tvShow.first_air_date ? new Date(tvShow.first_air_date).toLocaleDateString() : 'N/A'}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold mb-1">Status</h4>
-                      <p className="text-muted-foreground">{tvShow.status || 'N/A'}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold mb-1">Seasons</h4>
-                      <p className="text-muted-foreground">{tvShow.number_of_seasons || 'N/A'}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold mb-1">Episodes</h4>
-                      <p className="text-muted-foreground">{tvShow.number_of_episodes || 'N/A'}</p>
-                    </div>
-                  </div>
-                  
-                  {tvShow.genres && tvShow.genres.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mb-2">Genres</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {tvShow.genres.map((genre) => (
-                          <Badge key={genre.id} variant="secondary">
-                            {genre.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {tvShow.origin_country && tvShow.origin_country.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mb-2">Origin Country</h4>
-                      <div className="flex items-center gap-2">
-                        <Globe size={16} />
-                        <span className="text-muted-foreground">
-                          {tvShow.origin_country.join(', ')}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {videos.length > 0 && (
+
+          <TabsContent value="cast" className="mt-6">
+            <div className="space-y-6">
+              {director && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Videos & Trailers</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Show Creator
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {videos.map((video) => (
-                        <div key={video.id} className="aspect-video">
-                          <iframe
-                            src={`https://www.youtube.com/embed/${video.key}`}
-                            title={video.name}
-                            className="w-full h-full rounded-lg"
-                            allowFullScreen
-                          />
-                        </div>
-                      ))}
+                    <div className="flex items-center gap-4">
+                      {director.profile_path && (
+                        <img 
+                          src={`${imageBaseUrl}w185${director.profile_path}`}
+                          alt={director.name}
+                          className="w-16 h-16 rounded-full object-cover"
+                        />
+                      )}
+                      <div>
+                        <h3 className="font-semibold">{director.name}</h3>
+                        <p className="text-sm text-muted-foreground">{director.job}</p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               )}
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Main Cast</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {mainCast.map(actor => (
+                      <div key={actor.id} className="text-center">
+                        {actor.profile_path && (
+                          <img 
+                            src={`${imageBaseUrl}w185${actor.profile_path}`}
+                            alt={actor.name}
+                            className="w-full aspect-square rounded-lg object-cover mb-2"
+                          />
+                        )}
+                        <h4 className="font-medium text-sm">{actor.name}</h4>
+                        <p className="text-xs text-muted-foreground">{actor.character}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
-          
-          {/* Cast Tab */}
-          <TabsContent value="cast">
-            {cast.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                {cast.map((member) => (
-                  <Card key={member.id} className="text-center">
-                    <CardContent className="p-4">
-                      <img
-                        src={member.profile_path 
-                          ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
-                          : "/placeholder.svg"
-                        }
-                        alt={member.name}
-                        className="w-full h-48 object-cover rounded-lg mb-3"
-                      />
-                      <h3 className="font-semibold text-sm mb-1">{member.name}</h3>
-                      <p className="text-xs text-muted-foreground">{member.character}</p>
-                    </CardContent>
-                  </Card>
+
+          <TabsContent value="details" className="mt-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Info className="w-5 h-5" />
+                    Show Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status:</span>
+                    <span>{tvShow.status}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">First Air Date:</span>
+                    <span>{new Date(tvShow.first_air_date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Number of Seasons:</span>
+                    <span>{tvShow.number_of_seasons}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Number of Episodes:</span>
+                    <span>{tvShow.number_of_episodes}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Rating:</span>
+                    <span>{tvShow.vote_average.toFixed(1)}/10</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Language:</span>
+                    <span className="uppercase">{tvShow.original_language}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <WatchProviders id={parseInt(id!)} type="tv" />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="similar" className="mt-6">
+            {similar.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {similar.slice(0, 12).map(show => (
+                  <MovieCard key={show.id} item={show} type="tv" />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <Users size={48} className="mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No cast information available.</p>
-              </div>
+              <Card>
+                <CardContent className="flex items-center justify-center h-32">
+                  <p className="text-muted-foreground">No similar shows found.</p>
+                </CardContent>
+              </Card>
             )}
-          </TabsContent>
-          
-          {/* Watch Options Tab */}
-          <TabsContent value="watch">
-            <Card>
-              <CardContent className="p-6">
-                <WatchProviders id={tvShow.id} type="tv" />
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
