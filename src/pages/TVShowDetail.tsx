@@ -9,8 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { getTVShowDetails, fetchTVShowCredits, fetchSimilarTVShows, fetchTVShowImages } from "@/lib/api";
-import type { TVShow } from "@/types";
+import { getTVShowDetails, fetchTVShowCredits, fetchSimilarTVShows, fetchTVShowImages, getTVShowSeasonDetails } from "@/lib/api";
+import type { TVShow, Season, Episode } from "@/types";
 import FavoriteButton from "@/components/FavoriteButton";
 import CategoryRow from "@/components/CategoryRow";
 import WatchProviders from "@/components/WatchProviders";
@@ -39,6 +39,7 @@ const TVShowDetail = () => {
   const [cast, setCast] = useState<Person[]>([]);
   const [similarShows, setSimilarShows] = useState<TVShow[]>([]);
   const [images, setImages] = useState<TVShowImages | null>(null);
+  const [seasonsWithEpisodes, setSeasonsWithEpisodes] = useState<Season[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
@@ -60,6 +61,36 @@ const TVShowDetail = () => {
         setCast(creditsData.cast.slice(0, 10));
         setSimilarShows(similarData.results.slice(0, 20));
         setImages(imagesData);
+
+        // Load episodes for each season
+        if (showData.seasons && showData.seasons.length > 0) {
+          const seasonsWithEpisodesData = await Promise.all(
+            showData.seasons
+              .filter(season => season.season_number > 0) // Filter out specials
+              .map(async (season) => {
+                try {
+                  const seasonData = await getTVShowSeasonDetails(parseInt(id), season.season_number);
+                  if (seasonData.success && seasonData.episodes) {
+                    return {
+                      ...season,
+                      episodes: seasonData.episodes
+                    };
+                  }
+                  return {
+                    ...season,
+                    episodes: []
+                  };
+                } catch (error) {
+                  console.error(`Error loading season ${season.season_number}:`, error);
+                  return {
+                    ...season,
+                    episodes: []
+                  };
+                }
+              })
+          );
+          setSeasonsWithEpisodes(seasonsWithEpisodesData);
+        }
       } catch (error) {
         console.error("Error loading show details:", error);
         toast.error("Failed to load show details");
@@ -260,7 +291,7 @@ const TVShowDetail = () => {
                     type="tv"
                     title={show.name}
                     posterPath={show.poster_path}
-                    variant="button"
+                    variant="iconOnly"
                   />
                 </div>
               </div>
@@ -272,7 +303,7 @@ const TVShowDetail = () => {
       {/* Content Sections */}
       <div className="container mx-auto px-4 py-8 space-y-12">
         {/* Episodes Section */}
-        {show.seasons && show.seasons.length > 0 && (
+        {seasonsWithEpisodes && seasonsWithEpisodes.length > 0 && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -280,7 +311,7 @@ const TVShowDetail = () => {
             viewport={{ once: true }}
           >
             <EpisodeSelector
-              seasons={show.seasons}
+              seasons={seasonsWithEpisodes}
               onEpisodeSelect={handleEpisodeSelect}
               showId={show.id}
             />

@@ -40,6 +40,7 @@ export interface TVShow {
   number_of_seasons?: number;
   number_of_episodes?: number;
   seasons?: Season[];
+  status?: string; // Add status property
   score?: number; // For recommendation scoring
   media_type?: "tv"; // Add this for compatibility
   type?: "tv"; // Add this for compatibility with watch history
@@ -81,6 +82,7 @@ export interface Season {
   episode_count: number;
   air_date: string;
   poster_path: string | null;
+  episodes?: Episode[]; // Add episodes property to match EpisodeSelector expectations
 }
 
 export interface Episode {
@@ -93,6 +95,7 @@ export interface Episode {
   still_path: string | null;
   vote_average: number;
   vote_count: number;
+  runtime?: number | null; // Add runtime property
 }
 
 export interface Genre {
