@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -276,19 +275,19 @@ const Watch = () => {
   return (
     <div className="min-h-screen bg-black">
       <div className="h-screen w-screen relative">
-        {/* Source switcher buttons */}
-        <div className="absolute top-6 left-0 right-0 z-50 flex justify-between px-6">
+        {/* Enhanced source switcher with better mobile support */}
+        <div className="absolute top-4 left-0 right-0 z-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4 sm:px-6">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleBackNavigation}
-            className="bg-black/30 text-white hover:bg-black/50 rounded-full transition-opacity opacity-70 hover:opacity-100"
+            className="bg-black/50 backdrop-blur-md text-white hover:bg-black/70 rounded-full transition-all duration-200 border border-white/10 shadow-lg"
           >
-            <ArrowLeft size={20} className="mr-2" />
-            <span>Back</span>
+            <ArrowLeft size={18} className="mr-2" />
+            <span className="hidden sm:inline">Back</span>
           </Button>
           
-          <div className="flex flex-wrap gap-2 justify-end">
+          <div className="flex flex-wrap gap-2 justify-end w-full sm:w-auto">
             {videoSources.map((source) => (
               <Button 
                 key={source.id}
@@ -296,8 +295,11 @@ const Watch = () => {
                 variant={activeSource.id === source.id ? "default" : "outline"}
                 onClick={() => switchVideoSource(source)}
                 className={`
-                  ${activeSource.id === source.id ? 'bg-purple-600 hover:bg-purple-700' : 'bg-black/30 text-white border-white/20'}
-                  rounded-full transition-all text-xs sm:text-sm
+                  ${activeSource.id === source.id 
+                    ? 'bg-purple-600 hover:bg-purple-700 border-purple-500 shadow-lg shadow-purple-600/20' 
+                    : 'bg-black/50 text-white border-white/20 hover:bg-black/70 backdrop-blur-md'
+                  }
+                  rounded-full transition-all duration-200 text-xs sm:text-sm font-medium min-w-[60px] shadow-lg
                 `}
               >
                 {source.name}
@@ -306,14 +308,16 @@ const Watch = () => {
           </div>
         </div>
         
-        {/* Loading indicator */}
+        {/* Enhanced loading indicator */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black z-40">
-            <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-40">
+            <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-white text-lg font-medium">Loading {activeSource.name}...</p>
+            <p className="text-gray-400 text-sm mt-2">{title}</p>
           </div>
         )}
         
-        {/* Video Player iframe */}
+        {/* Video Player iframe - REMOVED SANDBOX ATTRIBUTE */}
         {videoUrl && (
           <div
             ref={playerContainerRef}
@@ -327,9 +331,8 @@ const Watch = () => {
               frameBorder="0"
               allowFullScreen
               className="w-full h-full absolute inset-0 bg-black"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
               style={{ zIndex: 10 }}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
               referrerPolicy="no-referrer"
             ></iframe>
           </div>

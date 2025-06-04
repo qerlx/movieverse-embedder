@@ -95,7 +95,7 @@ export interface Episode {
   still_path: string | null;
   vote_average: number;
   vote_count: number;
-  runtime?: number | null; // Add runtime property
+  runtime?: number; // Make runtime optional to match the API response
 }
 
 export interface Genre {

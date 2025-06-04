@@ -1,14 +1,10 @@
-
-// Fix the type error in FavoriteButton component
-// Current error: Argument of type 'number' is not assignable to parameter of type '"movie" | "tv"'
-// We need to ensure we're passing the correct type to the functions
-
 import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToFavorites, removeFromFavorites, checkIsFavorite } from "@/lib/favorites";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface FavoriteButtonProps {
   id: number;
@@ -34,49 +30,79 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   const { currentUser } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const displayName = title || name || "";
+
+  // Local storage key for client-side caching
+  const localStorageKey = `favorite_${currentUser?.uid}_${type}_${id}`;
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (currentUser) {
-        setIsLoading(true);
-        try {
-          const status = await checkIsFavorite(currentUser.uid, id, type);
-          setIsFavorite(status);
-        } catch (error) {
-          console.error("Error checking favorite status:", error);
-        } finally {
-          setIsLoading(false);
-        }
+      if (!currentUser) {
+        setIsFavorite(false);
+        setIsInitialized(true);
+        return;
+      }
+
+      // First check local storage for immediate response
+      const localFavorite = localStorage.getItem(localStorageKey);
+      if (localFavorite !== null) {
+        setIsFavorite(localFavorite === 'true');
+      }
+
+      setIsLoading(true);
+      try {
+        const status = await checkIsFavorite(currentUser.uid, id, type);
+        setIsFavorite(status);
+        // Update local storage
+        localStorage.setItem(localStorageKey, status.toString());
+      } catch (error) {
+        console.error("Error checking favorite status:", error);
+        // Keep local storage value if API fails
+      } finally {
+        setIsLoading(false);
+        setIsInitialized(true);
       }
     };
 
     checkFavoriteStatus();
-  }, [currentUser, id, type]);
+  }, [currentUser, id, type, localStorageKey]);
 
   const handleToggleFavorite = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast.error("Please sign in to add favorites");
+      return;
+    }
+    
+    // Optimistic update
+    const newFavoriteState = !isFavorite;
+    setIsFavorite(newFavoriteState);
+    localStorage.setItem(localStorageKey, newFavoriteState.toString());
     
     setIsLoading(true);
     try {
       if (isFavorite) {
         await removeFromFavorites(currentUser.uid, id, type);
-        setIsFavorite(false);
+        toast.success(`Removed ${displayName} from favorites`);
       } else {
         await addToFavorites(currentUser.uid, id, type, displayName, posterPath);
-        setIsFavorite(true);
+        toast.success(`Added ${displayName} to favorites`);
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
+      // Revert optimistic update on error
+      setIsFavorite(!newFavoriteState);
+      localStorage.setItem(localStorageKey, (!newFavoriteState).toString());
+      toast.error("Failed to update favorites. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const sizeClasses = {
-    sm: "h-7 px-2 text-xs",
-    md: "h-9 px-3",
-    lg: "h-11 px-4 text-lg"
+    sm: "h-8 px-3 text-xs",
+    md: "h-10 px-4",
+    lg: "h-12 px-6 text-lg"
   };
 
   const iconSizeClasses = {
@@ -92,18 +118,20 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         variant="ghost"
         size="icon"
         className={cn(
-          "rounded-full hover:bg-background/10 bg-background/5 backdrop-blur-md border border-white/10",
-          "absolute right-2 top-2 z-10",
+          "rounded-full hover:bg-background/20 bg-background/10 backdrop-blur-md border border-white/20 transition-all duration-200 shadow-lg",
+          "hover:scale-110 active:scale-95",
+          isLoading && "animate-pulse",
           className
         )}
-        disabled={isLoading || !currentUser}
+        disabled={isLoading || !isInitialized}
         onClick={handleToggleFavorite}
         title={isFavorite ? `Remove ${displayName} from favorites` : `Add ${displayName} to favorites`}
       >
         <Heart
           className={cn(
             iconSizeClasses[size],
-            isFavorite ? "fill-red-500 text-red-500" : "fill-none text-white"
+            "transition-all duration-200",
+            isFavorite ? "fill-red-500 text-red-500 scale-110" : "fill-none text-white hover:text-red-400"
           )}
         />
       </Button>
@@ -116,7 +144,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         type="button"
         variant="ghost"
         onClick={handleToggleFavorite}
-        disabled={isLoading || !currentUser}
+        disabled={isLoading || !isInitialized}
         className={className}
         title={isFavorite ? `Remove ${displayName} from favorites` : `Add ${displayName} to favorites`}
       >
@@ -138,7 +166,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         type="button"
         variant={isFavorite ? "destructive" : "outline"}
         onClick={handleToggleFavorite}
-        disabled={isLoading || !currentUser}
+        disabled={isLoading || !isInitialized}
         className={cn(sizeClasses[size], className)}
       >
         <Heart
@@ -158,13 +186,18 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       type="button"
       variant={isFavorite ? "destructive" : "outline"}
       onClick={handleToggleFavorite}
-      disabled={isLoading || !currentUser}
-      className={cn(sizeClasses[size], className)}
+      disabled={isLoading || !currentUser || !isInitialized}
+      className={cn(
+        sizeClasses[size], 
+        "transition-all duration-200 hover:scale-105 active:scale-95",
+        isLoading && "animate-pulse",
+        className
+      )}
     >
       <Heart
         className={cn(
           iconSizeClasses[size],
-          "mr-2",
+          "mr-2 transition-all duration-200",
           isFavorite ? "fill-current" : ""
         )}
       />
