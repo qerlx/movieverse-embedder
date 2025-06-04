@@ -364,3 +364,18 @@ export const fetchMovieImages = async (id: number) => {
     throw error;
   }
 };
+
+export const getTVShowCredits = async (tvShowId: number) => {
+  const res = await fetch(`https://api.themoviedb.org/3/tv/${tvShowId}/credits`, {
+    headers: {
+      Authorization: `Bearer ${TMDB_TOKEN}`,
+      accept: "application/json"
+    }
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch TV show credits");
+  }
+
+  return res.json();
+};
