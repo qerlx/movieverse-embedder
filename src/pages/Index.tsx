@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { getWatchHistory } from "@/lib/watchService";
 import { ContinueWatchingItem } from "@/components/ContinueWatchingRow";
+import StreamingProviders from "@/components/StreamingProviders";
 
 const Index = () => {
   const { currentUser } = useAuth();
@@ -147,6 +148,11 @@ const Index = () => {
               <Favorites limit={6} />
             </motion.div>
           )}
+
+          {/* Streaming Providers Section */}
+          <motion.div variants={item} className="mt-8">
+            <StreamingProviders />
+          </motion.div>
           
           {/* Top 10 Trending Movies Today */}
           {trendingMovies.length > 0 && (
