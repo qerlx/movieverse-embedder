@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -211,8 +212,8 @@ const TVShowDetail = () => {
                       className="bg-black/30 backdrop-blur-sm border-white/20 hover:bg-white/10"
                     />
                     <AddToWatchedButton
-                      id={tvShow.id}
-                      type="tv"
+                      mediaId={tvShow.id}
+                      mediaType="tv"
                       title={tvShow.name}
                       posterPath={tvShow.poster_path}
                       variant="outline"
@@ -260,7 +261,7 @@ const TVShowDetail = () => {
           <EpisodeSelector
             showId={tvShow.id}
             seasons={tvShow.seasons}
-            selectedSeason={selectedSeason}
+            currentSeason={selectedSeason}
             onSeasonChange={setSelectedSeason}
             seasonDetails={seasonDetails}
           />

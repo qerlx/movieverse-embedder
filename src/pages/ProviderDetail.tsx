@@ -6,9 +6,10 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MovieCard from '@/components/MovieCard';
 import { useToast } from '@/hooks/use-toast';
-import { getPopularMovies, getPopularTVShows } from '@/lib/api';
+import { getMovieDetails, getTVShowDetails } from '@/lib/api';
 
 const API_KEY = 'JEIxcWMvFnCX3JPkRWzeoPKDsoZsSkFYcwQVDruJ';
+const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMzQzYzU2N2ZhZTk3Y2JlZGM0OGQ1YWQ0Yjg5M2YzMSIsIm5iZiI6MTc0MTc1NzA2NC43MzMsInN1YiI6IjY3ZDExYTg4MTM5OTBhMDU4YjYwYWExMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.PfUfbFyxCtI3bJehMrDRUuuKOPp58WC-_4B4aUovCyA";
 
 // Provider logos mapping
 const providerLogos = {
@@ -24,14 +25,23 @@ interface Provider {
   type: string;
 }
 
+interface WatchmodeTitle {
+  id: number;
+  title: string;
+  original_title: string;
+  type: 'movie' | 'tv_show';
+  tmdb_id: number;
+  tmdb_type: 'movie' | 'tv';
+  year: number;
+}
+
 const ProviderDetail: React.FC = () => {
   const { providerId } = useParams<{ providerId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [provider, setProvider] = useState<Provider | null>(null);
-  const [movies, setMovies] = useState<any[]>([]);
-  const [tvShows, setTVShows] = useState<any[]>([]);
+  const [content, setContent] = useState<any[]>([]);
   const [filteredContent, setFilteredContent] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'movie' | 'tv'>('all');
@@ -54,15 +64,17 @@ const ProviderDetail: React.FC = () => {
         
         setProvider(currentProvider);
         
-        // For now, we'll show popular content since the Watchmode API titles endpoint
-        // doesn't return TMDB IDs consistently. In a real app, you'd need a mapping service.
-        const [moviesData, tvData] = await Promise.all([
-          getPopularMovies(),
-          getPopularTVShows()
-        ]);
+        // Fetch titles from this provider
+        const titlesResponse = await fetch(`https://api.watchmode.com/v1/list-titles/?apiKey=${API_KEY}&source_ids=${providerId}`);
+        const titlesData = await titlesResponse.json();
         
-        setMovies(moviesData.results || []);
-        setTVShows(tvData.results || []);
+        if (titlesData && titlesData.titles && titlesData.titles.length > 0) {
+          // Process titles and fetch TMDb data
+          const enrichedContent = await enrichWithTMDbData(titlesData.titles.slice(0, 50)); // Limit to 50 for performance
+          setContent(enrichedContent);
+        } else {
+          setContent([]);
+        }
         
       } catch (error) {
         console.error('Error fetching provider data:', error);
@@ -79,19 +91,53 @@ const ProviderDetail: React.FC = () => {
     fetchProviderAndContent();
   }, [providerId, toast]);
 
+  const enrichWithTMDbData = async (watchmodeTitles: WatchmodeTitle[]) => {
+    const enrichedTitles = [];
+    
+    for (const title of watchmodeTitles) {
+      if (title.tmdb_id) {
+        try {
+          let tmdbData;
+          const type = title.type === 'tv_show' ? 'tv' : 'movie';
+          
+          if (type === 'movie') {
+            tmdbData = await getMovieDetails(title.tmdb_id);
+          } else {
+            tmdbData = await getTVShowDetails(title.tmdb_id);
+          }
+          
+          if (tmdbData && !tmdbData.success === false) {
+            enrichedTitles.push({
+              ...tmdbData,
+              type: type
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching TMDb data for ${title.title}:`, error);
+          // Continue with next title if one fails
+        }
+      }
+    }
+    
+    return enrichedTitles;
+  };
+
   useEffect(() => {
     if (filter === 'all') {
-      setFilteredContent([...movies, ...tvShows]);
+      setFilteredContent(content);
     } else if (filter === 'movie') {
-      setFilteredContent(movies);
+      setFilteredContent(content.filter(item => item.type === 'movie'));
     } else {
-      setFilteredContent(tvShows);
+      setFilteredContent(content.filter(item => item.type === 'tv'));
     }
-  }, [filter, movies, tvShows]);
+  }, [filter, content]);
 
   const handleFilterChange = (newFilter: 'all' | 'movie' | 'tv') => {
     setFilter(newFilter);
   };
+
+  const getMovieCount = () => content.filter(item => item.type === 'movie').length;
+  const getTVCount = () => content.filter(item => item.type === 'tv').length;
 
   if (isLoading) {
     return (
@@ -173,21 +219,21 @@ const ProviderDetail: React.FC = () => {
             onClick={() => handleFilterChange('all')}
             className="transition-all duration-300"
           >
-            All ({movies.length + tvShows.length})
+            All ({content.length})
           </Button>
           <Button
             variant={filter === 'movie' ? 'default' : 'outline'}
             onClick={() => handleFilterChange('movie')}
             className="transition-all duration-300"
           >
-            Movies ({movies.length})
+            Movies ({getMovieCount()})
           </Button>
           <Button
             variant={filter === 'tv' ? 'default' : 'outline'}
             onClick={() => handleFilterChange('tv')}
             className="transition-all duration-300"
           >
-            TV Shows ({tvShows.length})
+            TV Shows ({getTVCount()})
           </Button>
         </div>
 
@@ -207,14 +253,14 @@ const ProviderDetail: React.FC = () => {
           >
             {filteredContent.map((item, index) => (
               <motion.div
-                key={`${item.id}-${item.title || item.name}`}
+                key={`${item.id}-${item.title || item.name}-${item.type}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
               >
                 <MovieCard
                   item={item}
-                  type={item.title ? 'movie' : 'tv'}
+                  type={item.type as "movie" | "tv"}
                   priority={index < 12}
                 />
               </motion.div>
