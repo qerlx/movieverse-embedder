@@ -2,18 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Filter, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import MovieCard from '@/components/MovieCard';
 import { useToast } from '@/hooks/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { getPopularMovies, getPopularTVShows } from '@/lib/api';
 
 const API_KEY = 'JEIxcWMvFnCX3JPkRWzeoPKDsoZsSkFYcwQVDruJ';
 
@@ -24,18 +17,6 @@ const providerLogos = {
   387: 'https://upload.wikimedia.org/wikipedia/commons/5/59/Hulu_Logo.svg',
   248: 'https://upload.wikimedia.org/wikipedia/commons/e/e4/HBO_Max_Logo.svg'
 };
-
-interface Title {
-  id: number;
-  title: string;
-  poster: string;
-  year: number;
-  type: string;
-  imdb_id?: string;
-  vote_average?: number;
-  poster_path?: string;
-  name?: string;
-}
 
 interface Provider {
   id: number;
@@ -49,13 +30,14 @@ const ProviderDetail: React.FC = () => {
   const { toast } = useToast();
   
   const [provider, setProvider] = useState<Provider | null>(null);
-  const [titles, setTitles] = useState<Title[]>([]);
-  const [filteredTitles, setFilteredTitles] = useState<Title[]>([]);
+  const [movies, setMovies] = useState<any[]>([]);
+  const [tvShows, setTVShows] = useState<any[]>([]);
+  const [filteredContent, setFilteredContent] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'movie' | 'tv'>('all');
 
   useEffect(() => {
-    const fetchProviderAndTitles = async () => {
+    const fetchProviderAndContent = async () => {
       if (!providerId) return;
       
       try {
@@ -72,28 +54,15 @@ const ProviderDetail: React.FC = () => {
         
         setProvider(currentProvider);
         
-        // Fetch titles for this provider
-        const titlesResponse = await fetch(
-          `https://api.watchmode.com/v1/list-titles/?apiKey=${API_KEY}&source_ids=${providerId}&limit=100`
-        );
+        // For now, we'll show popular content since the Watchmode API titles endpoint
+        // doesn't return TMDB IDs consistently. In a real app, you'd need a mapping service.
+        const [moviesData, tvData] = await Promise.all([
+          getPopularMovies(),
+          getPopularTVShows()
+        ]);
         
-        if (!titlesResponse.ok) {
-          throw new Error(`Failed to fetch titles: ${titlesResponse.status}`);
-        }
-        
-        const titlesData = await titlesResponse.json();
-        const titlesList = titlesData.titles || titlesData || [];
-        
-        // Transform titles to match our MovieCard interface
-        const transformedTitles = titlesList.map((title: any) => ({
-          ...title,
-          poster_path: title.poster ? title.poster.replace('https://image.tmdb.org/t/p/w500', '') : null,
-          name: title.title,
-          vote_average: title.rating || 0
-        }));
-        
-        setTitles(transformedTitles);
-        setFilteredTitles(transformedTitles);
+        setMovies(moviesData.results || []);
+        setTVShows(tvData.results || []);
         
       } catch (error) {
         console.error('Error fetching provider data:', error);
@@ -107,16 +76,18 @@ const ProviderDetail: React.FC = () => {
       }
     };
 
-    fetchProviderAndTitles();
+    fetchProviderAndContent();
   }, [providerId, toast]);
 
   useEffect(() => {
     if (filter === 'all') {
-      setFilteredTitles(titles);
+      setFilteredContent([...movies, ...tvShows]);
+    } else if (filter === 'movie') {
+      setFilteredContent(movies);
     } else {
-      setFilteredTitles(titles.filter(title => title.type === filter));
+      setFilteredContent(tvShows);
     }
-  }, [filter, titles]);
+  }, [filter, movies, tvShows]);
 
   const handleFilterChange = (newFilter: 'all' | 'movie' | 'tv') => {
     setFilter(newFilter);
@@ -186,7 +157,7 @@ const ProviderDetail: React.FC = () => {
                 {provider.name}
               </h1>
               <p className="text-white/80">
-                {filteredTitles.length} titles available
+                {filteredContent.length} titles available
               </p>
             </div>
           </div>
@@ -202,26 +173,26 @@ const ProviderDetail: React.FC = () => {
             onClick={() => handleFilterChange('all')}
             className="transition-all duration-300"
           >
-            All ({titles.length})
+            All ({movies.length + tvShows.length})
           </Button>
           <Button
             variant={filter === 'movie' ? 'default' : 'outline'}
             onClick={() => handleFilterChange('movie')}
             className="transition-all duration-300"
           >
-            Movies ({titles.filter(t => t.type === 'movie').length})
+            Movies ({movies.length})
           </Button>
           <Button
             variant={filter === 'tv' ? 'default' : 'outline'}
             onClick={() => handleFilterChange('tv')}
             className="transition-all duration-300"
           >
-            TV Shows ({titles.filter(t => t.type === 'tv').length})
+            TV Shows ({tvShows.length})
           </Button>
         </div>
 
         {/* Content Grid */}
-        {filteredTitles.length === 0 ? (
+        {filteredContent.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-lg text-muted-foreground">
               No {filter === 'all' ? 'content' : filter === 'movie' ? 'movies' : 'TV shows'} found for {provider.name}
@@ -234,16 +205,16 @@ const ProviderDetail: React.FC = () => {
             transition={{ duration: 0.4 }}
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
           >
-            {filteredTitles.map((title, index) => (
+            {filteredContent.map((item, index) => (
               <motion.div
-                key={title.id}
+                key={`${item.id}-${item.title || item.name}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
               >
                 <MovieCard
-                  item={title as any}
-                  type={title.type as 'movie' | 'tv'}
+                  item={item}
+                  type={item.title ? 'movie' : 'tv'}
                   priority={index < 12}
                 />
               </motion.div>

@@ -200,41 +200,26 @@ const TVShowDetail = () => {
                     ))}
                   </motion.div>
 
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="flex flex-wrap gap-3"
-                  >
-                    <Button 
-                      size="lg" 
-                      onClick={handlePlayClick}
-                      className="bg-purple-600 hover:bg-purple-700 text-white px-8"
-                    >
-                      <Play className="w-5 h-5 mr-2 fill-white" />
-                      Play S1E1
-                    </Button>
-                    
+                  <div className="flex flex-wrap gap-3 mb-8">
                     <FavoriteButton
-                      movieId={parseInt(id!)}
+                      id={tvShow.id}
                       type="tv"
                       title={tvShow.name}
                       posterPath={tvShow.poster_path}
                       variant="outline"
                       size="lg"
-                      className="border-white/30 text-white hover:bg-white/10"
+                      className="bg-black/30 backdrop-blur-sm border-white/20 hover:bg-white/10"
                     />
-                    
                     <AddToWatchedButton
-                      movieId={parseInt(id!)}
+                      id={tvShow.id}
                       type="tv"
                       title={tvShow.name}
                       posterPath={tvShow.poster_path}
                       variant="outline"
                       size="lg"
-                      className="border-white/30 text-white hover:bg-white/10"
+                      className="bg-black/30 backdrop-blur-sm border-white/20 hover:bg-white/10"
                     />
-                  </motion.div>
+                  </div>
                 </div>
                 
                 <motion.div
@@ -273,8 +258,8 @@ const TVShowDetail = () => {
           transition={{ delay: 0.8 }}
         >
           <EpisodeSelector
-            tvShowId={parseInt(id!)}
-            seasons={tvShow.seasons || []}
+            showId={tvShow.id}
+            seasons={tvShow.seasons}
             selectedSeason={selectedSeason}
             onSeasonChange={setSelectedSeason}
             seasonDetails={seasonDetails}
