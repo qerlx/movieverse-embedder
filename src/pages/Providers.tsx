@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, Play } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -23,14 +23,13 @@ interface Provider {
   type: string;
 }
 
-const StreamingProviders: React.FC = () => {
+const Providers: React.FC = () => {
   const navigate = useNavigate();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Fetch streaming providers on component mount
   useEffect(() => {
     const fetchProviders = async () => {
       try {
@@ -45,10 +44,10 @@ const StreamingProviders: React.FC = () => {
         
         const data = await response.json();
         
-        // Filter to show only major streaming services
+        // Show more providers on this dedicated page
         const streamingProviders = data.filter((provider: Provider) => 
-          provider.type === 'sub' || [203, 157, 387, 248].includes(provider.id)
-        ).slice(0, 12); // Limit to 12 providers for better UI
+          provider.type === 'sub' || provider.type === 'free'
+        ).slice(0, 24);
         
         setProviders(streamingProviders);
       } catch (error) {
@@ -67,32 +66,33 @@ const StreamingProviders: React.FC = () => {
     fetchProviders();
   }, [toast]);
 
-  // Navigate to provider detail page
   const handleProviderClick = (provider: Provider) => {
     navigate(`/provider/${provider.id}`);
   };
 
-  const renderProviderCard = (provider: Provider) => {
+  const renderProviderCard = (provider: Provider, index: number) => {
     const hasLogo = providerLogos[provider.id as keyof typeof providerLogos];
     
     return (
       <motion.div
         key={provider.id}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: index * 0.05 }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="flex-shrink-0"
       >
         <Card 
-          className="h-32 w-40 cursor-pointer bg-black/30 backdrop-blur-sm border-white/20 hover:bg-white/10 hover:border-purple-500/50 transition-all duration-300 overflow-hidden group"
+          className="h-40 cursor-pointer bg-black/30 backdrop-blur-sm border-white/20 hover:bg-white/10 hover:border-purple-500/50 transition-all duration-300 overflow-hidden group"
           onClick={() => handleProviderClick(provider)}
         >
-          <CardContent className="p-4 h-full flex flex-col items-center justify-center relative">
+          <CardContent className="p-6 h-full flex flex-col items-center justify-center relative">
             {hasLogo ? (
-              <div className="flex flex-col items-center space-y-2">
+              <div className="flex flex-col items-center space-y-3">
                 <img
                   src={providerLogos[provider.id as keyof typeof providerLogos]}
                   alt={provider.name}
-                  className="w-12 h-12 object-contain group-hover:scale-110 transition-transform duration-300"
+                  className="w-16 h-16 object-contain group-hover:scale-110 transition-transform duration-300"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
@@ -104,8 +104,8 @@ const StreamingProviders: React.FC = () => {
               </div>
             ) : (
               <div className="text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
-                  <span className="text-white font-bold text-lg">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-white font-bold text-xl">
                     {provider.name.charAt(0)}
                   </span>
                 </div>
@@ -115,9 +115,11 @@ const StreamingProviders: React.FC = () => {
               </div>
             )}
             
-            {/* Hover indicator */}
-            <div className="absolute inset-0 bg-gradient-to-t from-purple-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
-              <ArrowRight className="w-4 h-4 text-white" />
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-purple-600/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <div className="bg-white/20 rounded-full p-2">
+                <Play className="w-6 h-6 text-white fill-white" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -127,11 +129,10 @@ const StreamingProviders: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="py-8">
-        <h2 className="text-2xl font-bold mb-6">Browse by Streaming Service</h2>
-        <div className="flex justify-center items-center py-12">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center space-x-2">
           <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-          <span className="ml-2 text-muted-foreground">Loading providers...</span>
+          <span className="text-lg">Loading providers...</span>
         </div>
       </div>
     );
@@ -139,50 +140,49 @@ const StreamingProviders: React.FC = () => {
 
   if (error) {
     return (
-      <div className="py-8">
-        <h2 className="text-2xl font-bold mb-6">Browse by Streaming Service</h2>
-        <div className="flex items-center justify-center py-12 text-red-400">
-          <AlertCircle className="w-6 h-6 mr-2" />
-          <span>{error}</span>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Error Loading Providers</h1>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Browse by Streaming Service</h2>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => navigate('/providers')}
-          className="hidden sm:flex"
-        >
-          View All
-          <ArrowRight className="w-4 h-4 ml-1" />
-        </Button>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className="container mx-auto px-4 py-8"
+    >
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="hover:bg-white/10"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <h1 className="text-3xl font-bold">Streaming Providers</h1>
+        </div>
       </div>
-      
-      {/* Provider cards */}
-      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
+      >
         {providers.map(renderProviderCard)}
-      </div>
-      
-      {/* Mobile view all button */}
-      <div className="mt-4 sm:hidden">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => navigate('/providers')}
-          className="w-full"
-        >
-          View All Providers
-          <ArrowRight className="w-4 h-4 ml-1" />
-        </Button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
-export default StreamingProviders;
+export default Providers;
