@@ -120,6 +120,11 @@ const TVShowDetail = () => {
     navigate(`/watch/tv/${id}/1/1`);
   };
 
+  const handleEpisodeSelect = (seasonNumber: number, episodeNumber: number) => {
+    console.log(`Selected season ${seasonNumber}, episode ${episodeNumber}`);
+    // You can add additional logic here if needed
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -212,8 +217,8 @@ const TVShowDetail = () => {
                       className="bg-black/30 backdrop-blur-sm border-white/20 hover:bg-white/10"
                     />
                     <AddToWatchedButton
-                      mediaId={tvShow.id}
-                      mediaType="tv"
+                      itemId={tvShow.id}
+                      itemType="tv"
                       title={tvShow.name}
                       posterPath={tvShow.poster_path}
                       variant="outline"
@@ -259,11 +264,9 @@ const TVShowDetail = () => {
           transition={{ delay: 0.8 }}
         >
           <EpisodeSelector
+            seasons={tvShow.seasons || []}
+            onEpisodeSelect={handleEpisodeSelect}
             showId={tvShow.id}
-            seasons={tvShow.seasons}
-            currentSeason={selectedSeason}
-            onSeasonChange={setSelectedSeason}
-            seasonDetails={seasonDetails}
           />
         </motion.section>
 

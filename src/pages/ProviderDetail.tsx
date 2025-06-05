@@ -98,18 +98,21 @@ const ProviderDetail: React.FC = () => {
       if (title.tmdb_id) {
         try {
           let tmdbData;
-          const type = title.type === 'tv_show' ? 'tv' : 'movie';
+          // Use the correct type mapping
+          const isMovie = title.type === 'movie';
           
-          if (type === 'movie') {
+          console.log(`Fetching ${isMovie ? 'movie' : 'TV show'} data for: ${title.title} (TMDB ID: ${title.tmdb_id})`);
+          
+          if (isMovie) {
             tmdbData = await getMovieDetails(title.tmdb_id);
           } else {
             tmdbData = await getTVShowDetails(title.tmdb_id);
           }
           
-          if (tmdbData && !tmdbData.success === false) {
+          if (tmdbData && tmdbData.success !== false) {
             enrichedTitles.push({
               ...tmdbData,
-              type: type
+              type: isMovie ? 'movie' : 'tv'
             });
           }
         } catch (error) {
