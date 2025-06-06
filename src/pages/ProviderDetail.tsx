@@ -8,8 +8,8 @@ const API_KEY = 'JEIxcWMvFnCX3JPkRWzeoPKDsoZsSkFYcwQVDruJ';
 interface Provider {
   id: number;
   name: string;
-  logo_100px: string;
   type: string;
+  logo_100px: string;    // Watchmode’s logo field
 }
 
 const Providers: React.FC = () => {
@@ -20,8 +20,10 @@ const Providers: React.FC = () => {
   useEffect(() => {
     const fetchProviders = async () => {
       try {
-        const res = await fetch(`https://api.watchmode.com/v1/sources/?apiKey=${API_KEY}`);
-        const data = await res.json();
+        const res = await fetch(
+          `https://api.watchmode.com/v1/sources/?apiKey=${API_KEY}`
+        );
+        const data: Provider[] = await res.json();
         setProviders(data);
       } catch (err) {
         console.error('Error loading providers:', err);
@@ -29,7 +31,6 @@ const Providers: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchProviders();
   }, []);
 
@@ -37,7 +38,7 @@ const Providers: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
-        <span className="ml-2">Loading providers...</span>
+        <span className="ml-2 text-white">Loading providers…</span>
       </div>
     );
   }
@@ -46,7 +47,7 @@ const Providers: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6 text-white">Streaming Providers</h1>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {providers.map(provider => (
+        {providers.map((provider) => (
           <motion.button
             key={provider.id}
             onClick={() => navigate(`/provider/${provider.id}`)}
@@ -60,11 +61,13 @@ const Providers: React.FC = () => {
                 className="w-12 h-12 object-contain mb-2"
               />
             ) : (
-              <div className="w-12 h-12 flex items-center justify-center bg-white/10 rounded mb-2 text-white font-bold text-xl">
+              <div className="w-12 h-12 bg-white/10 rounded mb-2 flex items-center justify-center text-white font-bold text-xl">
                 {provider.name.charAt(0)}
               </div>
             )}
-            <span className="text-white text-sm text-center">{provider.name}</span>
+            <span className="text-white text-center text-sm font-medium">
+              {provider.name}
+            </span>
           </motion.button>
         ))}
       </div>
