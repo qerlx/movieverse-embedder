@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,20 +8,12 @@ import { useToast } from '@/hooks/use-toast';
 import { getMovieDetails, getTVShowDetails } from '@/lib/api';
 
 const API_KEY = 'JEIxcWMvFnCX3JPkRWzeoPKDsoZsSkFYcwQVDruJ';
-const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMzQzYzU2N2ZhZTk3Y2JlZGM0OGQ1YWQ0Yjg5M2YzMSIsIm5iZiI6MTc0MTc1NzA2NC43MzMsInN1YiI6IjY3ZDExYTg4MTM5OTBhMDU4YjYwYWExMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.PfUfbFyxCtI3bJehMrDRUuuKOPp58WC-_4B4aUovCyA";
-
-// Provider logos mapping
-const providerLogos = {
-  203: 'https://upload.wikimedia.org/wikipedia/commons/7/75/Netflix_icon.svg',
-  157: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg',
-  387: 'https://upload.wikimedia.org/wikipedia/commons/5/59/Hulu_Logo.svg',
-  248: 'https://upload.wikimedia.org/wikipedia/commons/e/e4/HBO_Max_Logo.svg'
-};
 
 interface Provider {
   id: number;
   name: string;
   type: string;
+  logo_100px: string;
 }
 
 interface WatchmodeTitle {
@@ -39,7 +30,7 @@ const ProviderDetail: React.FC = () => {
   const { providerId } = useParams<{ providerId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const [provider, setProvider] = useState<Provider | null>(null);
   const [content, setContent] = useState<any[]>([]);
   const [filteredContent, setFilteredContent] = useState<any[]>([]);
@@ -49,33 +40,32 @@ const ProviderDetail: React.FC = () => {
   useEffect(() => {
     const fetchProviderAndContent = async () => {
       if (!providerId) return;
-      
+
       try {
         setIsLoading(true);
-        
+
         // Fetch provider info
         const providersResponse = await fetch(`https://api.watchmode.com/v1/sources/?apiKey=${API_KEY}`);
         const providers = await providersResponse.json();
         const currentProvider = providers.find((p: Provider) => p.id === parseInt(providerId));
-        
+
         if (!currentProvider) {
           throw new Error('Provider not found');
         }
-        
+
         setProvider(currentProvider);
-        
+
         // Fetch titles from this provider
         const titlesResponse = await fetch(`https://api.watchmode.com/v1/list-titles/?apiKey=${API_KEY}&source_ids=${providerId}`);
         const titlesData = await titlesResponse.json();
-        
+
         if (titlesData && titlesData.titles && titlesData.titles.length > 0) {
-          // Process titles and fetch TMDb data
-          const enrichedContent = await enrichWithTMDbData(titlesData.titles.slice(0, 50)); // Limit to 50 for performance
+          const enrichedContent = await enrichWithTMDbData(titlesData.titles.slice(0, 50));
           setContent(enrichedContent);
         } else {
           setContent([]);
         }
-        
+
       } catch (error) {
         console.error('Error fetching provider data:', error);
         toast({
@@ -93,22 +83,19 @@ const ProviderDetail: React.FC = () => {
 
   const enrichWithTMDbData = async (watchmodeTitles: WatchmodeTitle[]) => {
     const enrichedTitles = [];
-    
+
     for (const title of watchmodeTitles) {
       if (title.tmdb_id) {
         try {
           let tmdbData;
-          // Use the correct type mapping
           const isMovie = title.type === 'movie';
-          
-          console.log(`Fetching ${isMovie ? 'movie' : 'TV show'} data for: ${title.title} (TMDB ID: ${title.tmdb_id})`);
-          
+
           if (isMovie) {
             tmdbData = await getMovieDetails(title.tmdb_id);
           } else {
             tmdbData = await getTVShowDetails(title.tmdb_id);
           }
-          
+
           if (tmdbData && tmdbData.success !== false) {
             enrichedTitles.push({
               ...tmdbData,
@@ -117,11 +104,10 @@ const ProviderDetail: React.FC = () => {
           }
         } catch (error) {
           console.error(`Error fetching TMDb data for ${title.title}:`, error);
-          // Continue with next title if one fails
         }
       }
     }
-    
+
     return enrichedTitles;
   };
 
@@ -164,7 +150,7 @@ const ProviderDetail: React.FC = () => {
     );
   }
 
-  const providerLogo = providerLogos[provider.id as keyof typeof providerLogos];
+  const providerLogo = provider?.logo_100px;
 
   return (
     <motion.div
@@ -187,7 +173,7 @@ const ProviderDetail: React.FC = () => {
               Back
             </Button>
           </div>
-          
+
           <div className="flex items-center space-x-6">
             {providerLogo ? (
               <img
@@ -200,7 +186,7 @@ const ProviderDetail: React.FC = () => {
                 <span className="text-white font-bold text-lg">{provider.name.charAt(0)}</span>
               </div>
             )}
-            
+
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
                 {provider.name}
@@ -220,21 +206,18 @@ const ProviderDetail: React.FC = () => {
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
             onClick={() => handleFilterChange('all')}
-            className="transition-all duration-300"
           >
             All ({content.length})
           </Button>
           <Button
             variant={filter === 'movie' ? 'default' : 'outline'}
             onClick={() => handleFilterChange('movie')}
-            className="transition-all duration-300"
           >
             Movies ({getMovieCount()})
           </Button>
           <Button
             variant={filter === 'tv' ? 'default' : 'outline'}
             onClick={() => handleFilterChange('tv')}
-            className="transition-all duration-300"
           >
             TV Shows ({getTVCount()})
           </Button>
