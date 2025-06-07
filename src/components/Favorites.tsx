@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getFavorites } from "@/lib/watchService";
-import { FavoriteItem } from "@/types";
+import { getFavorites } from "@/lib/supabaseService";
+import { FavoriteItem } from "@/lib/supabaseService";
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,6 @@ const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
       try {
         setIsLoading(true);
         const items = await getFavorites(currentUser);
-        // Apply limit if specified
         const limitedItems = limit > 0 ? items.slice(0, limit) : items;
         setFavoriteItems(limitedItems);
       } catch (error) {
@@ -90,12 +89,10 @@ const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               
-              {/* Favorite badge */}
               <div className="absolute top-2 right-2">
                 <Heart className="text-red-500 fill-current" size={16} />
               </div>
 
-              {/* Hover content */}
               <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                 <h3 className="text-white font-medium text-sm line-clamp-1">
                   {item.title}
