@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { addToFavorites, removeFromFavorites, checkIsFavorite } from "@/lib/supabaseService";
+import { addToFavorites, removeFromFavorites, checkIsFavorite } from "@/lib/favorites";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -34,6 +33,9 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const displayName = title || name || "";
 
+  // Local storage key for client-side caching
+  const localStorageKey = `favorite_${currentUser?.uid}_${type}_${id}`;
+
   useEffect(() => {
     const checkFavoriteStatus = async () => {
       if (!currentUser) {
@@ -42,12 +44,21 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         return;
       }
 
+      // First check local storage for immediate response
+      const localFavorite = localStorage.getItem(localStorageKey);
+      if (localFavorite !== null) {
+        setIsFavorite(localFavorite === 'true');
+      }
+
       setIsLoading(true);
       try {
-        const status = await checkIsFavorite(currentUser.id, id, type);
+        const status = await checkIsFavorite(currentUser.uid, id, type);
         setIsFavorite(status);
+        // Update local storage
+        localStorage.setItem(localStorageKey, status.toString());
       } catch (error) {
         console.error("Error checking favorite status:", error);
+        // Keep local storage value if API fails
       } finally {
         setIsLoading(false);
         setIsInitialized(true);
@@ -55,7 +66,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     };
 
     checkFavoriteStatus();
-  }, [currentUser, id, type]);
+  }, [currentUser, id, type, localStorageKey]);
 
   const handleToggleFavorite = async () => {
     if (!currentUser) {
@@ -63,21 +74,25 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       return;
     }
     
+    // Optimistic update
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
+    localStorage.setItem(localStorageKey, newFavoriteState.toString());
     
     setIsLoading(true);
     try {
       if (isFavorite) {
-        await removeFromFavorites(currentUser, id, type);
+        await removeFromFavorites(currentUser.uid, id, type);
         toast.success(`Removed ${displayName} from favorites`);
       } else {
-        await addToFavorites(currentUser, { id, type, title: displayName, posterPath });
+        await addToFavorites(currentUser.uid, id, type, displayName, posterPath);
         toast.success(`Added ${displayName} to favorites`);
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
+      // Revert optimistic update on error
       setIsFavorite(!newFavoriteState);
+      localStorage.setItem(localStorageKey, (!newFavoriteState).toString());
       toast.error("Failed to update favorites. Please try again.");
     } finally {
       setIsLoading(false);

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Eye, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { addToWatchHistory, getWatchProgress } from "@/lib/supabaseService";
+import { addToWatchHistory, getWatchProgress } from "@/lib/watchService";
 import { toast } from "sonner";
 
 interface AddToWatchedButtonProps {
@@ -29,6 +29,7 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
   const [isAdded, setIsAdded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if already in watch history
   useEffect(() => {
     const checkWatchStatus = async () => {
       if (!currentUser) {
@@ -41,6 +42,7 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
         setIsAdded(progress !== null);
       } catch (error) {
         console.error("Error checking watch status:", error);
+        // Don't show toast for background checks
       }
     };
     
@@ -48,19 +50,20 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
   }, [currentUser, itemId, itemType]);
 
   const handleAddToWatched = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); // Prevent navigation if inside a link
+    e.stopPropagation(); // Prevent event bubbling
 
     if (!currentUser) {
       toast.error("Please sign in to update watch history");
       return;
     }
 
-    if (isLoading) return;
+    if (isLoading) return; // Prevent multiple clicks
 
     setIsLoading(true);
     
     try {
+      // Add to watch history
       await addToWatchHistory(currentUser, {
         id: itemId,
         type: itemType,

@@ -12,6 +12,7 @@ const UserProfile = () => {
   const { currentUser, signOut } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  // Redirect if not logged in
   if (!currentUser) {
     return <Navigate to="/" />;
   }
@@ -27,23 +28,16 @@ const UserProfile = () => {
     }
   };
 
-  const displayName = currentUser.user_metadata?.display_name || 
-                     currentUser.user_metadata?.full_name || 
-                     currentUser.email?.split('@')[0] || 
-                     "User";
-
-  const photoURL = currentUser.user_metadata?.avatar_url;
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row items-start gap-8">
         <div className="w-full md:w-1/4 bg-card rounded-lg border border-border p-6">
           <div className="flex flex-col items-center mb-6">
             <div className="w-24 h-24 rounded-full overflow-hidden bg-muted mb-4">
-              {photoURL ? (
+              {currentUser.photoURL ? (
                 <img 
-                  src={photoURL} 
-                  alt={displayName} 
+                  src={currentUser.photoURL} 
+                  alt={currentUser.displayName || "User"} 
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -53,7 +47,7 @@ const UserProfile = () => {
               )}
             </div>
             <h2 className="text-xl font-bold mb-1">
-              {displayName}
+              {currentUser.displayName || "User"}
             </h2>
             <p className="text-sm text-muted-foreground">{currentUser.email}</p>
           </div>
