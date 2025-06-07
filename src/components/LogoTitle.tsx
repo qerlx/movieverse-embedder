@@ -35,6 +35,8 @@ const LogoTitle: React.FC<LogoTitleProps> = ({
       try {
         setIsLoading(true);
         setHasError(false);
+        setLogoUrl(null); // Reset logo URL
+        
         let imageData: ImageData;
         
         if (type === 'movie') {
@@ -55,12 +57,15 @@ const LogoTitle: React.FC<LogoTitleProps> = ({
         
         if (selectedLogo) {
           // Use w500 for better quality
-          setLogoUrl(`https://image.tmdb.org/t/p/w500${selectedLogo.file_path}`);
+          const logoUrl = `https://image.tmdb.org/t/p/w500${selectedLogo.file_path}`;
+          setLogoUrl(logoUrl);
+          console.log(`Logo set for ${title}:`, logoUrl);
         } else {
+          console.log(`No logo found for ${title}, falling back to text`);
           setHasError(true);
         }
       } catch (error) {
-        console.error(`Error fetching ${type} logo:`, error);
+        console.error(`Error fetching ${type} logo for ${title}:`, error);
         setHasError(true);
       } finally {
         setIsLoading(false);
@@ -68,7 +73,19 @@ const LogoTitle: React.FC<LogoTitleProps> = ({
     };
 
     fetchLogo();
-  }, [id, type]);
+  }, [id, type, title]);
+
+  // Handle image load error
+  const handleImageError = () => {
+    console.log(`Logo failed to load for ${title}, falling back to text`);
+    setHasError(true);
+    setLogoUrl(null);
+  };
+
+  // Handle image load success
+  const handleImageLoad = () => {
+    console.log(`Logo loaded successfully for ${title}`);
+  };
 
   // Loading state
   if (isLoading) {
@@ -86,14 +103,9 @@ const LogoTitle: React.FC<LogoTitleProps> = ({
         src={logoUrl} 
         alt={title}
         className={`${className} filter drop-shadow-lg`}
-        onError={() => {
-          console.log(`Logo failed to load for ${title}, falling back to text`);
-          setHasError(true);
-          setLogoUrl(null);
-        }}
-        onLoad={() => {
-          console.log(`Logo loaded successfully for ${title}`);
-        }}
+        onError={handleImageError}
+        onLoad={handleImageLoad}
+        style={{ display: hasError ? 'none' : 'block' }}
       />
     );
   }
