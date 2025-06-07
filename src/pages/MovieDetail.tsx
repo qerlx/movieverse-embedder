@@ -11,7 +11,9 @@ import {
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
+import AddToWatchedButton from "@/components/AddToWatchedButton";
 import WatchProviders from "@/components/WatchProviders";
+import LogoTitle from "@/components/LogoTitle";
 import { motion } from "framer-motion";
 
 interface Cast {
@@ -236,14 +238,20 @@ const MovieDetail = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="flex-1"
             >
-              <motion.h1 
+              <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6 }}
-                className="cinematic-title text-4xl md:text-6xl font-bold mb-4 text-white text-shadow"
+                className="mb-4"
               >
-                {movie.title}
-              </motion.h1>
+                <LogoTitle
+                  id={movie.id}
+                  title={movie.title}
+                  type="movie"
+                  className="max-w-lg h-16 sm:h-20 md:h-24 object-contain"
+                  fallbackClassName="cinematic-title text-4xl md:text-6xl font-bold text-white text-shadow"
+                />
+              </motion.div>
               
               <motion.div 
                 initial={{ opacity: 0 }}
@@ -334,14 +342,23 @@ const MovieDetail = () => {
                 </Button>
                 
                 {currentUser && (
-                  <FavoriteButton
-                    id={movie.id} 
-                    type="movie" 
-                    title={movie.title}
-                    posterPath={movie.poster_path}
-                    variant="default" // Changed from "outline" to "default"
-                    className="w-full flex-1"
-                  />
+                  <>
+                    <FavoriteButton
+                      id={movie.id} 
+                      type="movie" 
+                      title={movie.title}
+                      posterPath={movie.poster_path}
+                      variant="outline"
+                    />
+                    <AddToWatchedButton
+                      itemId={movie.id}
+                      itemType="movie"
+                      title={movie.title}
+                      posterPath={movie.poster_path}
+                      variant="outline"
+                      genres={movie.genres?.map((g: any) => g.id)}
+                    />
+                  </>
                 )}
               </motion.div>
             </motion.div>
