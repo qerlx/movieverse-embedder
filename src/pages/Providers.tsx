@@ -9,18 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 
 const API_KEY = 'JEIxcWMvFnCX3JPkRWzeoPKDsoZsSkFYcwQVDruJ';
 
-// Logo mapping for popular providers
-const providerLogos = {
-  203: 'https://upload.wikimedia.org/wikipedia/commons/7/75/Netflix_icon.svg',
-  157: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg',
-  387: 'https://upload.wikimedia.org/wikipedia/commons/5/59/Hulu_Logo.svg',
-  248: 'https://upload.wikimedia.org/wikipedia/commons/e/e4/HBO_Max_Logo.svg'
-};
-
 interface Provider {
   id: number;
   name: string;
   type: string;
+  logo_100px?: string;
 }
 
 const Providers: React.FC = () => {
@@ -71,7 +64,7 @@ const Providers: React.FC = () => {
   };
 
   const renderProviderCard = (provider: Provider, index: number) => {
-    const hasLogo = providerLogos[provider.id as keyof typeof providerLogos];
+    const hasLogo = provider.logo_100px;
     
     return (
       <motion.div
@@ -90,14 +83,24 @@ const Providers: React.FC = () => {
             {hasLogo ? (
               <div className="flex flex-col items-center space-y-3">
                 <img
-                  src={providerLogos[provider.id as keyof typeof providerLogos]}
+                  src={provider.logo_100px}
                   alt={provider.name}
                   className="w-16 h-16 object-contain group-hover:scale-110 transition-transform duration-300"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
+                    // Show fallback when logo fails to load
+                    const fallback = target.parentElement?.querySelector('.fallback-logo');
+                    if (fallback) {
+                      (fallback as HTMLElement).style.display = 'flex';
+                    }
                   }}
                 />
+                <div className="fallback-logo w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300" style={{ display: 'none' }}>
+                  <span className="text-white font-bold text-xl">
+                    {provider.name.charAt(0)}
+                  </span>
+                </div>
                 <span className="text-sm text-center font-medium text-white line-clamp-2">
                   {provider.name}
                 </span>
