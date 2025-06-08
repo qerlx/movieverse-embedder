@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +13,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
 import AddToWatchedButton from "@/components/AddToWatchedButton";
 import WatchProviders from "@/components/WatchProviders";
+import EpisodeSelector from "@/components/EpisodeSelector";
+import LogoTitle from "@/components/LogoTitle";
 import { motion } from "framer-motion";
 
 interface Cast {
@@ -94,7 +95,6 @@ const TVShowDetail = () => {
     };
 
     fetchTVShowDetails();
-    // Scroll to top when navigating to a new show
     window.scrollTo(0, 0);
   }, [id, toast]);
 
@@ -106,6 +106,13 @@ const TVShowDetail = () => {
       } else {
         navigate(`/watch/tv/${id}/${season}/${episode}`);
       }
+    }
+  };
+
+  // Handle episode selection
+  const handleEpisodeSelect = (seasonNumber: number, episodeNumber: number) => {
+    if (id) {
+      navigate(`/watch/tv/${id}/${seasonNumber}/${episodeNumber}`);
     }
   };
 
@@ -166,7 +173,7 @@ const TVShowDetail = () => {
       transition={{ duration: 0.5 }}
       className="min-h-screen bg-background"
     >
-      {/* Hero section with backdrop */}
+      {/* Hero section with enhanced backdrop */}
       <div className="relative">
         {backdropUrl && (
           <div className="absolute inset-0 w-full h-full">
@@ -174,7 +181,7 @@ const TVShowDetail = () => {
               initial={{ filter: "blur(16px)", opacity: 0 }}
               animate={{ filter: "blur(0px)", opacity: 1 }}
               transition={{ duration: 1.2 }}
-              className="w-full h-[80vh] bg-cover bg-center bg-no-repeat"
+              className="w-full h-[85vh] bg-cover bg-center bg-no-repeat"
               style={{ backgroundImage: `url(${backdropUrl})` }}
             ></motion.div>
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent"></div>
@@ -182,19 +189,19 @@ const TVShowDetail = () => {
           </div>
         )}
 
-        <div className="relative container mx-auto px-4 pt-20 pb-10 min-h-[80vh] flex flex-col justify-center">
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            {/* Poster */}
+        <div className="relative container mx-auto px-4 pt-20 pb-10 min-h-[85vh] flex flex-col justify-center">
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            {/* Enhanced Poster Section */}
             <motion.div 
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="w-full max-w-xs mx-auto md:mx-0"
+              className="w-full max-w-sm mx-auto lg:mx-0"
             >
-              <div className="overflow-hidden rounded-2xl shadow-2xl hover:shadow-primary/20 transition-shadow duration-300 purple-glow">
+              <div className="overflow-hidden rounded-2xl shadow-2xl hover:shadow-primary/30 transition-all duration-300 purple-glow">
                 <motion.img
                   whileHover={{ scale: 1.03 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.3 }}
                   src={posterUrl}
                   alt={tvShow.name}
                   className="w-full h-auto object-cover"
@@ -207,27 +214,33 @@ const TVShowDetail = () => {
                 />
               </div>
               
-              {/* Video Player Options Card */}
+              {/* Enhanced Video Player Options Card */}
               <motion.div 
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
-                className="mt-8"
+                className="mt-6"
               >
-                <Card className="border-primary/20 bg-black/30 backdrop-blur-md">
-                  <CardContent className="space-y-3 p-4">
-                    <h3 className="text-gradient text-xl mb-2 font-semibold">Watch Options</h3>
+                <Card className="border-primary/20 bg-black/40 backdrop-blur-md overflow-hidden">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-gradient text-xl font-semibold">Watch Options</h3>
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/30">
+                        <Tv size={16} className="text-purple-400" />
+                        <span className="text-purple-300 text-sm font-medium">TV Show</span>
+                      </div>
+                    </div>
                     
                     {/* Video source buttons */}
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {videoSources.map((source, index) => (
                         <Button 
                           key={source.id}
                           onClick={() => handleWatchClick(source.id)}
                           className={
                             index === 0 
-                              ? "w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-4 py-6 shadow-lg hover:shadow-primary/30 transition-all" 
-                              : "w-full bg-black/60 hover:bg-black/80 text-white gap-2 rounded-full px-4 py-4 border border-primary/30 hover:border-primary/50 transition-all mt-2"
+                              ? "w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-full py-6 text-base font-medium shadow-lg hover:shadow-primary/30 transition-all" 
+                              : "w-full bg-black/60 hover:bg-black/80 text-white gap-2 rounded-full py-4 border border-primary/30 hover:border-primary/50 transition-all"
                           }
                           size={index === 0 ? "lg" : "default"}
                         >
@@ -251,21 +264,27 @@ const TVShowDetail = () => {
               </motion.div>
             </motion.div>
 
-            {/* Details */}
+            {/* Enhanced Details Section */}
             <motion.div 
               initial={{ x: -30, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
               className="flex-1"
             >
-              <motion.h1 
+              <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6 }}
-                className="cinematic-title text-4xl md:text-6xl font-bold mb-4 text-white text-shadow"
+                className="mb-6"
               >
-                {tvShow.name}
-              </motion.h1>
+                <LogoTitle
+                  id={tvShow.id}
+                  title={tvShow.name}
+                  type="tv"
+                  className="max-w-2xl h-16 sm:h-20 md:h-24 object-contain"
+                  fallbackClassName="cinematic-title text-4xl md:text-6xl font-bold text-white text-shadow"
+                />
+              </motion.div>
               
               <motion.div 
                 initial={{ opacity: 0 }}
@@ -276,7 +295,7 @@ const TVShowDetail = () => {
                 {tvShow.genres?.map((genre: any) => (
                   <span
                     key={genre.id}
-                    className="px-3 py-1 rounded-full text-sm backdrop-blur-sm bg-black/30 border border-white/10 text-white/90"
+                    className="px-4 py-2 rounded-full text-sm backdrop-blur-sm bg-black/30 border border-white/20 text-white/90 hover:border-primary/50 transition-colors"
                   >
                     {genre.name}
                   </span>
@@ -287,31 +306,25 @@ const TVShowDetail = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="flex flex-wrap gap-6 mb-6 text-sm"
+                className="flex flex-wrap gap-4 mb-8 text-sm"
               >
                 {tvShow.vote_average > 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/30 backdrop-blur-sm border border-white/10">
                     <Star size={16} className="text-yellow-400" />
                     <span className="font-medium">{tvShow.vote_average.toFixed(1)}/10</span>
                   </div>
                 )}
                 
                 {tvShow.number_of_seasons && (
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/30 backdrop-blur-sm border border-white/10">
                     <Tv size={16} className="text-white/80" />
                     <span>{tvShow.number_of_seasons} Season{tvShow.number_of_seasons > 1 ? 's' : ''}</span>
                   </div>
                 )}
                 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/30 backdrop-blur-sm border border-white/10">
                   <Calendar size={16} className="text-white/80" />
                   <span>{firstAirYear}</span>
-                </div>
-                
-                {/* Media type indicator */}
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
-                  <Tv size={16} className="text-purple-400" />
-                  <span>TV Show</span>
                 </div>
               </motion.div>
               
@@ -319,10 +332,10 @@ const TVShowDetail = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
-                className="mb-6 max-w-2xl"
+                className="mb-8 max-w-3xl"
               >
-                <h2 className="text-xl font-semibold mb-2 text-white/90">Overview</h2>
-                <p className="text-white/70 leading-relaxed">{tvShow.overview}</p>
+                <h2 className="text-xl font-semibold mb-3 text-white/90">Overview</h2>
+                <p className="text-white/70 leading-relaxed text-lg">{tvShow.overview}</p>
               </motion.div>
               
               {creators.length > 0 && (
@@ -332,10 +345,10 @@ const TVShowDetail = () => {
                   transition={{ duration: 0.8, delay: 0.6 }}
                   className="mb-8"
                 >
-                  <h2 className="text-xl font-semibold mb-2 text-white/90">Created by</h2>
-                  <div className="flex flex-wrap gap-2">
+                  <h2 className="text-xl font-semibold mb-3 text-white/90">Created by</h2>
+                  <div className="flex flex-wrap gap-3">
                     {creators.map((creator: any) => (
-                      <span key={creator.id} className="text-white/70">
+                      <span key={creator.id} className="text-white/70 text-lg">
                         {creator.name}
                       </span>
                     ))}
@@ -365,6 +378,7 @@ const TVShowDetail = () => {
                       title={tvShow.name}
                       posterPath={tvShow.poster_path}
                       variant="outline"
+                      size="lg"
                     />
                     <AddToWatchedButton
                       itemId={tvShow.id}
@@ -381,6 +395,24 @@ const TVShowDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Episode Selector Section */}
+      {tvShow.seasons && tvShow.seasons.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="py-8 bg-gradient-to-b from-transparent to-black/20"
+        >
+          <div className="container mx-auto px-4">
+            <EpisodeSelector
+              seasons={tvShow.seasons}
+              onEpisodeSelect={handleEpisodeSelect}
+              showId={parseInt(id!)}
+            />
+          </div>
+        </motion.div>
+      )}
 
       {/* Cast section */}
       {topCast.length > 0 && (
@@ -407,7 +439,7 @@ const TVShowDetail = () => {
                     <img
                       src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
                       alt={person.name}
-                      className="w-full h-48 object-cover object-center"
+                      className="w-full h-48 object-cover"
                       loading="lazy"
                     />
                   ) : (

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import HeroSlider from "@/components/HeroSlider";
 import CategoryRow from "@/components/CategoryRow";
@@ -11,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
 import Favorites from "@/components/Favorites";
 import ContinueWatchingRow from "@/components/ContinueWatchingRow";
-import { Heart } from "lucide-react";
+import { Heart, TrendingUp, Star, Tv, Film } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { getWatchHistory } from "@/lib/watchService";
@@ -56,7 +57,6 @@ const Index = () => {
           try {
             const watchHistory = await getWatchHistory(currentUser);
             if (watchHistory && watchHistory.length > 0) {
-              // Ensure each item has both poster_path and posterPath properties
               const formattedWatchHistory = watchHistory.map(item => ({
                 ...item,
                 poster_path: item.poster_path || item.posterPath || null,
@@ -85,40 +85,48 @@ const Index = () => {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.2
+        staggerChildren: 0.15
       }
     }
   };
   
   const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6 } }
   };
   
   return (
-    <div className="min-h-screen pb-20">
-      {/* Hero Slider - Only render when data is loaded */}
+    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background pb-20">
+      {/* Hero Slider with improved overlay */}
       {!isLoading && heroItems && heroItems.length > 0 && (
-        <div className="w-full relative overflow-hidden">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="w-full relative overflow-hidden"
+        >
           <HeroSlider items={heroItems} type="movie" />
-        </div>
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+        </motion.div>
       )}
       
-      {/* Loading indicator */}
+      {/* Loading indicator with improved design */}
       {isLoading && (
         <div className="py-20 flex justify-center items-center">
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="relative w-16 h-16"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative w-20 h-20"
           >
             <motion.div 
-              className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-primary animate-spin"
-              style={{ animationDuration: '1s' }}
+              className="absolute inset-0 rounded-full border-3 border-t-primary border-r-primary/30 border-b-transparent border-l-transparent"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             />
             <motion.div 
-              className="absolute inset-2 rounded-full border-2 border-t-transparent border-r-primary border-b-primary border-l-transparent animate-spin"
-              style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}
+              className="absolute inset-2 rounded-full border-2 border-t-transparent border-r-transparent border-b-primary border-l-primary/30"
+              animate={{ rotate: -360 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
             />
           </motion.div>
         </div>
@@ -129,86 +137,120 @@ const Index = () => {
           variants={container}
           initial="hidden"
           animate="show"
-          className="py-4 container mx-auto px-4"
+          className="relative -mt-16 z-10"
         >
-          {/* Continue Watching Row */}
-          {currentUser && continueWatchingItems.length > 0 && (
-            <motion.div variants={item} className="mt-4">
-              <ContinueWatchingRow items={continueWatchingItems} />
-            </motion.div>
-          )}
-          
-          {/* User's favorites (only for logged in users) */}
-          {currentUser && (
-            <motion.div variants={item} className="mt-6">
-              <h2 className="text-xl md:text-2xl font-bold mb-4 flex items-center">
-                <Heart className="mr-2 text-red-500" size={20} />
-                <span className="bg-gradient-to-r from-red-500 to-red-300 bg-clip-text text-transparent">Your Favorites</span>
-              </h2>
-              <Favorites limit={6} />
-            </motion.div>
-          )}
+          <div className="container mx-auto px-4 space-y-12">
+            {/* Continue Watching Row with improved styling */}
+            {currentUser && continueWatchingItems.length > 0 && (
+              <motion.div variants={item}>
+                <ContinueWatchingRow items={continueWatchingItems} />
+              </motion.div>
+            )}
+            
+            {/* User's favorites with enhanced header */}
+            {currentUser && (
+              <motion.div variants={item}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-500/20 border border-red-500/30">
+                    <Heart className="text-red-400" size={20} />
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-red-400 to-red-300 bg-clip-text text-transparent">
+                    Your Favorites
+                  </h2>
+                </div>
+                <Favorites limit={6} />
+              </motion.div>
+            )}
 
-          {/* Streaming Providers Section */}
-          <motion.div variants={item} className="mt-8">
-            <StreamingProviders />
-          </motion.div>
-          
-          {/* Top 10 Trending Movies Today */}
-          {trendingMovies.length > 0 && (
+            {/* Streaming Providers with improved layout */}
             <motion.div variants={item}>
-              <CategoryRow
-                title="Top 10 Movies Today"
-                items={trendingMovies.slice(0, 10)}
-                type="movie"
-                isRanked={true}
-                className="my-8"
-              />
+              <StreamingProviders />
             </motion.div>
-          )}
-          
-          {/* Trending TV Shows */}
-          {trendingTVShows && trendingTVShows.length > 0 && (
-            <motion.div variants={item}>
-              <CategoryRow
-                title="Trending TV Shows" 
-                items={trendingTVShows}
-                type="tv"
-                className="my-8"
-              />
-            </motion.div>
-          )}
-          
-          {/* Popular Movies */}
-          {popularMovies && popularMovies.length > 0 && (
-            <motion.div variants={item}>
-              <CategoryRow
-                title="Popular Movies" 
-                items={popularMovies} 
-                type="movie"
-                className="my-8"
-              />
-            </motion.div>
-          )}
-          
-          {/* Popular TV Shows */}
-          {popularTVShows && popularTVShows.length > 0 && (
-            <motion.div variants={item}>
-              <CategoryRow
-                title="Popular TV Shows" 
-                items={popularTVShows} 
-                type="tv"
-                className="my-8"
-              />
-            </motion.div>
-          )}
-          
-          {/* Personalized Recommendations (only for logged in users) */}
-          {currentUser && (
-            <motion.div variants={item} className="mt-8 mb-12">
-              <PersonalizedRecommendations />
-            </motion.div>
-          )}
+            
+            {/* Top 10 Trending Movies with enhanced styling */}
+            {trendingMovies.length > 0 && (
+              <motion.div variants={item}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-500/20 border border-yellow-500/30">
+                    <TrendingUp className="text-yellow-400" size={20} />
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                    Top 10 Movies Today
+                  </h2>
+                </div>
+                <CategoryRow
+                  title=""
+                  items={trendingMovies.slice(0, 10)}
+                  type="movie"
+                  isRanked={true}
+                />
+              </motion.div>
+            )}
+            
+            {/* Trending TV Shows with enhanced styling */}
+            {trendingTVShows && trendingTVShows.length > 0 && (
+              <motion.div variants={item}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/30">
+                    <Tv className="text-purple-400" size={20} />
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                    Trending TV Shows
+                  </h2>
+                </div>
+                <CategoryRow
+                  title=""
+                  items={trendingTVShows}
+                  type="tv"
+                />
+              </motion.div>
+            )}
+            
+            {/* Popular Movies with enhanced styling */}
+            {popularMovies && popularMovies.length > 0 && (
+              <motion.div variants={item}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/30">
+                    <Film className="text-blue-400" size={20} />
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                    Popular Movies
+                  </h2>
+                </div>
+                <CategoryRow
+                  title=""
+                  items={popularMovies} 
+                  type="movie"
+                />
+              </motion.div>
+            )}
+            
+            {/* Popular TV Shows with enhanced styling */}
+            {popularTVShows && popularTVShows.length > 0 && (
+              <motion.div variants={item}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500/20 border border-green-500/30">
+                    <Star className="text-green-400" size={20} />
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                    Popular TV Shows
+                  </h2>
+                </div>
+                <CategoryRow
+                  title=""
+                  items={popularTVShows} 
+                  type="tv"
+                />
+              </motion.div>
+            )}
+            
+            {/* Personalized Recommendations with enhanced styling */}
+            {currentUser && (
+              <motion.div variants={item} className="pb-8">
+                <PersonalizedRecommendations />
+              </motion.div>
+            )}
+          </div>
         </motion.div>
       )}
     </div>
