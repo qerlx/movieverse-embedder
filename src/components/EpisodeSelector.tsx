@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { ChevronDown, ChevronRight, Play, Clock, Calendar } from "lucide-react";
+import { ChevronDown, ChevronRight, Play, Clock, Calendar, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -109,7 +109,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
         className="w-full mt-8 p-8 text-center"
       >
         <div className="max-w-md mx-auto">
-          <h2 className="text-2xl font-bold mb-3 text-gradient">Episodes</h2>
+          <h2 className="text-xl font-bold mb-3 text-white">Episodes</h2>
           <p className="text-muted-foreground">No episodes available for this show.</p>
         </div>
       </motion.div>
@@ -121,18 +121,18 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="w-full space-y-6 mt-8"
+      className="w-full space-y-4 mt-8"
     >
       <div className="flex items-center gap-3 mb-6">
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 border border-primary/30">
-          <Play size={20} className="text-primary ml-0.5" />
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 border border-primary/30">
+          <Play size={16} className="text-primary ml-0.5" />
         </div>
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+        <h2 className="text-xl font-bold text-white">
           Episodes
         </h2>
       </div>
       
-      <div className="space-y-4">
+      <div className="space-y-3">
         {validSeasons.map((season, index) => (
           <motion.div
             key={season.id}
@@ -140,40 +140,40 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
           >
-            <Card className="border-primary/20 bg-black/40 backdrop-blur-md overflow-hidden hover:border-primary/30 transition-all">
+            <Card className="border-white/10 bg-black/20 backdrop-blur-md overflow-hidden hover:border-primary/20 transition-all">
               <motion.div 
                 className={cn(
-                  "flex justify-between items-center p-6 cursor-pointer hover:bg-black/60 transition-all duration-300",
-                  expandedSeason === season.season_number && "border-b border-primary/20"
+                  "flex justify-between items-center p-4 cursor-pointer hover:bg-black/40 transition-all duration-300",
+                  expandedSeason === season.season_number && "border-b border-white/10"
                 )}
                 onClick={() => handleSeasonToggle(season.season_number)}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <motion.div
                     animate={{ rotate: expandedSeason === season.season_number ? 90 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
                     {expandedSeason === season.season_number ? (
-                      <ChevronDown className="text-primary w-6 h-6" />
+                      <ChevronDown className="text-primary w-5 h-5" />
                     ) : (
-                      <ChevronRight className="text-white/70 w-6 h-6" />
+                      <ChevronRight className="text-white/70 w-5 h-5" />
                     )}
                   </motion.div>
                   
                   <div>
-                    <h3 className="text-xl font-semibold text-white mb-1">
+                    <h3 className="text-lg font-semibold text-white mb-1">
                       Season {season.season_number}
                     </h3>
                     <div className="flex items-center gap-3 text-sm text-white/60">
                       <span className="flex items-center gap-1">
-                        <Play size={14} />
+                        <Play size={12} />
                         {season.episode_count} episodes
                       </span>
                       {season.air_date && (
                         <span className="flex items-center gap-1">
-                          <Calendar size={14} />
+                          <Calendar size={12} />
                           {new Date(season.air_date).getFullYear()}
                         </span>
                       )}
@@ -181,7 +181,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                   </div>
                 </div>
                 
-                <div className="text-primary/60">
+                <div className="text-primary/60 text-sm">
                   {loadingSeasons[season.season_number] && "Loading..."}
                 </div>
               </motion.div>
@@ -195,11 +195,11 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className="p-6 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="p-4 space-y-3">
                       {loadingSeasons[season.season_number] ? (
-                        <div className="col-span-full flex justify-center py-8">
+                        <div className="flex justify-center py-8">
                           <motion.div 
-                            className="w-8 h-8 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-primary"
+                            className="w-6 h-6 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-primary"
                             animate={{ rotate: 360 }}
                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                           />
@@ -211,18 +211,17 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: episodeIndex * 0.05 }}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                            whileHover={{ scale: 1.01 }}
                             className={cn(
-                              "flex gap-4 p-4 rounded-xl cursor-pointer transition-all duration-300 group",
+                              "flex gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 group border",
                               selectedEpisode?.season === season.season_number && 
                               selectedEpisode?.episode === episode.episode_number
-                                ? "bg-primary/20 border border-primary/40 shadow-lg shadow-primary/20"
-                                : "hover:bg-white/5 border border-transparent hover:border-white/10"
+                                ? "bg-primary/10 border-primary/30 shadow-lg"
+                                : "hover:bg-white/5 border-transparent hover:border-white/10"
                             )}
                             onClick={() => handleEpisodeClick(season.season_number, episode.episode_number)}
                           >
-                            <div className="w-32 h-20 flex-shrink-0 bg-black/60 rounded-lg overflow-hidden relative group">
+                            <div className="w-24 h-16 flex-shrink-0 bg-black/40 rounded-md overflow-hidden relative group">
                               {episode.still_path ? (
                                 <img 
                                   src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
@@ -231,76 +230,63 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                                   loading="lazy"
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-white/30 bg-gradient-to-br from-black/60 to-black/80">
-                                  <Play size={20} className="opacity-50" />
+                                <div className="w-full h-full flex items-center justify-center text-white/30">
+                                  <Play size={16} className="opacity-50" />
                                 </div>
                               )}
                               
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <Button
                                   size="icon"
                                   variant="ghost"
-                                  className="w-10 h-10 rounded-full bg-primary/90 hover:bg-primary text-white shadow-lg"
+                                  className="w-8 h-8 rounded-full bg-primary/90 hover:bg-primary text-white"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleWatchNow(season.season_number, episode.episode_number);
                                   }}
                                 >
-                                  <Play size={16} className="ml-0.5" />
+                                  <Play size={12} className="ml-0.5" />
                                 </Button>
                               </div>
                             </div>
                             
                             <div className="flex-1 overflow-hidden">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm font-bold bg-primary/20 text-primary px-2 py-1 rounded-md">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 rounded">
                                   E{episode.episode_number}
                                 </span>
                                 {episode.runtime && (
                                   <span className="text-xs text-white/50 flex items-center gap-1">
-                                    <Clock size={12} />
+                                    <Clock size={10} />
                                     {episode.runtime}m
                                   </span>
                                 )}
                                 {episode.vote_average > 0 && (
                                   <span className="text-xs text-yellow-400 flex items-center gap-1">
-                                    ⭐ {episode.vote_average.toFixed(1)}
+                                    <Star size={10} fill="currentColor" />
+                                    {episode.vote_average.toFixed(1)}
                                   </span>
                                 )}
                               </div>
                               
-                              <h4 className="text-base font-medium line-clamp-1 mb-2 text-white group-hover:text-primary transition-colors">
+                              <h4 className="text-sm font-medium line-clamp-1 mb-1 text-white group-hover:text-primary transition-colors">
                                 {episode.name}
                               </h4>
                               
-                              <p className="text-sm text-white/60 line-clamp-2 leading-relaxed">
+                              <p className="text-xs text-white/60 line-clamp-2 leading-relaxed">
                                 {episode.overview || "No description available."}
                               </p>
                               
                               {episode.air_date && (
-                                <p className="text-xs text-white/40 mt-2">
-                                  Aired: {new Date(episode.air_date).toLocaleDateString()}
+                                <p className="text-xs text-white/40 mt-1">
+                                  {new Date(episode.air_date).toLocaleDateString()}
                                 </p>
                               )}
-                            </div>
-                            
-                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="w-10 h-10 p-0 rounded-full hover:bg-primary/20 text-primary"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleWatchNow(season.season_number, episode.episode_number);
-                                }}
-                              >
-                                <Play size={18} className="ml-0.5" />
-                              </Button>
                             </div>
                           </motion.div>
                         ))
                       ) : (
-                        <div className="col-span-full text-center py-8 text-white/60">
+                        <div className="text-center py-6 text-white/60">
                           No episodes available for this season.
                         </div>
                       )}

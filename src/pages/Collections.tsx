@@ -1,134 +1,262 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { LibraryBig } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Film, Tv, Star, Calendar, Users, Sparkles } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { fetchCollection, fetchMCUList } from "@/lib/collections";
-import CollectionCard from "@/components/CollectionCard";
-import type { Collection } from "@/types";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { collections } from "@/lib/collections";
 
 const Collections = () => {
-  const [collections, setCollections] = useState<Collection[]>([]);
+  const navigate = useNavigate();
+  const [featuredCollections, setFeaturedCollections] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Featured collection IDs with more variety
-  const featuredCollectionIds = [
-    573436, // Spider-Verse
-    328,    // Jurassic Park
-    1241,   // Harry Potter
-    119,    // Lord of the Rings
-    10,     // Star Wars
-    263,    // The Dark Knight
-    131635, // Hunger Games
-    86311,  // Avengers
-    645,    // James Bond
-    9485,   // Fast & Furious
-    295,    // Pirates of the Caribbean
-    2344,   // The Matrix
-    748,    // X-Men
-    422834, // Godzilla MonsterVerse
-    87359,  // Mission: Impossible
-    8091,   // Alien
-    1709,   // Scream
-    91361,  // Halloween
-    8945,   // Mad Max
-    434,    // Lethal Weapon
-    1582,   // Tremors
-    86066,  // Sherlock Holmes
-  ];
 
   useEffect(() => {
-    const loadFeaturedCollections = async () => {
-      setIsLoading(true);
+    const loadCollections = async () => {
       try {
-        // Fetch MCU list separately as it's handled differently
-        const mcuCollection = await fetchMCUList();
-        
-        // Fetch all regular collections
-        const collectionsPromises = featuredCollectionIds.map(async (id) => {
-          try {
-            return await fetchCollection(id);
-          } catch (error) {
-            console.error(`Failed to fetch collection ${id}:`, error);
-            return null;
-          }
-        });
-        
-        // Wait for all collections to load
-        const collectionsResults = await Promise.all(collectionsPromises);
-        const validCollections = collectionsResults.filter(collection => collection !== null);
-        
-        // Combine MCU with other collections
-        const allCollections = [mcuCollection, ...validCollections];
-        
-        // Sort alphabetically by name
-        allCollections.sort((a, b) => a.name.localeCompare(b.name));
-        
-        setCollections(allCollections);
+        setIsLoading(true);
+        const collectionsData = await Promise.all(
+          collections.map(async (collection) => {
+            try {
+              const data = await collection.fetchFunction();
+              return {
+                ...collection,
+                itemCount: data?.results?.length || data?.length || 0,
+                items: data?.results || data || []
+              };
+            } catch (error) {
+              console.error(`Error loading collection ${collection.name}:`, error);
+              return {
+                ...collection,
+                itemCount: 0,
+                items: []
+              };
+            }
+          })
+        );
+        setFeaturedCollections(collectionsData);
       } catch (error) {
-        console.error("Error loading featured collections:", error);
-        toast.error("Failed to load collections. Please try again later.");
+        console.error("Error loading collections:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadFeaturedCollections();
+    loadCollections();
   }, []);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div 
+          className="relative w-16 h-16"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <motion.div 
+            className="absolute inset-0 rounded-full border-3 border-t-primary border-r-primary/30 border-b-transparent border-l-transparent"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen pb-24">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="container mx-auto px-4 pt-6 pb-16"
-      >
-        {/* Page Header */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <LibraryBig className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-              Collections
-            </h1>
-          </div>
-          <p className="text-muted-foreground">
-            Explore popular film franchises and series
-          </p>
-          
-          {!isLoading && (
-            <Badge variant="premium" className="text-xs py-1.5 mt-4">
-              {collections.length} Featured Collections
-            </Badge>
-          )}
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90"
+    >
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-purple-500/5 to-blue-500/10" />
+        <div className="container mx-auto px-6 py-16">
+          <motion.div 
+            initial={{ y: -30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            className="text-center max-w-4xl mx-auto"
+          >
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/20 border border-primary/30">
+                <Sparkles size={24} className="text-primary" />
+              </div>
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-purple-400 to-blue-400 bg-clip-text text-transparent">
+                Collections
+              </h1>
+            </div>
+            <p className="text-lg text-white/80 leading-relaxed mb-8">
+              Discover curated collections of the best movies and TV shows, organized by themes, genres, and popular franchises.
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Collections Grid */}
+      <div className="container mx-auto px-6 pb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {featuredCollections.map((collection, index) => (
+            <motion.div
+              key={collection.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              whileHover={{ y: -4 }}
+              className="group cursor-pointer"
+              onClick={() => navigate(`/collections/${collection.id}`)}
+            >
+              <Card className="border-white/10 bg-black/20 backdrop-blur-xl overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 h-full">
+                {/* Collection Image/Preview */}
+                <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/20 via-purple-500/10 to-blue-500/20">
+                  {collection.items.length > 0 && collection.items[0].poster_path ? (
+                    <div className="flex">
+                      {collection.items.slice(0, 3).map((item: any, idx: number) => (
+                        <div key={idx} className="flex-1 h-48 relative">
+                          <img
+                            src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                            alt={item.title || item.name}
+                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+                            style={{
+                              transform: `translateX(${idx * -20}px)`,
+                              zIndex: 3 - idx
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-primary/20 flex items-center justify-center">
+                          {collection.type === 'movie' ? (
+                            <Film size={24} className="text-primary" />
+                          ) : (
+                            <Tv size={24} className="text-primary" />
+                          )}
+                        </div>
+                        <p className="text-white/60 text-sm">No items available</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  
+                  {/* Collection Badge */}
+                  <div className="absolute top-3 left-3">
+                    <Badge 
+                      variant="secondary" 
+                      className="bg-black/60 backdrop-blur-sm text-white border-white/20"
+                    >
+                      {collection.itemCount} items
+                    </Badge>
+                  </div>
+                  
+                  {/* Type Badge */}
+                  <div className="absolute top-3 right-3">
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "backdrop-blur-sm border-white/20 text-white",
+                        collection.type === 'movie' 
+                          ? "bg-blue-500/20 border-blue-500/30" 
+                          : "bg-purple-500/20 border-purple-500/30"
+                      )}
+                    >
+                      {collection.type === 'movie' ? (
+                        <><Film size={12} className="mr-1" /> Movies</>
+                      ) : (
+                        <><Tv size={12} className="mr-1" /> TV Shows</>
+                      )}
+                    </Badge>
+                  </div>
+                </div>
+
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {/* Title */}
+                    <div>
+                      <h3 className="text-xl font-bold text-white group-hover:text-primary transition-colors duration-300 mb-2">
+                        {collection.name}
+                      </h3>
+                      <p className="text-white/70 text-sm leading-relaxed line-clamp-2">
+                        {collection.description}
+                      </p>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="flex items-center justify-between text-sm text-white/60">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1">
+                          <Users size={12} />
+                          <span>Popular</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Star size={12} />
+                          <span>Curated</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar size={12} />
+                        <span>Updated</span>
+                      </div>
+                    </div>
+
+                    {/* View Button */}
+                    <Button 
+                      className="w-full bg-gradient-to-r from-primary/80 to-primary hover:from-primary hover:to-primary/90 text-white rounded-lg transition-all duration-300 group-hover:shadow-lg group-hover:shadow-primary/20"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/collections/${collection.id}`);
+                      }}
+                    >
+                      Explore Collection
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Collections Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array(12).fill(0).map((_, index) => (
-              <div key={index} className="overflow-hidden">
-                <div className="aspect-[16/9] relative">
-                  <Skeleton className="w-full h-full rounded-lg" />
-                </div>
+        {/* Empty State */}
+        {featuredCollections.length === 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16"
+          >
+            <div className="max-w-md mx-auto">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
+                <Sparkles size={24} className="text-primary" />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {collections.map((collection) => (
-              <CollectionCard 
-                key={collection.id} 
-                collection={collection}
-              />
-            ))}
-          </div>
+              <h3 className="text-xl font-bold text-white mb-2">No Collections Available</h3>
+              <p className="text-white/60 mb-6">
+                Collections are currently being prepared. Check back soon for curated content!
+              </p>
+              <Button 
+                onClick={() => navigate("/")}
+                className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+              >
+                Browse All Content
+              </Button>
+            </div>
+          </motion.div>
         )}
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   );
+};
+
+// Helper function for conditional classes
+const cn = (...classes: (string | undefined | null | false)[]) => {
+  return classes.filter(Boolean).join(' ');
 };
 
 export default Collections;

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,10 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     checkFavoriteStatus();
   }, [currentUser, id, type, localStorageKey]);
 
-  const handleToggleFavorite = async () => {
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!currentUser) {
       toast.error("Please sign in to add favorites");
       return;
@@ -101,14 +105,14 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 
   const sizeClasses = {
     sm: "h-8 px-3 text-xs",
-    md: "h-10 px-4",
-    lg: "h-12 px-6 text-lg"
+    md: "h-9 px-4 text-sm",
+    lg: "h-10 px-5 text-sm"
   };
 
   const iconSizeClasses = {
     sm: "w-3 h-3",
     md: "w-4 h-4",
-    lg: "w-5 h-5"
+    lg: "w-4 h-4"
   };
 
   if (variant === "iconOnly") {
@@ -118,8 +122,8 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         variant="ghost"
         size="icon"
         className={cn(
-          "rounded-full hover:bg-background/20 bg-background/10 backdrop-blur-md border border-white/20 transition-all duration-200 shadow-lg",
-          "hover:scale-110 active:scale-95",
+          "rounded-full hover:bg-white/10 bg-black/20 backdrop-blur-md border border-white/20 transition-all duration-200 shadow-lg",
+          "hover:scale-105 active:scale-95",
           isLoading && "animate-pulse",
           className
         )}
@@ -145,17 +149,17 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         variant="ghost"
         onClick={handleToggleFavorite}
         disabled={isLoading || !isInitialized}
-        className={className}
+        className={cn(sizeClasses[size], className)}
         title={isFavorite ? `Remove ${displayName} from favorites` : `Add ${displayName} to favorites`}
       >
         <Heart
           className={cn(
             iconSizeClasses[size],
-            "mr-2",
-            isFavorite ? "fill-red-500 text-red-500" : ""
+            "mr-2 transition-colors duration-200",
+            isFavorite ? "fill-red-500 text-red-500" : "text-white/70"
           )}
         />
-        {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+        {isFavorite ? "Remove" : "Add to Favorites"}
       </Button>
     );
   }
@@ -164,19 +168,24 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     return (
       <Button
         type="button"
-        variant={isFavorite ? "destructive" : "outline"}
+        variant="outline"
         onClick={handleToggleFavorite}
         disabled={isLoading || !isInitialized}
-        className={cn(sizeClasses[size], className)}
+        className={cn(
+          sizeClasses[size], 
+          "border-white/20 bg-black/20 backdrop-blur-sm hover:bg-black/40 text-white hover:text-white transition-all duration-200",
+          isFavorite && "border-red-500/50 bg-red-500/10 hover:bg-red-500/20",
+          className
+        )}
       >
         <Heart
           className={cn(
             iconSizeClasses[size],
-            "mr-2",
-            isFavorite ? "fill-current" : ""
+            "mr-2 transition-all duration-200",
+            isFavorite ? "fill-red-500 text-red-500" : "text-white/70"
           )}
         />
-        {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+        {isFavorite ? "Remove" : "Add to Favorites"}
       </Button>
     );
   }
@@ -191,6 +200,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         sizeClasses[size], 
         "transition-all duration-200 hover:scale-105 active:scale-95",
         isLoading && "animate-pulse",
+        !isFavorite && "border-white/20 bg-black/20 backdrop-blur-sm hover:bg-black/40 text-white hover:text-white",
         className
       )}
     >
@@ -198,10 +208,10 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         className={cn(
           iconSizeClasses[size],
           "mr-2 transition-all duration-200",
-          isFavorite ? "fill-current" : ""
+          isFavorite ? "fill-current" : "text-white/70"
         )}
       />
-      {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+      {isFavorite ? "Remove" : "Add to Favorites"}
     </Button>
   );
 };
