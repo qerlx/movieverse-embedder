@@ -21,23 +21,117 @@ export async function fetchCollection(id: number): Promise<Collection> {
   }
 }
 
-// Function to fetch the MCU list from TMDb with the updated ID
-export async function fetchMCUList() {
+// Function to fetch the MCU collection using the proper collection ID
+export async function fetchMCUCollection(): Promise<Collection> {
   try {
-    // Use the MCU list ID: 84979
-    const url = 'https://api.themoviedb.org/3/list/84979?language=en-US&page=1';
+    // Use the official MCU collection ID: 131295 (The Marvel Cinematic Universe)
+    const collectionId = 131295;
+    const collection = await fetchCollection(collectionId);
+    
+    // If the main collection doesn't have enough movies, supplement with additional MCU collections
+    if (!collection.parts || collection.parts.length < 25) {
+      console.log("Fetching additional MCU movies from multiple collections...");
+      
+      // Known MCU collection IDs
+      const mcuCollectionIds = [
+        131295, // The Marvel Cinematic Universe
+        131296, // The Infinity Saga
+        623911, // Phase One
+        623912, // Phase Two  
+        623913, // Phase Three
+        748  // X-Men Collection (Marvel)
+      ];
+      
+      const allMovies = new Map();
+      
+      // Add movies from main collection first
+      if (collection.parts) {
+        collection.parts.forEach(movie => {
+          allMovies.set(movie.id, movie);
+        });
+      }
+      
+      // Fetch from other collections
+      for (const id of mcuCollectionIds.slice(1)) {
+        try {
+          const additionalCollection = await fetchCollection(id);
+          if (additionalCollection.parts) {
+            additionalCollection.parts.forEach(movie => {
+              // Only add if it's not already in our collection
+              if (!allMovies.has(movie.id)) {
+                allMovies.set(movie.id, movie);
+              }
+            });
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch collection ${id}:`, error);
+        }
+      }
+      
+      // Convert back to array and sort by release date
+      collection.parts = Array.from(allMovies.values()).sort((a, b) => {
+        const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
+        const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
+        return dateA - dateB;
+      });
+    }
+    
+    // Enhance the collection with better metadata
+    return {
+      ...collection,
+      name: "Marvel Cinematic Universe",
+      overview: collection.overview || "The Marvel Cinematic Universe (MCU) is an American media franchise and shared universe centered on a series of superhero films produced by Marvel Studios. The films are based on characters that appear in American comic books published by Marvel Comics.",
+      poster_path: collection.poster_path || "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
+      backdrop_path: collection.backdrop_path || "/rO0LncgjszG43IaPZnBJWPiNJgZ.jpg"
+    };
+  } catch (error) {
+    console.error("Error fetching MCU collection:", error);
+    
+    // Fallback: try to use the list approach if collection fails
+    try {
+      console.log("Trying fallback MCU list approach...");
+      return await fetchMCUList();
+    } catch (listError) {
+      console.error("Fallback MCU list also failed:", listError);
+      throw new Error("Failed to fetch MCU collection and fallback list");
+    }
+  }
+}
+
+// Fallback function to fetch the MCU list from TMDb
+export async function fetchMCUList(): Promise<Collection> {
+  try {
+    // Use a more reliable MCU list ID or create from search
+    const searchUrl = 'https://api.themoviedb.org/3/search/collection?query=marvel%20cinematic%20universe&language=en-US&page=1';
+    const searchResponse = await fetch(searchUrl, API_OPTIONS);
+    
+    if (!searchResponse.ok) throw new Error('Failed to search for MCU collections');
+    const searchData = await searchResponse.json();
+    
+    // Find the best MCU collection from search results
+    const mcuCollection = searchData.results?.find((collection: any) => 
+      collection.name.toLowerCase().includes('marvel cinematic universe') ||
+      collection.name.toLowerCase().includes('infinity saga')
+    );
+    
+    if (mcuCollection) {
+      return await fetchCollection(mcuCollection.id);
+    }
+    
+    // If search fails, use the list approach as final fallback
+    const url = 'https://api.themoviedb.org/3/list/1?language=en-US&page=1';
     const response = await fetch(url, API_OPTIONS);
     if (!response.ok) throw new Error('Failed to fetch MCU list');
     const data = await response.json();
     
-    // Transform the list data into Collection format for consistency
+    // Transform the list data into Collection format
     return {
-      id: 84979,
+      id: 131295,
       name: "Marvel Cinematic Universe",
       overview: "The Marvel Cinematic Universe (MCU) is an American media franchise and shared universe centered on a series of superhero films produced by Marvel Studios.",
-      poster_path: data.items[0]?.poster_path || "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
-      backdrop_path: data.items[0]?.backdrop_path || "/rO0LncgjszG43IaPZnBJWPiNJgZ.jpg",
-      parts: data.items.map(item => ({
+      poster_path: "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
+      backdrop_path: "/rO0LncgjszG43IaPZnBJWPiNJgZ.jpg",
+      parts: data.items?.map((item: any) => ({
         id: item.id,
         title: item.title,
         poster_path: item.poster_path,
@@ -50,7 +144,7 @@ export async function fetchMCUList() {
         adult: item.adult || false,
         video: item.video || false,
         original_language: item.original_language || "en"
-      }))
+      })) || []
     };
   } catch (error) {
     console.error("Error fetching MCU list:", error);
