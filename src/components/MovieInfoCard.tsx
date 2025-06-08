@@ -24,65 +24,58 @@ const MovieInfoCard: React.FC<MovieInfoCardProps> = ({ movie, onWatchClick, chil
     <motion.div 
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, delay: 0.6 }}
+      transition={{ duration: 0.6, delay: 0.3 }}
       className="mt-6"
     >
-      <Card className="border-primary/20 bg-black/40 backdrop-blur-md overflow-hidden hover:border-primary/30 transition-all">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-bold text-gradient">Movie Details</h3>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30">
-              <Film size={16} className="text-purple-400" />
-              <span className="text-purple-300 text-sm font-medium">Movie</span>
+      <Card className="border-white/10 bg-black/40 backdrop-blur-md overflow-hidden">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 border border-primary/30">
+              <Film size={16} className="text-primary" />
             </div>
+            <h3 className="text-lg font-semibold text-white">Details</h3>
           </div>
         </CardHeader>
         
-        <CardContent className="space-y-6">
-          {/* Enhanced Movie Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <CardContent className="space-y-4">
+          {/* Movie Stats */}
+          <div className="grid grid-cols-3 gap-3">
             {movie.vote_average > 0 && (
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 hover:border-yellow-500/30 transition-colors">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-yellow-500/20">
-                  <Star size={20} className="text-yellow-400" />
+              <div className="text-center p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                <div className="flex items-center justify-center mb-1">
+                  <Star size={16} className="text-yellow-400" />
                 </div>
-                <div>
-                  <p className="text-sm text-white/60 font-medium">Rating</p>
-                  <p className="text-lg font-bold text-white">{movie.vote_average.toFixed(1)}/10</p>
-                </div>
+                <p className="text-xs text-white/60">Rating</p>
+                <p className="text-sm font-bold text-white">{movie.vote_average.toFixed(1)}</p>
               </div>
             )}
             
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 hover:border-blue-500/30 transition-colors">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-500/20">
-                <Clock size={20} className="text-blue-400" />
+            <div className="text-center p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="flex items-center justify-center mb-1">
+                <Clock size={16} className="text-blue-400" />
               </div>
-              <div>
-                <p className="text-sm text-white/60 font-medium">Duration</p>
-                <p className="text-lg font-bold text-white">{formattedRuntime}</p>
-              </div>
+              <p className="text-xs text-white/60">Duration</p>
+              <p className="text-sm font-bold text-white">{formattedRuntime}</p>
             </div>
             
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 hover:border-green-500/30 transition-colors">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-500/20">
-                <Calendar size={20} className="text-green-400" />
+            <div className="text-center p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="flex items-center justify-center mb-1">
+                <Calendar size={16} className="text-green-400" />
               </div>
-              <div>
-                <p className="text-sm text-white/60 font-medium">Release</p>
-                <p className="text-lg font-bold text-white">{releaseYear}</p>
-              </div>
+              <p className="text-xs text-white/60">Year</p>
+              <p className="text-sm font-bold text-white">{releaseYear}</p>
             </div>
           </div>
 
-          {/* Enhanced Genres */}
+          {/* Genres */}
           {movie.genres && movie.genres.length > 0 && (
             <div>
-              <h4 className="text-base font-semibold text-white/90 mb-3">Genres</h4>
-              <div className="flex flex-wrap gap-2">
-                {movie.genres.map((genre: any) => (
+              <h4 className="text-sm font-medium text-white/80 mb-2">Genres</h4>
+              <div className="flex flex-wrap gap-1">
+                {movie.genres.slice(0, 4).map((genre: any) => (
                   <span
                     key={genre.id}
-                    className="px-3 py-1.5 text-sm rounded-full bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 text-primary-foreground hover:border-primary/50 transition-colors"
+                    className="px-2 py-1 text-xs rounded-full bg-white/10 text-white/80 border border-white/10"
                   >
                     {genre.name}
                   </span>
@@ -91,26 +84,26 @@ const MovieInfoCard: React.FC<MovieInfoCardProps> = ({ movie, onWatchClick, chil
             </div>
           )}
 
-          {/* Enhanced Overview */}
+          {/* Overview */}
           {movie.overview && (
             <div>
-              <h4 className="text-base font-semibold text-white/90 mb-3">Overview</h4>
-              <p className="text-white/70 leading-relaxed">{movie.overview}</p>
+              <h4 className="text-sm font-medium text-white/80 mb-2">Overview</h4>
+              <p className="text-xs text-white/60 line-clamp-3 leading-relaxed">{movie.overview}</p>
             </div>
           )}
 
-          {/* Enhanced Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-2 pt-2">
             <Button
               onClick={onWatchClick}
-              className="flex-1 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white gap-2 rounded-full py-6 text-base font-medium shadow-lg hover:shadow-primary/30 transition-all transform hover:scale-[1.02]"
+              className="w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-lg py-2 text-sm font-medium"
             >
-              <Play size={18} />
+              <Play size={16} />
               Watch Now
             </Button>
             
             {children && (
-              <div className="flex gap-2 sm:flex-row">
+              <div className="flex gap-2">
                 {children}
               </div>
             )}

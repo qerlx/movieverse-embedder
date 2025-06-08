@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -68,11 +69,9 @@ const MovieDetail = () => {
     };
 
     fetchMovieDetails();
-    // Scroll to top when navigating to a new movie
     window.scrollTo(0, 0);
   }, [id, toast]);
 
-  // Handle watch button click for specific source
   const handleWatchClick = (source?: string) => {
     if (id) {
       if (source) {
@@ -83,7 +82,6 @@ const MovieDetail = () => {
     }
   };
 
-  // Loading and error states
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -93,12 +91,9 @@ const MovieDetail = () => {
           animate={{ opacity: 1 }}
         >
           <motion.div 
-            className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-primary animate-spin"
-            style={{ animationDuration: '1s' }}
-          />
-          <motion.div 
-            className="absolute inset-2 rounded-full border-2 border-t-transparent border-r-primary border-b-primary border-l-transparent animate-spin"
-            style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}
+            className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-primary"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
         </motion.div>
       </div>
@@ -109,9 +104,9 @@ const MovieDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md p-8 backdrop-blur-lg bg-black/40 rounded-2xl border border-white/10">
-          <h2 className="text-2xl font-bold mb-2 purple-text-gradient">Movie Not Found</h2>
-          <p className="text-muted-foreground mb-6">The movie you're looking for doesn't exist or has been removed.</p>
-          <Button onClick={() => navigate("/movies")} className="premium-button premium-button-primary">Browse Movies</Button>
+          <h2 className="text-2xl font-bold mb-2 text-white">Movie Not Found</h2>
+          <p className="text-white/60 mb-6">The movie you're looking for doesn't exist or has been removed.</p>
+          <Button onClick={() => navigate("/movies")} className="bg-primary hover:bg-primary/90">Browse Movies</Button>
         </div>
       </div>
     );
@@ -147,7 +142,7 @@ const MovieDetail = () => {
               initial={{ filter: "blur(16px)", opacity: 0 }}
               animate={{ filter: "blur(0px)", opacity: 1 }}
               transition={{ duration: 1.2 }}
-              className="w-full h-[80vh] bg-cover bg-center bg-no-repeat"
+              className="w-full h-[70vh] bg-cover bg-center bg-no-repeat"
               style={{ backgroundImage: `url(${backdropUrl})` }}
             ></motion.div>
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent"></div>
@@ -155,7 +150,7 @@ const MovieDetail = () => {
           </div>
         )}
 
-        <div className="relative container mx-auto px-4 pt-20 pb-10 min-h-[80vh] flex flex-col justify-center">
+        <div className="relative container mx-auto px-4 pt-20 pb-10 min-h-[70vh] flex flex-col justify-center">
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Poster */}
             <motion.div 
@@ -164,7 +159,7 @@ const MovieDetail = () => {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="w-full max-w-xs mx-auto md:mx-0"
             >
-              <div className="overflow-hidden rounded-2xl shadow-2xl hover:shadow-primary/20 transition-shadow duration-300 purple-glow">
+              <div className="overflow-hidden rounded-xl shadow-2xl">
                 <motion.img
                   whileHover={{ scale: 1.03 }}
                   transition={{ duration: 0.2 }}
@@ -180,18 +175,17 @@ const MovieDetail = () => {
                 />
               </div>
               
-              {/* Video Player Options Card */}
+              {/* Watch Options */}
               <motion.div 
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
-                className="mt-8"
+                className="mt-6"
               >
-                <Card className="border-primary/20 bg-black/30 backdrop-blur-md">
+                <Card className="border-white/10 bg-black/30 backdrop-blur-md">
                   <CardContent className="space-y-3 p-4">
-                    <h3 className="text-gradient text-xl mb-2 font-semibold">Watch Options</h3>
+                    <h3 className="text-white text-lg font-semibold">Watch Options</h3>
                     
-                    {/* Video source buttons */}
                     <div className="space-y-2">
                       {videoSources.map((source, index) => (
                         <Button 
@@ -199,14 +193,14 @@ const MovieDetail = () => {
                           onClick={() => handleWatchClick(source.id)}
                           className={
                             index === 0 
-                              ? "w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-4 py-6 shadow-lg hover:shadow-primary/30 transition-all" 
-                              : "w-full bg-black/60 hover:bg-black/80 text-white gap-2 rounded-full px-4 py-4 border border-primary/30 hover:border-primary/50 transition-all mt-2"
+                              ? "w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-lg py-3" 
+                              : "w-full bg-black/40 hover:bg-black/60 text-white gap-2 rounded-lg py-2 border border-white/10"
                           }
-                          size={index === 0 ? "lg" : "default"}
+                          size={index === 0 ? "default" : "sm"}
                         >
                           {source.icon}
-                          Watch with {source.name}
-                          {index === 0 && <span className="text-xs ml-1 opacity-70">(Recommended)</span>}
+                          {source.name}
+                          {index === 0 && <span className="text-xs opacity-70">(HD)</span>}
                         </Button>
                       ))}
                     </div>
@@ -223,7 +217,6 @@ const MovieDetail = () => {
                 <WatchProviders id={parseInt(id!)} type="movie" />
               </motion.div>
 
-              {/* Enhanced Movie Info Card */}
               <MovieInfoCard 
                 movie={movie} 
                 onWatchClick={() => handleWatchClick()}
@@ -261,14 +254,14 @@ const MovieDetail = () => {
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6 }}
-                className="mb-4"
+                className="mb-6"
               >
                 <LogoTitle
                   id={movie.id}
                   title={movie.title}
                   type="movie"
-                  className="max-w-lg h-16 sm:h-20 md:h-24 object-contain"
-                  fallbackClassName="cinematic-title text-4xl md:text-6xl font-bold text-white text-shadow"
+                  className="max-w-md h-12 sm:h-16 md:h-20 object-contain"
+                  fallbackClassName="text-3xl md:text-5xl font-bold text-white"
                 />
               </motion.div>
               
@@ -276,12 +269,12 @@ const MovieDetail = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                className="flex flex-wrap gap-3 mb-6"
+                className="flex flex-wrap gap-2 mb-4"
               >
-                {movie.genres?.map((genre: any) => (
+                {movie.genres?.slice(0, 4).map((genre: any) => (
                   <span
                     key={genre.id}
-                    className="px-3 py-1 rounded-full text-sm backdrop-blur-sm bg-black/30 border border-white/10 text-white/90"
+                    className="px-3 py-1 rounded-full text-sm bg-white/10 border border-white/10 text-white/90"
                   >
                     {genre.name}
                   </span>
@@ -292,29 +285,23 @@ const MovieDetail = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="flex flex-wrap gap-6 mb-6 text-sm"
+                className="flex flex-wrap gap-4 mb-6 text-sm"
               >
                 {movie.vote_average > 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
-                    <Star size={16} className="text-yellow-400" />
-                    <span className="font-medium">{movie.vote_average.toFixed(1)}/10</span>
+                  <div className="flex items-center gap-1 text-yellow-400">
+                    <Star size={16} />
+                    <span>{movie.vote_average.toFixed(1)}</span>
                   </div>
                 )}
                 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
-                  <Clock size={16} className="text-white/80" />
+                <div className="flex items-center gap-1 text-white/80">
+                  <Clock size={16} />
                   <span>{movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : "Unknown"}</span>
                 </div>
                 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
-                  <Calendar size={16} className="text-white/80" />
+                <div className="flex items-center gap-1 text-white/80">
+                  <Calendar size={16} />
                   <span>{movie.release_date ? new Date(movie.release_date).getFullYear() : "Unknown"}</span>
-                </div>
-                
-                {/* Media type indicator */}
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
-                  <Film size={16} className="text-purple-400" />
-                  <span>Movie</span>
                 </div>
               </motion.div>
               
@@ -324,8 +311,7 @@ const MovieDetail = () => {
                 transition={{ duration: 0.8, delay: 0.5 }}
                 className="mb-6 max-w-2xl"
               >
-                <h2 className="text-xl font-semibold mb-2 text-white/90">Overview</h2>
-                <p className="text-white/70 leading-relaxed">{movie.overview}</p>
+                <p className="text-white/80 leading-relaxed">{movie.overview}</p>
               </motion.div>
               
               {directors.length > 0 && (
@@ -335,14 +321,9 @@ const MovieDetail = () => {
                   transition={{ duration: 0.8, delay: 0.6 }}
                   className="mb-8"
                 >
-                  <h2 className="text-xl font-semibold mb-2 text-white/90">Director</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {directors.map((director: any) => (
-                      <span key={director.id} className="text-white/70">
-                        {director.name}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="text-white/60">
+                    <span className="font-medium">Director:</span> {directors.map((director: any) => director.name).join(", ")}
+                  </p>
                 </motion.div>
               )}
               
@@ -354,10 +335,10 @@ const MovieDetail = () => {
               >
                 <Button
                   onClick={() => handleWatchClick()}
-                  className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-full px-8 py-6 text-lg font-medium shadow-lg hover:shadow-primary/30 transition-all"
+                  className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-lg px-8 py-3 text-lg font-medium"
                 >
-                  <Play size={22} className="ml-1" />
-                  Watch Now
+                  <Play size={20} />
+                  Play
                 </Button>
                 
                 {currentUser && (
@@ -391,36 +372,34 @@ const MovieDetail = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="py-12 bg-gradient-to-b from-transparent to-black/30"
+          className="py-12"
         >
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-8 purple-text-gradient">
-              Featured Cast
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
+            <h2 className="text-2xl font-bold mb-8 text-white">Cast</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {topCast.map((person: Cast, index) => (
                 <motion.div 
                   key={person.id} 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.1 * index }}
-                  className="premium-card hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
+                  className="bg-black/20 rounded-lg overflow-hidden border border-white/10"
                 >
                   {person.profile_path ? (
                     <img
                       src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
                       alt={person.name}
-                      className="w-full h-48 object-cover object-center"
+                      className="w-full h-40 object-cover"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-48 flex items-center justify-center bg-black/50">
-                      <span className="text-muted-foreground">No Photo</span>
+                    <div className="w-full h-40 flex items-center justify-center bg-black/50">
+                      <span className="text-white/60 text-sm">No Photo</span>
                     </div>
                   )}
-                  <div className="p-4">
-                    <h3 className="font-medium text-sm line-clamp-1">{person.name}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                  <div className="p-3">
+                    <h3 className="font-medium text-sm text-white line-clamp-1">{person.name}</h3>
+                    <p className="text-xs text-white/60 line-clamp-1 mt-1">
                       {person.character}
                     </p>
                   </div>
