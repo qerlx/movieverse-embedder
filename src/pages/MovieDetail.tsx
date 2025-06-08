@@ -14,6 +14,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import AddToWatchedButton from "@/components/AddToWatchedButton";
 import WatchProviders from "@/components/WatchProviders";
 import LogoTitle from "@/components/LogoTitle";
+import MovieInfoCard from "@/components/MovieInfoCard";
 import { motion } from "framer-motion";
 
 interface Cast {
@@ -124,14 +125,6 @@ const MovieDetail = () => {
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
     : "/placeholder.svg";
 
-  const formattedRuntime = movie.runtime
-    ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m`
-    : "Unknown";
-  
-  const releaseYear = movie.release_date
-    ? new Date(movie.release_date).getFullYear()
-    : "Unknown";
-  
   const directors = movie.credits?.crew?.filter(
     (person: any) => person.job === "Director"
   ) || [];
@@ -229,6 +222,32 @@ const MovieDetail = () => {
               >
                 <WatchProviders id={parseInt(id!)} type="movie" />
               </motion.div>
+
+              {/* Enhanced Movie Info Card */}
+              <MovieInfoCard 
+                movie={movie} 
+                onWatchClick={() => handleWatchClick()}
+              >
+                {currentUser && (
+                  <>
+                    <FavoriteButton
+                      id={movie.id} 
+                      type="movie" 
+                      title={movie.title}
+                      posterPath={movie.poster_path}
+                      variant="outline"
+                    />
+                    <AddToWatchedButton
+                      itemId={movie.id}
+                      itemType="movie"
+                      title={movie.title}
+                      posterPath={movie.poster_path}
+                      variant="outline"
+                      genres={movie.genres?.map((g: any) => g.id)}
+                    />
+                  </>
+                )}
+              </MovieInfoCard>
             </motion.div>
 
             {/* Details */}
@@ -284,12 +303,12 @@ const MovieDetail = () => {
                 
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
                   <Clock size={16} className="text-white/80" />
-                  <span>{formattedRuntime}</span>
+                  <span>{movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : "Unknown"}</span>
                 </div>
                 
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/30 backdrop-blur-sm">
                   <Calendar size={16} className="text-white/80" />
-                  <span>{releaseYear}</span>
+                  <span>{movie.release_date ? new Date(movie.release_date).getFullYear() : "Unknown"}</span>
                 </div>
                 
                 {/* Media type indicator */}
