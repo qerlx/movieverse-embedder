@@ -99,7 +99,7 @@ const Collections = () => {
 
       {/* Collections Grid */}
       <div className="container mx-auto px-6 pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {featuredCollections.map((collection, index) => (
             <motion.div
               key={collection.id}
@@ -112,17 +112,17 @@ const Collections = () => {
             >
               <Card className="border-white/10 bg-black/20 backdrop-blur-xl overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 h-full">
                 {/* Collection Image/Preview */}
-                <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/20 via-purple-500/10 to-blue-500/20">
+                <div className="relative h-32 sm:h-40 md:h-48 overflow-hidden bg-gradient-to-br from-primary/20 via-purple-500/10 to-blue-500/20">
                   {collection.items.length > 0 && collection.items[0].poster_path ? (
                     <div className="flex">
                       {collection.items.slice(0, 3).map((item: any, idx: number) => (
-                        <div key={idx} className="flex-1 h-48 relative">
+                        <div key={idx} className="flex-1 h-32 sm:h-40 md:h-48 relative">
                           <img
                             src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
                             alt={item.title || item.name}
                             className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
                             style={{
-                              transform: `translateX(${idx * -20}px)`,
+                              transform: `translateX(${idx * -15}px)`,
                               zIndex: 3 - idx
                             }}
                           />
@@ -149,68 +149,69 @@ const Collections = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   
                   {/* Collection Badge */}
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-2 left-2 md:top-3 md:left-3">
                     <Badge 
                       variant="secondary" 
-                      className="bg-black/60 backdrop-blur-sm text-white border-white/20"
+                      className="bg-black/60 backdrop-blur-sm text-white border-white/20 text-xs"
                     >
                       {collection.itemCount} items
                     </Badge>
                   </div>
                   
                   {/* Type Badge */}
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-2 right-2 md:top-3 md:right-3">
                     <Badge 
                       variant="outline" 
                       className={cn(
-                        "backdrop-blur-sm border-white/20 text-white",
+                        "backdrop-blur-sm border-white/20 text-white text-xs",
                         collection.type === 'movie' 
                           ? "bg-blue-500/20 border-blue-500/30" 
                           : "bg-purple-500/20 border-purple-500/30"
                       )}
                     >
                       {collection.type === 'movie' ? (
-                        <><Film size={12} className="mr-1" /> Movies</>
+                        <><Film size={10} className="mr-1" /> Movies</>
                       ) : (
-                        <><Tv size={12} className="mr-1" /> TV Shows</>
+                        <><Tv size={10} className="mr-1" /> TV Shows</>
                       )}
                     </Badge>
                   </div>
                 </div>
 
-                <CardContent className="p-6">
-                  <div className="space-y-4">
+                <CardContent className="p-4 md:p-6">
+                  <div className="space-y-3 md:space-y-4">
                     {/* Title */}
                     <div>
-                      <h3 className="text-xl font-bold text-white group-hover:text-primary transition-colors duration-300 mb-2">
+                      <h3 className="text-lg md:text-xl font-bold text-white group-hover:text-primary transition-colors duration-300 mb-2">
                         {collection.name}
                       </h3>
-                      <p className="text-white/70 text-sm leading-relaxed line-clamp-2">
+                      <p className="text-white/70 text-xs md:text-sm leading-relaxed line-clamp-2">
                         {collection.description}
                       </p>
                     </div>
 
                     {/* Stats */}
-                    <div className="flex items-center justify-between text-sm text-white/60">
-                      <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between text-xs md:text-sm text-white/60">
+                      <div className="flex items-center gap-2 md:gap-4">
                         <div className="flex items-center gap-1">
-                          <Users size={12} />
-                          <span>Popular</span>
+                          <Users size={10} className="md:w-3 md:h-3" />
+                          <span className="hidden sm:inline">Popular</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Star size={12} />
-                          <span>Curated</span>
+                          <Star size={10} className="md:w-3 md:h-3" />
+                          <span className="hidden sm:inline">Curated</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Calendar size={12} />
-                        <span>Updated</span>
+                        <Calendar size={10} className="md:w-3 md:h-3" />
+                        <span className="hidden sm:inline">Updated</span>
                       </div>
                     </div>
 
                     {/* View Button */}
                     <Button 
-                      className="w-full bg-gradient-to-r from-primary/80 to-primary hover:from-primary hover:to-primary/90 text-white rounded-lg transition-all duration-300 group-hover:shadow-lg group-hover:shadow-primary/20"
+                      className="w-full bg-gradient-to-r from-primary/80 to-primary hover:from-primary hover:to-primary/90 text-white rounded-lg transition-all duration-300 group-hover:shadow-lg group-hover:shadow-primary/20 text-sm"
+                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/collections/${collection.id}`);

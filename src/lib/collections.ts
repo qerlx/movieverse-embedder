@@ -99,6 +99,32 @@ export async function fetchMCUCollection(): Promise<Collection> {
 }
 
 // Fallback function to fetch the MCU list from TMDb
+// Collection definitions for the app
+export const collections = [
+  {
+    id: 'mcu',
+    name: 'Marvel Cinematic Universe',
+    description: 'The complete Marvel Cinematic Universe collection featuring all MCU movies in chronological order.',
+    type: 'movie' as const,
+    fetchFunction: fetchMCUCollection
+  },
+  {
+    id: 'top-rated',
+    name: 'Top Rated Movies',
+    description: 'The highest rated movies of all time according to critics and audiences.',
+    type: 'movie' as const,
+    fetchFunction: async () => {
+      const response = await fetch('https://api.themoviedb.org/3/movie/top_rated?language=en-US&page=1', {
+        headers: {
+          accept: 'application/json',
+          Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMzQzYzU2N2ZhZTk3Y2JlZGM0OGQ1YWQ0Yjg5M2YzMSIsIm5iZiI6MTc0MTc1NzA2NC43MzMsInN1YiI6IjY3ZDExYTg4MTM5OTBhMDU4YjYwYWExMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.PfUfbFyxCtI3bJehMrDRUuuKOPp58WC-_4B4aUovCyA'
+        }
+      });
+      return await response.json();
+    }
+  }
+];
+
 export async function fetchMCUList(): Promise<Collection> {
   try {
     // Use a more reliable MCU list ID or create from search

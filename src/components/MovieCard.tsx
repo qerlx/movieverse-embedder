@@ -9,6 +9,7 @@ interface MovieCardProps {
   type: "movie" | "tv";
   isRanked?: boolean;
   rank?: number;
+  priority?: boolean;
   className?: string;
 }
 
@@ -16,7 +17,8 @@ const MovieCard: React.FC<MovieCardProps> = ({
   item, 
   type, 
   isRanked = false, 
-  rank, 
+  rank,
+  priority = false,
   className = "" 
 }) => {
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
             src={posterUrl}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               if (target.src !== '/placeholder.svg') {
@@ -71,37 +73,37 @@ const MovieCard: React.FC<MovieCardProps> = ({
             <motion.div
               initial={{ scale: 0.8 }}
               whileHover={{ scale: 1.1 }}
-              className="bg-white/20 backdrop-blur-md text-white rounded-full p-3 shadow-xl border border-white/10"
+              className="bg-white/20 backdrop-blur-md text-white rounded-full p-2 md:p-3 shadow-xl border border-white/10"
             >
-              <Play size={20} className="ml-0.5" fill="white" />
+              <Play size={16} className="md:w-5 md:h-5 ml-0.5" fill="white" />
             </motion.div>
           </div>
 
           {/* Rating Badge */}
           {item.vote_average > 0 && (
-            <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm text-yellow-400 text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1 border border-yellow-400/20">
-              <Star size={10} fill="currentColor" />
-              <span>{item.vote_average.toFixed(1)}</span>
+            <div className="absolute top-1.5 right-1.5 md:top-2 md:right-2 bg-black/70 backdrop-blur-sm text-yellow-400 text-xs font-bold px-1.5 py-0.5 md:px-2 md:py-1 rounded-lg flex items-center gap-1 border border-yellow-400/20">
+              <Star size={8} className="md:w-2.5 md:h-2.5" fill="currentColor" />
+              <span className="text-[10px] md:text-xs">{item.vote_average.toFixed(1)}</span>
             </div>
           )}
         </div>
 
         {/* Content Info */}
-        <div className="p-3 space-y-1">
-          <h3 className="font-semibold text-sm text-white line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+        <div className="p-2 md:p-3 space-y-1">
+          <h3 className="font-semibold text-xs md:text-sm text-white line-clamp-2 leading-tight group-hover:text-primary transition-colors">
             {title}
           </h3>
           
-          <div className="flex items-center justify-between text-xs text-white/50">
+          <div className="flex items-center justify-between text-[10px] md:text-xs text-white/50">
             {year && (
-              <div className="flex items-center gap-1">
-                <Calendar size={10} />
+              <div className="flex items-center gap-0.5 md:gap-1">
+                <Calendar size={8} className="md:w-2.5 md:h-2.5" />
                 <span>{year}</span>
               </div>
             )}
             
-            <div className="flex items-center gap-1">
-              <div className="w-1 h-1 bg-primary/60 rounded-full"></div>
+            <div className="flex items-center gap-0.5 md:gap-1">
+              <div className="w-0.5 h-0.5 md:w-1 md:h-1 bg-primary/60 rounded-full"></div>
               <span className="uppercase font-medium text-primary/70">{type}</span>
             </div>
           </div>

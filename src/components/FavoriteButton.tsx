@@ -104,14 +104,14 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   };
 
   const sizeClasses = {
-    sm: "h-8 px-3 text-xs",
-    md: "h-9 px-4 text-sm",
-    lg: "h-10 px-5 text-sm"
+    sm: "h-7 md:h-8 px-2 md:px-3 text-xs",
+    md: "h-8 md:h-9 px-3 md:px-4 text-xs md:text-sm",
+    lg: "h-9 md:h-10 px-4 md:px-5 text-sm"
   };
 
   const iconSizeClasses = {
     sm: "w-3 h-3",
-    md: "w-4 h-4",
+    md: "w-3.5 h-3.5 md:w-4 md:h-4",
     lg: "w-4 h-4"
   };
 
@@ -124,6 +124,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         className={cn(
           "rounded-full hover:bg-white/10 bg-black/20 backdrop-blur-md border border-white/20 transition-all duration-200 shadow-lg",
           "hover:scale-105 active:scale-95",
+          "w-7 h-7 md:w-9 md:h-9",
           isLoading && "animate-pulse",
           className
         )}
