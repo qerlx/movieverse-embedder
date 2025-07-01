@@ -50,9 +50,12 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   );
 
   useEffect(() => {
-    // Set first valid season as expanded by default
+    // Set first valid season as expanded by default and fetch episodes immediately
     if (validSeasons.length > 0 && expandedSeason === null) {
-      setExpandedSeason(validSeasons[0].season_number);
+      const firstSeason = validSeasons[0].season_number;
+      setExpandedSeason(firstSeason);
+      // Fetch episodes for the first season immediately
+      fetchSeasonEpisodes(firstSeason);
     }
   }, [seasons, validSeasons, expandedSeason]);
 
@@ -74,7 +77,12 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       
       if (response.ok) {
         const data = await response.json();
-        setEpisodeData(prev => ({ ...prev, [seasonNumber]: data.episodes || [] }));
+        console.log(`Fetched season ${seasonNumber} data:`, data);
+        const episodes = data.episodes || [];
+        console.log(`Found ${episodes.length} episodes for season ${seasonNumber}`);
+        setEpisodeData(prev => ({ ...prev, [seasonNumber]: episodes }));
+      } else {
+        console.error(`Failed to fetch season ${seasonNumber}: ${response.status}`);
       }
     } catch (error) {
       console.error(`Error fetching episodes for season ${seasonNumber}:`, error);

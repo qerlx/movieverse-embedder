@@ -21,15 +21,14 @@ export async function fetchCollection(id: number): Promise<Collection> {
   }
 }
 
-// Function to fetch the MCU collection using the proper collection ID
 export async function fetchMCUCollection(): Promise<Collection> {
   try {
     // Use the official MCU collection ID: 131295 (The Marvel Cinematic Universe)
     const collectionId = 131295;
-    const collection = await fetchCollection(collectionId);
+    let collection = await fetchCollection(collectionId);
     
     // If the main collection doesn't have enough movies, supplement with additional MCU collections
-    if (!collection.parts || collection.parts.length < 25) {
+    if (!collection.parts || collection.parts.length < 20) {
       console.log("Fetching additional MCU movies from multiple collections...");
       
       // Known MCU collection IDs
@@ -38,8 +37,7 @@ export async function fetchMCUCollection(): Promise<Collection> {
         131296, // The Infinity Saga
         623911, // Phase One
         623912, // Phase Two  
-        623913, // Phase Three
-        748  // X-Men Collection (Marvel)
+        623913  // Phase Three
       ];
       
       const allMovies = new Map();
@@ -98,7 +96,6 @@ export async function fetchMCUCollection(): Promise<Collection> {
   }
 }
 
-// Fallback function to fetch the MCU list from TMDb
 // Collection definitions for the app
 export const collections = [
   {
@@ -107,6 +104,48 @@ export const collections = [
     description: 'The complete Marvel Cinematic Universe collection featuring all MCU movies in chronological order.',
     type: 'movie' as const,
     fetchFunction: fetchMCUCollection
+  },
+  {
+    id: 'jurassic-park',
+    name: 'Jurassic Park Collection',
+    description: 'Experience the wonder and terror of dinosaurs with the complete Jurassic Park franchise.',
+    type: 'movie' as const,
+    fetchFunction: () => fetchCollection(328) // Jurassic Park Collection ID
+  },
+  {
+    id: 'star-wars',
+    name: 'Star Wars Collection',
+    description: 'A long time ago in a galaxy far, far away... The complete Star Wars saga.',
+    type: 'movie' as const,
+    fetchFunction: () => fetchCollection(10) // Star Wars Collection ID
+  },
+  {
+    id: 'fast-furious',
+    name: 'Fast & Furious Collection',
+    description: 'High-octane action and family bonds in the Fast & Furious franchise.',
+    type: 'movie' as const,
+    fetchFunction: () => fetchCollection(9485) // Fast & Furious Collection ID
+  },
+  {
+    id: 'harry-potter',
+    name: 'Harry Potter Collection',
+    description: 'Enter the magical world of Hogwarts with Harry Potter and his friends.',
+    type: 'movie' as const,
+    fetchFunction: () => fetchCollection(1241) // Harry Potter Collection ID
+  },
+  {
+    id: 'lord-of-rings',
+    name: 'The Lord of the Rings Collection',
+    description: 'Epic fantasy adventure through Middle-earth in the Lord of the Rings trilogy.',
+    type: 'movie' as const,
+    fetchFunction: () => fetchCollection(119) // Lord of the Rings Collection ID
+  },
+  {
+    id: 'batman-dark-knight',
+    name: 'The Dark Knight Collection',
+    description: 'Christopher Nolan\'s acclaimed Dark Knight trilogy.',
+    type: 'movie' as const,
+    fetchFunction: () => fetchCollection(263) // The Dark Knight Collection ID
   },
   {
     id: 'top-rated',
@@ -125,6 +164,7 @@ export const collections = [
   }
 ];
 
+// Fallback function to fetch the MCU list from TMDb
 export async function fetchMCUList(): Promise<Collection> {
   try {
     // Use a more reliable MCU list ID or create from search
