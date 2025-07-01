@@ -54,10 +54,15 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     if (validSeasons.length > 0 && expandedSeason === null) {
       const firstSeason = validSeasons[0].season_number;
       setExpandedSeason(firstSeason);
-      // Fetch episodes for the first season immediately
-      fetchSeasonEpisodes(firstSeason);
     }
-  }, [seasons, validSeasons, expandedSeason]);
+  }, [validSeasons.length, expandedSeason]);
+
+  // Separate effect to fetch episodes when a season is expanded
+  useEffect(() => {
+    if (expandedSeason !== null && !episodeData[expandedSeason] && !loadingSeasons[expandedSeason]) {
+      fetchSeasonEpisodes(expandedSeason);
+    }
+  }, [expandedSeason, episodeData, loadingSeasons]);
 
   const fetchSeasonEpisodes = async (seasonNumber: number) => {
     if (episodeData[seasonNumber] || loadingSeasons[seasonNumber]) return;
