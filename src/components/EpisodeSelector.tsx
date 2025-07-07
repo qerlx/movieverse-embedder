@@ -153,11 +153,11 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
           >
-            <Card className="border-white/10 bg-black/20 backdrop-blur-md overflow-hidden hover:border-primary/20 transition-all">
+            <Card className="border-white/10 bg-black/20 backdrop-blur-md overflow-hidden hover:border-primary/20 transition-all shadow-lg">
               <motion.div 
                 className={cn(
-                  "flex justify-between items-center p-4 cursor-pointer hover:bg-black/40 transition-all duration-300",
-                  expandedSeason === season.season_number && "border-b border-white/10"
+                  "flex justify-between items-center p-3 md:p-4 cursor-pointer hover:bg-black/40 transition-all duration-300 rounded-t-lg",
+                  expandedSeason === season.season_number && "border-b border-white/10 bg-primary/5"
                 )}
                 onClick={() => handleSeasonToggle(season.season_number)}
                 whileHover={{ scale: 1.01 }}
@@ -176,17 +176,22 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                   </motion.div>
                   
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-1">
+                    <h3 className="text-base md:text-lg font-semibold text-white mb-1 flex items-center gap-2">
                       Season {season.season_number}
+                      {expandedSeason === season.season_number && (
+                        <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                          Open
+                        </span>
+                      )}
                     </h3>
-                    <div className="flex items-center gap-3 text-sm text-white/60">
+                    <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-white/60">
                       <span className="flex items-center gap-1">
-                        <Play size={12} />
+                        <Play size={10} className="md:w-3 md:h-3" />
                         {season.episode_count} episodes
                       </span>
                       {season.air_date && (
                         <span className="flex items-center gap-1">
-                          <Calendar size={12} />
+                          <Calendar size={10} className="md:w-3 md:h-3" />
                           {new Date(season.air_date).getFullYear()}
                         </span>
                       )}
@@ -208,7 +213,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className="p-4 space-y-3">
+                    <div className="p-3 md:p-4 space-y-2 md:space-y-3 bg-black/10">
                       {loadingSeasons[season.season_number] ? (
                         <div className="flex justify-center py-8">
                           <motion.div 
@@ -226,15 +231,15 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                             transition={{ duration: 0.3, delay: episodeIndex * 0.05 }}
                             whileHover={{ scale: 1.01 }}
                             className={cn(
-                              "flex gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 group border",
+                              "flex gap-2 md:gap-3 p-2 md:p-3 rounded-lg cursor-pointer transition-all duration-300 group border",
                               selectedEpisode?.season === season.season_number && 
                               selectedEpisode?.episode === episode.episode_number
-                                ? "bg-primary/10 border-primary/30 shadow-lg"
-                                : "hover:bg-white/5 border-transparent hover:border-white/10"
+                                ? "bg-primary/10 border-primary/30 shadow-lg shadow-primary/20"
+                                : "hover:bg-white/5 border-transparent hover:border-white/10 hover:shadow-md"
                             )}
                             onClick={() => handleEpisodeClick(season.season_number, episode.episode_number)}
                           >
-                            <div className="w-24 h-16 flex-shrink-0 bg-black/40 rounded-md overflow-hidden relative group">
+                            <div className="w-16 h-12 md:w-24 md:h-16 flex-shrink-0 bg-black/40 rounded-md overflow-hidden relative group">
                               {episode.still_path ? (
                                 <img 
                                   src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
@@ -264,29 +269,29 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                             </div>
                             
                             <div className="flex-1 overflow-hidden">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 rounded">
+                              <div className="flex items-center gap-1 md:gap-2 mb-1 flex-wrap">
+                                <span className="text-xs font-bold bg-primary/20 text-primary px-1.5 md:px-2 py-0.5 rounded">
                                   E{episode.episode_number}
                                 </span>
                                 {episode.runtime && (
                                   <span className="text-xs text-white/50 flex items-center gap-1">
-                                    <Clock size={10} />
+                                    <Clock size={8} className="md:w-2.5 md:h-2.5" />
                                     {episode.runtime}m
                                   </span>
                                 )}
                                 {episode.vote_average > 0 && (
                                   <span className="text-xs text-yellow-400 flex items-center gap-1">
-                                    <Star size={10} fill="currentColor" />
+                                    <Star size={8} className="md:w-2.5 md:h-2.5" fill="currentColor" />
                                     {episode.vote_average.toFixed(1)}
                                   </span>
                                 )}
                               </div>
                               
-                              <h4 className="text-sm font-medium line-clamp-1 mb-1 text-white group-hover:text-primary transition-colors">
+                              <h4 className="text-xs md:text-sm font-medium line-clamp-1 mb-1 text-white group-hover:text-primary transition-colors">
                                 {episode.name}
                               </h4>
                               
-                              <p className="text-xs text-white/60 line-clamp-2 leading-relaxed">
+                              <p className="text-xs text-white/60 line-clamp-2 leading-relaxed hidden md:block">
                                 {episode.overview || "No description available."}
                               </p>
                               

@@ -217,37 +217,41 @@ const AIRecommendations: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-4xl">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="rounded-xl overflow-hidden border border-primary/20 bg-black/40 backdrop-blur-lg p-6 neo-blur"
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-full bg-primary/20">
-            <Sparkles className="h-6 w-6 text-primary" />
+    <div className="min-h-screen p-3 md:p-6 bg-gradient-to-br from-black via-purple-900/20 to-black">
+      <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="rounded-xl overflow-hidden border border-primary/20 bg-black/40 backdrop-blur-lg p-4 md:p-6 neo-blur"
+        >
+          <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+            <div className="p-1.5 md:p-2 rounded-full bg-primary/20">
+              <Sparkles className="h-4 w-4 md:h-6 md:w-6 text-primary" />
+            </div>
+            <h2 className="text-xl md:text-2xl font-bold">MovieMind AI Assistant</h2>
           </div>
-          <h2 className="text-2xl font-bold">MovieMind AI Assistant</h2>
-        </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="recommend" className="flex gap-2 items-center">
-              <Film className="h-4 w-4" />
-              <span>Recommendations</span>
+          <TabsList className="grid grid-cols-3 mb-4 md:mb-6 h-auto p-1 bg-black/40">
+            <TabsTrigger value="recommend" className="flex gap-1 md:gap-2 items-center text-xs md:text-sm p-2 md:p-3">
+              <Film className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Recommendations</span>
+              <span className="sm:hidden">Rec</span>
             </TabsTrigger>
-            <TabsTrigger value="analyze" className="flex gap-2 items-center">
-              <History className="h-4 w-4" />
-              <span>Analyze History</span>
+            <TabsTrigger value="analyze" className="flex gap-1 md:gap-2 items-center text-xs md:text-sm p-2 md:p-3">
+              <History className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Analyze History</span>
+              <span className="sm:hidden">History</span>
             </TabsTrigger>
-            <TabsTrigger value="trivia" className="flex gap-2 items-center">
-              <BookOpen className="h-4 w-4" />
-              <span>Movie Trivia</span>
+            <TabsTrigger value="trivia" className="flex gap-1 md:gap-2 items-center text-xs md:text-sm p-2 md:p-3">
+              <BookOpen className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Movie Trivia</span>
+              <span className="sm:hidden">Trivia</span>
             </TabsTrigger>
           </TabsList>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
             <TabsContent value="recommend">
               <div>
                 <Textarea
@@ -432,12 +436,7 @@ const AIRecommendations: React.FC = () => {
             )}
           </motion.div>
         )}
-      </motion.div>
-      
-      <div className="mt-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          Powered by Llama 4 AI. Results may vary and are based on the AI's knowledge.
-        </p>
+        </motion.div>
       </div>
     </div>
   );

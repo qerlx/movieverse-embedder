@@ -21,10 +21,12 @@ const Collections = () => {
           collections.map(async (collection) => {
             try {
               const data = await collection.fetchFunction();
+              // Handle different response structures
+              const items = data?.results || data?.parts || data || [];
               return {
                 ...collection,
-                itemCount: data?.results?.length || data?.length || 0,
-                items: data?.results || data || []
+                itemCount: items.length,
+                items: items
               };
             } catch (error) {
               console.error(`Error loading collection ${collection.name}:`, error);

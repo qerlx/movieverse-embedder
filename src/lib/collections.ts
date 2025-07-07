@@ -27,38 +27,20 @@ export async function fetchMCUCollection(): Promise<Collection> {
     const collectionId = 131295;
     let collection = await fetchCollection(collectionId);
     
-    // If the main collection doesn't have enough movies, supplement with additional MCU collections
-    if (!collection.parts || collection.parts.length < 20) {
-      console.log("Fetching additional MCU movies from multiple collections...");
+    // If no collection or insufficient movies, use a simpler approach
+    if (!collection.parts || collection.parts.length < 10) {
+      console.log("Main MCU collection insufficient, trying alternate approach...");
       
-      // Known MCU collection IDs
-      const mcuCollectionIds = [
-        131295, // The Marvel Cinematic Universe
-        131296, // The Infinity Saga
-        623911, // Phase One
-        623912, // Phase Two  
-        623913  // Phase Three
-      ];
-      
+      // Try just the main MCU collections that are known to work
+      const workingCollectionIds = [131295, 131296];
       const allMovies = new Map();
       
-      // Add movies from main collection first
-      if (collection.parts) {
-        collection.parts.forEach(movie => {
-          allMovies.set(movie.id, movie);
-        });
-      }
-      
-      // Fetch from other collections
-      for (const id of mcuCollectionIds.slice(1)) {
+      for (const id of workingCollectionIds) {
         try {
           const additionalCollection = await fetchCollection(id);
           if (additionalCollection.parts) {
             additionalCollection.parts.forEach(movie => {
-              // Only add if it's not already in our collection
-              if (!allMovies.has(movie.id)) {
-                allMovies.set(movie.id, movie);
-              }
+              allMovies.set(movie.id, movie);
             });
           }
         } catch (error) {
@@ -66,12 +48,14 @@ export async function fetchMCUCollection(): Promise<Collection> {
         }
       }
       
-      // Convert back to array and sort by release date
-      collection.parts = Array.from(allMovies.values()).sort((a, b) => {
-        const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
-        const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
-        return dateA - dateB;
-      });
+      // If we got movies, use them
+      if (allMovies.size > 0) {
+        collection.parts = Array.from(allMovies.values()).sort((a, b) => {
+          const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
+          const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
+          return dateA - dateB;
+        });
+      }
     }
     
     // Enhance the collection with better metadata

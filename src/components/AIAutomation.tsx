@@ -90,30 +90,31 @@ const AIAutomation: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 my-4">
-      <div className="bg-black/20 border border-white/10 rounded-lg p-6 space-y-4">
-        <div className="flex items-center gap-3">
-          <Wand size={20} className="text-primary" />
-          <h2 className="text-xl font-semibold">AI Movie Recommendations</h2>
-        </div>
-        
-        <p className="text-muted-foreground">
-          Describe what kind of movie you're in the mood for, and our AI will recommend something for you.
-        </p>
-        
-        <textarea
-          ref={inputRef}
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          className="w-full h-20 p-3 bg-black/30 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-          placeholder="e.g. 'I want something like Inception but with more action'"
-        />
-        
-        <Button 
-          onClick={handleGenerateRecommendations}
-          disabled={isGenerating || !prompt.trim()} 
-          className="gap-2"
-        >
+    <div className="min-h-screen p-3 md:p-6 bg-gradient-to-br from-black via-purple-900/20 to-black">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-black/20 border border-white/10 rounded-xl p-4 md:p-6 space-y-3 md:space-y-4 backdrop-blur-md">
+          <div className="flex items-center gap-2 md:gap-3">
+            <Wand size={16} className="md:w-5 md:h-5 text-primary" />
+            <h2 className="text-lg md:text-xl font-semibold">AI Movie Recommendations</h2>
+          </div>
+          
+          <p className="text-sm md:text-base text-muted-foreground">
+            Describe what kind of movie you're in the mood for, and our AI will recommend something for you.
+          </p>
+          
+          <textarea
+            ref={inputRef}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            className="w-full h-16 md:h-20 p-2 md:p-3 bg-black/30 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm md:text-base resize-none"
+            placeholder="e.g. 'I want something like Inception but with more action'"
+          />
+          
+          <Button 
+            onClick={handleGenerateRecommendations}
+            disabled={isGenerating || !prompt.trim()} 
+            className="gap-2 w-full md:w-auto text-sm md:text-base py-2 md:py-3"
+          >
           {isGenerating ? (
             <>
               <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -171,6 +172,7 @@ const AIAutomation: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </div>
   );
