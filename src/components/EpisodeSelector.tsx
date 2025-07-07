@@ -153,15 +153,17 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
           >
-            <Card className="border-white/10 bg-black/20 backdrop-blur-md overflow-hidden hover:border-primary/20 transition-all shadow-lg">
+            <Card className="border-white/10 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-primary/10">
               <motion.div 
                 className={cn(
-                  "flex justify-between items-center p-3 md:p-4 cursor-pointer hover:bg-black/40 transition-all duration-300 rounded-t-lg",
-                  expandedSeason === season.season_number && "border-b border-white/10 bg-primary/5"
+                  "flex justify-between items-center p-4 md:p-5 cursor-pointer transition-all duration-300",
+                  expandedSeason === season.season_number 
+                    ? "bg-gradient-to-r from-primary/10 to-primary/5 border-b border-primary/20" 
+                    : "hover:bg-gradient-to-r hover:from-white/5 hover:to-white/2"
                 )}
                 onClick={() => handleSeasonToggle(season.season_number)}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                whileHover={{ scale: 1.005 }}
+                whileTap={{ scale: 0.995 }}
               >
                 <div className="flex items-center gap-3">
                   <motion.div
@@ -176,22 +178,24 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                   </motion.div>
                   
                   <div>
-                    <h3 className="text-base md:text-lg font-semibold text-white mb-1 flex items-center gap-2">
-                      Season {season.season_number}
+                    <h3 className="text-lg md:text-xl font-bold text-white mb-2 flex items-center gap-3">
+                      <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                        Season {season.season_number}
+                      </span>
                       {expandedSeason === season.season_number && (
-                        <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
-                          Open
+                        <span className="text-xs bg-gradient-to-r from-primary/20 to-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
+                          Expanded
                         </span>
                       )}
                     </h3>
-                    <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-white/60">
-                      <span className="flex items-center gap-1">
-                        <Play size={10} className="md:w-3 md:h-3" />
+                    <div className="flex items-center gap-3 md:gap-4 text-sm text-white/70">
+                      <span className="flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-md">
+                        <Play size={12} className="text-primary" />
                         {season.episode_count} episodes
                       </span>
                       {season.air_date && (
-                        <span className="flex items-center gap-1">
-                          <Calendar size={10} className="md:w-3 md:h-3" />
+                        <span className="flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-md">
+                          <Calendar size={12} className="text-primary" />
                           {new Date(season.air_date).getFullYear()}
                         </span>
                       )}
@@ -213,7 +217,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className="p-3 md:p-4 space-y-2 md:space-y-3 bg-black/10">
+                    <div className="p-4 md:p-6 space-y-3 md:space-y-4 bg-gradient-to-b from-black/20 to-black/10">
                       {loadingSeasons[season.season_number] ? (
                         <div className="flex justify-center py-8">
                           <motion.div 

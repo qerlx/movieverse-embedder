@@ -148,6 +148,33 @@ export const collections = [
   }
 ];
 
+// Get collection by ID
+export function getCollectionById(id: string) {
+  return collections.find(collection => collection.id === id);
+}
+
+// Load collection data by ID
+export async function loadCollectionData(id: string): Promise<Collection | null> {
+  const collection = getCollectionById(id);
+  if (!collection) return null;
+  
+  try {
+    const data = await collection.fetchFunction();
+    // Handle different response structures
+    const items = data?.results || data?.parts || data || [];
+    return {
+      ...data,
+      id: collection.id,
+      name: collection.name,
+      description: collection.description,
+      parts: items
+    };
+  } catch (error) {
+    console.error(`Error loading collection ${id}:`, error);
+    throw error;
+  }
+}
+
 // Fallback function to fetch the MCU list from TMDb
 export async function fetchMCUList(): Promise<Collection> {
   try {

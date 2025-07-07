@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { fetchCollection } from "@/lib/collections";
+import { loadCollectionData } from "@/lib/collections";
 import LogoTitle from "@/components/LogoTitle";
 import type { Collection } from "@/types";
 
@@ -23,7 +23,7 @@ const CollectionDetail = () => {
       
       try {
         setIsLoading(true);
-        const collectionData = await fetchCollection(parseInt(id));
+        const collectionData = await loadCollectionData(id);
         setCollection(collectionData);
       } catch (error) {
         console.error("Error loading collection:", error);
