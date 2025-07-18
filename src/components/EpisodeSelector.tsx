@@ -62,7 +62,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     if (expandedSeason !== null && !episodeData[expandedSeason] && !loadingSeasons[expandedSeason]) {
       fetchSeasonEpisodes(expandedSeason);
     }
-  }, [expandedSeason, episodeData, loadingSeasons]);
+  }, [expandedSeason]);
 
   const fetchSeasonEpisodes = async (seasonNumber: number) => {
     if (episodeData[seasonNumber] || loadingSeasons[seasonNumber]) return;
@@ -243,64 +243,70 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                             )}
                             onClick={() => handleEpisodeClick(season.season_number, episode.episode_number)}
                           >
-                            <div className="w-16 h-12 md:w-24 md:h-16 flex-shrink-0 bg-black/40 rounded-md overflow-hidden relative group">
+                            <div className="w-16 h-12 md:w-20 md:h-14 flex-shrink-0 bg-gradient-to-br from-black/60 to-black/40 rounded-lg overflow-hidden relative group border border-white/10">
                               {episode.still_path ? (
                                 <img 
                                   src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
                                   alt={episode.name}
-                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                  className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:brightness-110"
                                   loading="lazy"
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-white/30">
-                                  <Play size={16} className="opacity-50" />
+                                <div className="w-full h-full flex items-center justify-center text-white/40 bg-gradient-to-br from-primary/20 to-primary/10">
+                                  <Play size={14} className="opacity-60" />
                                 </div>
                               )}
                               
-                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="w-8 h-8 rounded-full bg-primary/90 hover:bg-primary text-white"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleWatchNow(season.season_number, episode.episode_number);
-                                  }}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                                <motion.div
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
                                 >
-                                  <Play size={12} className="ml-0.5" />
-                                </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="w-8 h-8 rounded-full bg-primary/95 hover:bg-primary text-white shadow-lg hover:shadow-primary/30"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleWatchNow(season.season_number, episode.episode_number);
+                                    }}
+                                  >
+                                    <Play size={12} className="ml-0.5" />
+                                  </Button>
+                                </motion.div>
                               </div>
                             </div>
                             
-                            <div className="flex-1 overflow-hidden">
-                              <div className="flex items-center gap-1 md:gap-2 mb-1 flex-wrap">
-                                <span className="text-xs font-bold bg-primary/20 text-primary px-1.5 md:px-2 py-0.5 rounded">
+                            <div className="flex-1 overflow-hidden min-w-0">
+                              <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 flex-wrap">
+                                <span className="text-xs font-bold bg-gradient-to-r from-primary/30 to-primary/20 text-primary px-2 py-1 rounded-md border border-primary/20">
                                   E{episode.episode_number}
                                 </span>
                                 {episode.runtime && (
-                                  <span className="text-xs text-white/50 flex items-center gap-1">
-                                    <Clock size={8} className="md:w-2.5 md:h-2.5" />
+                                  <span className="text-xs text-white/60 flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded">
+                                    <Clock size={10} />
                                     {episode.runtime}m
                                   </span>
                                 )}
                                 {episode.vote_average > 0 && (
-                                  <span className="text-xs text-yellow-400 flex items-center gap-1">
-                                    <Star size={8} className="md:w-2.5 md:h-2.5" fill="currentColor" />
+                                  <span className="text-xs text-yellow-400/90 flex items-center gap-1 bg-yellow-400/10 px-1.5 py-0.5 rounded">
+                                    <Star size={10} fill="currentColor" />
                                     {episode.vote_average.toFixed(1)}
                                   </span>
                                 )}
                               </div>
                               
-                              <h4 className="text-xs md:text-sm font-medium line-clamp-1 mb-1 text-white group-hover:text-primary transition-colors">
+                              <h4 className="text-sm font-semibold line-clamp-1 mb-1 text-white group-hover:text-primary transition-colors duration-300">
                                 {episode.name}
                               </h4>
                               
-                              <p className="text-xs text-white/60 line-clamp-2 leading-relaxed hidden md:block">
+                              <p className="text-xs text-white/60 line-clamp-2 leading-relaxed hidden md:block mb-1">
                                 {episode.overview || "No description available."}
                               </p>
                               
                               {episode.air_date && (
-                                <p className="text-xs text-white/40 mt-1">
+                                <p className="text-xs text-white/40 flex items-center gap-1">
+                                  <Calendar size={10} />
                                   {new Date(episode.air_date).toLocaleDateString()}
                                 </p>
                               )}

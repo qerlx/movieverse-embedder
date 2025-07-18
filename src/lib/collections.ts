@@ -22,61 +22,71 @@ export async function fetchCollection(id: number): Promise<Collection> {
 }
 
 export async function fetchMCUCollection(): Promise<Collection> {
+  // MCU movies in chronological timeline order (not release order)
+  const mcuMovieIds = [
+    1771,    // Captain America: The First Avenger (2011)
+    102382,  // Captain Marvel (2019) - set in 1995
+    1726,    // Iron Man (2008)
+    10138,   // Iron Man 2 (2010) 
+    10195,   // Thor (2011)
+    24428,   // The Avengers (2012)
+    68721,   // Iron Man 3 (2013)
+    76338,   // Thor: The Dark World (2013)
+    1865,    // Captain America: The Winter Soldier (2014)
+    118340,  // Guardians of the Galaxy (2014)
+    99861,   // Avengers: Age of Ultron (2015)
+    76341,   // Ant-Man (2015)
+    271110,  // Captain America: Civil War (2016)
+    284052,  // Doctor Strange (2016)
+    283995,  // Guardians of the Galaxy Vol. 2 (2017)
+    348350,  // Spider-Man: Homecoming (2017)
+    284053,  // Thor: Ragnarok (2017)
+    281957,  // Black Panther (2018)
+    299536,  // Avengers: Infinity War (2018)
+    363088,  // Ant-Man and the Wasp (2018)
+    299534,  // Avengers: Endgame (2019)
+    429617,  // Spider-Man: Far From Home (2019)
+    505642,  // Black Widow (2021)
+    566525,  // Shang-Chi and the Legend of the Ten Rings (2021)
+    524434,  // Eternals (2021)
+    634649,  // Spider-Man: No Way Home (2021)
+    453395,  // Doctor Strange in the Multiverse of Madness (2022)
+    616037,  // Thor: Love and Thunder (2022)
+    507086,  // Black Panther: Wakanda Forever (2022)
+    640146,  // Ant-Man and the Wasp: Quantumania (2023)
+    447365,  // Guardians of the Galaxy Volume 3 (2023)
+    609681,  // The Marvels (2023)
+    695721,  // Deadpool & Wolverine (2024)
+  ];
+
   try {
-    // Use the official MCU collection ID: 131295 (The Marvel Cinematic Universe)
-    const collectionId = 131295;
-    let collection = await fetchCollection(collectionId);
-    
-    // If no collection or insufficient movies, use a simpler approach
-    if (!collection.parts || collection.parts.length < 10) {
-      console.log("Main MCU collection insufficient, trying alternate approach...");
-      
-      // Try just the main MCU collections that are known to work
-      const workingCollectionIds = [131295, 131296];
-      const allMovies = new Map();
-      
-      for (const id of workingCollectionIds) {
-        try {
-          const additionalCollection = await fetchCollection(id);
-          if (additionalCollection.parts) {
-            additionalCollection.parts.forEach(movie => {
-              allMovies.set(movie.id, movie);
-            });
-          }
-        } catch (error) {
-          console.warn(`Failed to fetch collection ${id}:`, error);
+    const moviePromises = mcuMovieIds.map(async (movieId) => {
+      try {
+        const response = await fetch(`https://api.themoviedb.org/3/movie/${movieId}?language=en-US`, API_OPTIONS);
+        if (response.ok) {
+          return await response.json();
         }
+        return null;
+      } catch (error) {
+        console.warn(`Failed to fetch movie ${movieId}:`, error);
+        return null;
       }
-      
-      // If we got movies, use them
-      if (allMovies.size > 0) {
-        collection.parts = Array.from(allMovies.values()).sort((a, b) => {
-          const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
-          const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
-          return dateA - dateB;
-        });
-      }
-    }
-    
-    // Enhance the collection with better metadata
+    });
+
+    const movies = await Promise.all(moviePromises);
+    const validMovies = movies.filter(movie => movie !== null);
+
     return {
-      ...collection,
+      id: 131295,
       name: "Marvel Cinematic Universe",
-      overview: collection.overview || "The Marvel Cinematic Universe (MCU) is an American media franchise and shared universe centered on a series of superhero films produced by Marvel Studios. The films are based on characters that appear in American comic books published by Marvel Comics.",
-      poster_path: collection.poster_path || "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
-      backdrop_path: collection.backdrop_path || "/rO0LncgjszG43IaPZnBJWPiNJgZ.jpg"
+      overview: "The Marvel Cinematic Universe (MCU) is an American media franchise and shared universe centered on a series of superhero films produced by Marvel Studios. Experience the complete MCU saga in chronological timeline order.",
+      poster_path: "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
+      backdrop_path: "/rO0LncgjszG43IaPZnBJWPiNJgZ.jpg",
+      parts: validMovies
     };
   } catch (error) {
     console.error("Error fetching MCU collection:", error);
-    
-    // Fallback: try to use the list approach if collection fails
-    try {
-      console.log("Trying fallback MCU list approach...");
-      return await fetchMCUList();
-    } catch (listError) {
-      console.error("Fallback MCU list also failed:", listError);
-      throw new Error("Failed to fetch MCU collection and fallback list");
-    }
+    throw new Error("Failed to fetch MCU collection");
   }
 }
 
