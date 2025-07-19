@@ -22,7 +22,7 @@ export async function fetchCollection(id: number): Promise<Collection> {
 }
 
 export async function fetchMCUCollection(): Promise<Collection> {
-  // MCU movies in chronological timeline order (not release order)
+  // MCU movies in chronological timeline order - verified MCU only
   const mcuMovieIds = [
     1771,    // Captain America: The First Avenger (2011)
     102382,  // Captain Marvel (2019) - set in 1995
@@ -56,7 +56,6 @@ export async function fetchMCUCollection(): Promise<Collection> {
     640146,  // Ant-Man and the Wasp: Quantumania (2023)
     447365,  // Guardians of the Galaxy Volume 3 (2023)
     609681,  // The Marvels (2023)
-    695721,  // Deadpool & Wolverine (2024)
   ];
 
   try {

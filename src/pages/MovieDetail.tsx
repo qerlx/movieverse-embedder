@@ -220,6 +220,7 @@ const MovieDetail = () => {
               <MovieInfoCard 
                 movie={movie} 
                 onWatchClick={() => handleWatchClick()}
+                showCompactLayout={true}
               >
                 {currentUser && (
                   <>
