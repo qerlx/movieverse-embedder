@@ -134,257 +134,150 @@ const MovieDetail = () => {
       transition={{ duration: 0.5 }}
       className="min-h-screen bg-background"
     >
-      {/* Hero section with backdrop */}
-      <div className="relative">
-        {backdropUrl && (
-          <div className="absolute inset-0 w-full h-full">
-            <motion.div 
-              initial={{ filter: "blur(16px)", opacity: 0 }}
-              animate={{ filter: "blur(0px)", opacity: 1 }}
-              transition={{ duration: 1.2 }}
-              className="w-full h-[70vh] bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${backdropUrl})` }}
-            ></motion.div>
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
-          </div>
+      {/* Hero Section with MovieInfoCard */}
+      <MovieInfoCard 
+        movie={movie} 
+        onWatchClick={() => handleWatchClick()}
+      >
+        {currentUser && (
+          <>
+            <FavoriteButton
+              id={movie.id} 
+              type="movie" 
+              title={movie.title}
+              posterPath={movie.poster_path}
+              variant="outline"
+            />
+            <AddToWatchedButton
+              itemId={movie.id}
+              itemType="movie"
+              title={movie.title}
+              posterPath={movie.poster_path}
+              variant="outline"
+              genres={movie.genres?.map((g: any) => g.id)}
+            />
+          </>
         )}
+      </MovieInfoCard>
 
-        <div className="relative container mx-auto px-4 pt-20 pb-10 min-h-[70vh] flex flex-col justify-center">
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            {/* Poster */}
-            <motion.div 
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="w-full max-w-xs mx-auto md:mx-0"
-            >
-              <div className="overflow-hidden rounded-xl shadow-2xl">
-                <motion.img
-                  whileHover={{ scale: 1.03 }}
-                  transition={{ duration: 0.2 }}
-                  src={posterUrl}
-                  alt={movie.title}
-                  className="w-full h-auto object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    if (target.src !== '/placeholder.svg') {
-                      target.src = '/placeholder.svg';
-                    }
-                  }}
-                />
-              </div>
-              
-              {/* Watch Options */}
-              <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="mt-6"
-              >
-                <Card className="border-white/10 bg-black/30 backdrop-blur-md">
-                  <CardContent className="space-y-3 p-4">
-                    <h3 className="text-white text-lg font-semibold">Watch Options</h3>
-                    
-                    <div className="space-y-2">
-                      {videoSources.map((source, index) => (
-                        <Button 
-                          key={source.id}
-                          onClick={() => handleWatchClick(source.id)}
-                          className={
-                            index === 0 
-                              ? "w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-lg py-3" 
-                              : "w-full bg-black/40 hover:bg-black/60 text-white gap-2 rounded-lg py-2 border border-white/10"
-                          }
-                          size={index === 0 ? "default" : "sm"}
-                        >
-                          {source.icon}
-                          {source.name}
-                          {index === 0 && <span className="text-xs opacity-70">(HD)</span>}
-                        </Button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              
-              <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
-                className="mt-4"
-              >
-                <WatchProviders id={parseInt(id!)} type="movie" />
-              </motion.div>
-
-              <MovieInfoCard 
-                movie={movie} 
-                onWatchClick={() => handleWatchClick()}
-                showCompactLayout={true}
-              >
-                {currentUser && (
-                  <>
-                    <FavoriteButton
-                      id={movie.id} 
-                      type="movie" 
-                      title={movie.title}
-                      posterPath={movie.poster_path}
-                      variant="outline"
-                    />
-                    <AddToWatchedButton
-                      itemId={movie.id}
-                      itemType="movie"
-                      title={movie.title}
-                      posterPath={movie.poster_path}
-                      variant="outline"
-                      genres={movie.genres?.map((g: any) => g.id)}
-                    />
-                  </>
-                )}
-              </MovieInfoCard>
-            </motion.div>
-
-            {/* Details */}
-            <motion.div 
-              initial={{ x: -30, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex-1"
-            >
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6 }}
-                className="mb-6"
-              >
-                <LogoTitle
-                  id={movie.id}
-                  title={movie.title}
-                  type="movie"
-                  className="max-w-md h-12 sm:h-16 md:h-20 object-contain"
-                  fallbackClassName="text-3xl md:text-5xl font-bold text-white"
-                />
-              </motion.div>
-              
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.3 }}
-                className="flex flex-wrap gap-2 mb-4"
-              >
-                {movie.genres?.slice(0, 4).map((genre: any) => (
-                  <span
-                    key={genre.id}
-                    className="px-3 py-1 rounded-full text-sm bg-white/10 border border-white/10 text-white/90"
-                  >
-                    {genre.name}
-                  </span>
-                ))}
-              </motion.div>
-              
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className="flex flex-wrap gap-4 mb-6 text-sm"
-              >
-                {movie.vote_average > 0 && (
-                  <div className="flex items-center gap-1 text-yellow-400">
-                    <Star size={16} />
-                    <span>{movie.vote_average.toFixed(1)}</span>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-1 text-white/80">
-                  <Clock size={16} />
-                  <span>{movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : "Unknown"}</span>
-                </div>
-                
-                <div className="flex items-center gap-1 text-white/80">
-                  <Calendar size={16} />
-                  <span>{movie.release_date ? new Date(movie.release_date).getFullYear() : "Unknown"}</span>
-                </div>
-              </motion.div>
-              
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-                className="mb-6 max-w-2xl"
-              >
-                <p className="text-white/80 leading-relaxed">{movie.overview}</p>
-              </motion.div>
-              
-              {directors.length > 0 && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.6 }}
-                  className="mb-8"
-                >
-                  <p className="text-white/60">
-                    <span className="font-medium">Director:</span> {directors.map((director: any) => director.name).join(", ")}
-                  </p>
-                </motion.div>
-              )}
-              
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.7 }}
-                className="flex flex-wrap gap-4 mt-8"
-              >
-                <Button
-                  onClick={() => handleWatchClick()}
-                  className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-lg px-8 py-3 text-lg font-medium"
-                >
-                  <Play size={20} />
-                  Play
-                </Button>
-                
-                {currentUser && (
-                  <>
-                    <FavoriteButton
-                      id={movie.id} 
-                      type="movie" 
-                      title={movie.title}
-                      posterPath={movie.poster_path}
-                      variant="outline"
-                    />
-                    <AddToWatchedButton
-                      itemId={movie.id}
-                      itemType="movie"
-                      title={movie.title}
-                      posterPath={movie.poster_path}
-                      variant="outline"
-                      genres={movie.genres?.map((g: any) => g.id)}
-                    />
-                  </>
-                )}
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-
-      {/* Cast section */}
-      {topCast.length > 0 && (
+      {/* Content Section */}
+      <div className="container mx-auto px-4 py-12">
+        {/* Watch Options */}
         <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="py-12"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-12"
         >
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-8 text-white">Cast</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="max-w-md mx-auto">
+            <div className="bg-card/50 backdrop-blur-md rounded-xl border border-white/10 p-6">
+              <h3 className="text-white text-lg font-semibold mb-4 text-center">Watch Options</h3>
+              
+              <div className="space-y-3">
+                {videoSources.map((source, index) => (
+                  <Button 
+                    key={source.id}
+                    onClick={() => handleWatchClick(source.id)}
+                    className={
+                      index === 0 
+                        ? "w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-lg py-3 text-base" 
+                        : "w-full bg-black/40 hover:bg-black/60 text-white gap-2 rounded-lg py-2 border border-white/10"
+                    }
+                    size={index === 0 ? "default" : "sm"}
+                  >
+                    {source.icon}
+                    {source.name}
+                    {index === 0 && <span className="text-xs opacity-70">(HD)</span>}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Movie Details */}
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mb-12"
+        >
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">About {movie.title}</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Movie Stats */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white">Movie Details</h3>
+                <div className="space-y-3 text-white/70">
+                  <div className="flex justify-between">
+                    <span className="text-white/90">Release Date:</span>
+                    <span>{movie.release_date ? new Date(movie.release_date).toLocaleDateString() : 'Unknown'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/90">Runtime:</span>
+                    <span>{movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : 'Unknown'}</span>
+                  </div>
+                  {movie.vote_average > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-white/90">Rating:</span>
+                      <span className="flex items-center gap-1">
+                        <Star size={16} className="text-yellow-400" fill="currentColor" />
+                        {movie.vote_average.toFixed(1)}
+                      </span>
+                    </div>
+                  )}
+                  {directors.length > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-white/90">Director:</span>
+                      <span>{directors.map((director: any) => director.name).join(", ")}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Genres */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white">Genres</h3>
+                <div className="flex flex-wrap gap-2">
+                  {movie.genres?.map((genre: any) => (
+                    <span
+                      key={genre.id}
+                      className="px-3 py-1.5 rounded-full text-sm bg-white/10 border border-white/20 text-white/90"
+                    >
+                      {genre.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Overview */}
+            <div className="mt-8 text-center">
+              <p className="text-white/80 leading-relaxed text-lg max-w-3xl mx-auto">
+                {movie.overview}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Cast section */}
+        {topCast.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="mb-12"
+          >
+            <h2 className="text-2xl font-bold mb-8 text-white text-center">Cast</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
               {topCast.map((person: Cast, index) => (
                 <motion.div 
                   key={person.id} 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.1 * index }}
-                  className="bg-black/20 rounded-lg overflow-hidden border border-white/10"
+                  className="bg-card/30 rounded-lg overflow-hidden border border-white/10 backdrop-blur-sm"
                 >
                   {person.profile_path ? (
                     <img
@@ -394,7 +287,7 @@ const MovieDetail = () => {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-40 flex items-center justify-center bg-black/50">
+                    <div className="w-full h-40 flex items-center justify-center bg-muted/20">
                       <span className="text-white/60 text-sm">No Photo</span>
                     </div>
                   )}
@@ -407,25 +300,36 @@ const MovieDetail = () => {
                 </motion.div>
               ))}
             </div>
+          </motion.div>
+        )}
+
+        {/* Watch Providers */}
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="mb-12"
+        >
+          <div className="max-w-2xl mx-auto">
+            <WatchProviders id={parseInt(id!)} type="movie" />
           </div>
         </motion.div>
-      )}
 
-      {/* Similar movies */}
-      {movie.similar?.results?.length > 0 && (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="py-12"
-        >
-          <CategoryRow
-            title="More Like This"
-            items={movie.similar.results}
-            type="movie"
-          />
-        </motion.div>
-      )}
+        {/* Similar movies */}
+        {movie.similar?.results?.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1 }}
+          >
+            <CategoryRow
+              title="More Like This"
+              items={movie.similar.results}
+              type="movie"
+            />
+          </motion.div>
+        )}
+      </div>
     </motion.div>
   );
 };
