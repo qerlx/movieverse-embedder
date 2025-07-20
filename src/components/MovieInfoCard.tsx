@@ -119,7 +119,7 @@ const MovieInfoCard: React.FC<MovieInfoCardProps> = ({
 
   // Default hero layout matching the streaming interface design
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    <div className="relative w-full h-screen overflow-hidden bg-black">
       {/* Background Image */}
       {movie.backdrop_path && (
         <div className="absolute inset-0">

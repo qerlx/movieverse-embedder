@@ -22,7 +22,7 @@ export async function fetchCollection(id: number): Promise<Collection> {
 }
 
 export async function fetchMCUCollection(): Promise<Collection> {
-  // MCU movies in chronological timeline order - verified MCU only
+  // MCU movies in chronological timeline order - only verified MCU films
   const mcuMovieIds = [
     1771,    // Captain America: The First Avenger (2011)
     102382,  // Captain Marvel (2019) - set in 1995
