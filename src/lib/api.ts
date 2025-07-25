@@ -1,4 +1,5 @@
 import { MovieResult, TVResult, ConfigurationResponse, Genre } from "@/types";
+import { getCachedData, setCachedData, createCacheKey } from "./api-cache";
 
 const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMzQzYzU2N2ZhZTk3Y2JlZGM0OGQ1YWQ0Yjg5M2YzMSIsIm5iZiI6MTc0MTc1NzA2NC43MzMsInN1YiI6IjY3ZDExYTg4MTM5OTBhMDU4YjYwYWExMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.PfUfbFyxCtI3bJehMrDRUuuKOPp58WC-_4B4aUovCyA";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -24,12 +25,18 @@ export const getConfiguration = async (): Promise<ConfigurationResponse> => {
   }
 };
 
-// Get popular movies
+// Get popular movies with caching
 export const getPopularMovies = async (page = 1): Promise<MovieResult> => {
+  const cacheKey = createCacheKey('popular', 'movies', page);
+  const cached = getCachedData<MovieResult>(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = await fetch(`${TMDB_BASE_URL}/movie/popular?language=en-US&page=${page}`, API_OPTIONS);
     if (!response.ok) throw new Error('Failed to fetch popular movies');
-    return await response.json();
+    const data = await response.json();
+    setCachedData(cacheKey, data, { ttl: 1000 * 60 * 15 }); // Cache for 15 minutes
+    return data;
   } catch (error) {
     console.error('Error fetching popular movies:', error);
     throw error;
@@ -87,12 +94,18 @@ export const getMoviesByGenre = async (genreId: number, page = 1): Promise<Movie
   }
 };
 
-// Get popular TV shows
+// Get popular TV shows with caching
 export const getPopularTVShows = async (page = 1): Promise<TVResult> => {
+  const cacheKey = createCacheKey('popular', 'tv', page);
+  const cached = getCachedData<TVResult>(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = await fetch(`${TMDB_BASE_URL}/tv/popular?language=en-US&page=${page}`, API_OPTIONS);
     if (!response.ok) throw new Error('Failed to fetch popular TV shows');
-    return await response.json();
+    const data = await response.json();
+    setCachedData(cacheKey, data, { ttl: 1000 * 60 * 15 }); // Cache for 15 minutes
+    return data;
   } catch (error) {
     console.error('Error fetching popular TV shows:', error);
     throw error;

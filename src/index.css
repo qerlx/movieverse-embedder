@@ -319,26 +319,7 @@ body {
   transition: opacity 300ms, transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Enhanced Animations and gradients */
-.sparkle {
-  animation: sparkle 3s ease-in-out infinite;
-}
-
-.sparkle:nth-child(2) {
-  animation-delay: 0.3s;
-}
-
-.sparkle:nth-child(3) {
-  animation-delay: 0.6s;
-}
-
-.sparkle:nth-child(4) {
-  animation-delay: 0.9s;
-}
-
-.sparkle:nth-child(5) {
-  animation-delay: 1.2s;
-}
+/* Critical animations only - other animations moved to components */
 
 .cinema-gradient {
   @apply bg-gradient-to-t from-black via-black/70 to-transparent;

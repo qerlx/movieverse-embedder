@@ -14,19 +14,19 @@ import Watch from "./pages/Watch";
 import NotFound from "./pages/NotFound";
 import DnsPopup from "./components/DnsPopup";
 
-// Lazy loaded components for better performance
-const Movies = lazy(() => import("./pages/Movies"));
-const TVShows = lazy(() => import("./pages/TVShows"));
-const MovieDetail = lazy(() => import("./pages/MovieDetail"));
-const TVShowDetail = lazy(() => import("./pages/TVShowDetail"));
-const Search = lazy(() => import("./pages/Search"));
-const UserProfile = lazy(() => import("./pages/UserProfile"));
-const Collections = lazy(() => import("./pages/Collections"));
-const CollectionDetail = lazy(() => import("./pages/CollectionDetail"));
-const AIRecommendations = lazy(() => import("./components/AIRecommendations"));
-const AIAutomation = lazy(() => import("./components/AIAutomation"));
-const Providers = lazy(() => import("./pages/Providers"));
-const ProviderDetail = lazy(() => import("./pages/ProviderDetail"));
+// Optimized lazy loaded components with preloading hints
+const Movies = lazy(() => import(/* webpackChunkName: "pages-movies" */ "./pages/Movies"));
+const TVShows = lazy(() => import(/* webpackChunkName: "pages-tv" */ "./pages/TVShows"));
+const MovieDetail = lazy(() => import(/* webpackChunkName: "pages-detail" */ "./pages/MovieDetail"));
+const TVShowDetail = lazy(() => import(/* webpackChunkName: "pages-detail" */ "./pages/TVShowDetail"));
+const Search = lazy(() => import(/* webpackChunkName: "pages-search" */ "./pages/Search"));
+const UserProfile = lazy(() => import(/* webpackChunkName: "pages-profile" */ "./pages/UserProfile"));
+const Collections = lazy(() => import(/* webpackChunkName: "pages-collections" */ "./pages/Collections"));
+const CollectionDetail = lazy(() => import(/* webpackChunkName: "pages-collections" */ "./pages/CollectionDetail"));
+const AIRecommendations = lazy(() => import(/* webpackChunkName: "components-ai" */ "./components/AIRecommendations"));
+const AIAutomation = lazy(() => import(/* webpackChunkName: "components-ai" */ "./components/AIAutomation"));
+const Providers = lazy(() => import(/* webpackChunkName: "pages-providers" */ "./pages/Providers"));
+const ProviderDetail = lazy(() => import(/* webpackChunkName: "pages-providers" */ "./pages/ProviderDetail"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -94,9 +94,14 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
+      retry: (failureCount, error) => failureCount < 2,
+      staleTime: 1000 * 60 * 10, // 10 minutes - longer stale time
+      gcTime: 1000 * 60 * 60, // 1 hour - longer garbage collection
+      refetchOnReconnect: 'always',
+      refetchInterval: false,
+    },
+    mutations: {
       retry: 1,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes (using gcTime instead of deprecated cacheTime)
     },
   },
 });
