@@ -193,26 +193,10 @@ export const removeFromFavorites = async (user: User, type: "movie" | "tv", id: 
   }
 };
 
+// Legacy function - use getFavorites from @/lib/favorites instead
 export const getFavorites = async (user: User): Promise<FavoriteItem[]> => {
-  if (!user || !user.uid) return [];
-  
-  try {
-    const userId = user.uid;
-    const favoritesData = getLocalStorageCollection(userId, "favorites");
-    
-    // Ensure all items have the poster_path property for compatibility
-    const items = Object.values(favoritesData).map((item: any) => {
-      return {
-        ...item,
-        poster_path: item.posterPath || item.poster_path || null
-      };
-    });
-    
-    return items.sort((a: FavoriteItem, b: FavoriteItem) => b.addedAt - a.addedAt);
-  } catch (error) {
-    console.error("Error fetching favorites:", error);
-    return [];
-  }
+  console.warn("Using deprecated getFavorites from watchService. Use getFavorites from @/lib/favorites instead.");
+  return [];
 };
 
 export const checkIsFavorite = async (userId: string, itemId: number, itemType: string): Promise<boolean> => {

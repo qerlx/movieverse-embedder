@@ -3,9 +3,10 @@ import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { addToFavorites, removeFromFavorites, checkIsFavorite } from "@/lib/favorites";
+import { toggleFavorite, checkFavoriteStatus } from "@/lib/favorites";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface FavoriteButtonProps {
   id: number;
@@ -29,16 +30,17 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   className
 }) => {
   const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const displayName = title || name || "";
 
   // Local storage key for client-side caching
-  const localStorageKey = `favorite_${currentUser?.uid}_${type}_${id}`;
+  const localStorageKey = `favorite_${type}_${id}`;
 
   useEffect(() => {
-    const checkFavoriteStatus = async () => {
+    const checkFavoriteStatusAsync = async () => {
       if (!currentUser) {
         setIsFavorite(false);
         setIsInitialized(true);
@@ -53,10 +55,13 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 
       setIsLoading(true);
       try {
-        const status = await checkIsFavorite(currentUser.uid, id, type);
-        setIsFavorite(status);
+        const result = await checkFavoriteStatus({
+          mediaId: id.toString(),
+          mediaType: type,
+        });
+        setIsFavorite(result.isFavorite);
         // Update local storage
-        localStorage.setItem(localStorageKey, status.toString());
+        localStorage.setItem(localStorageKey, result.isFavorite.toString());
       } catch (error) {
         console.error("Error checking favorite status:", error);
         // Keep local storage value if API fails
@@ -66,7 +71,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       }
     };
 
-    checkFavoriteStatus();
+    checkFavoriteStatusAsync();
   }, [currentUser, id, type, localStorageKey]);
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
@@ -85,12 +90,23 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     
     setIsLoading(true);
     try {
-      if (isFavorite) {
-        await removeFromFavorites(currentUser.uid, id, type);
-        toast.success(`Removed ${displayName} from favorites`);
-      } else {
-        await addToFavorites(currentUser.uid, id, type, displayName, posterPath);
+      const result = await toggleFavorite({
+        mediaId: id.toString(),
+        mediaType: type,
+        title: displayName,
+        posterPath: posterPath || null,
+      });
+      
+      setIsFavorite(result.isFavorite);
+      localStorage.setItem(localStorageKey, result.isFavorite.toString());
+      
+      // Invalidate favorites query to refresh the favorites list
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      
+      if (result.isFavorite) {
         toast.success(`Added ${displayName} to favorites`);
+      } else {
+        toast.success(`Removed ${displayName} from favorites`);
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
