@@ -12,7 +12,7 @@ import {
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
-import AddToWatchedButton from "@/components/AddToWatchedButton";
+
 import WatchProviders from "@/components/WatchProviders";
 import LogoTitle from "@/components/LogoTitle";
 import MovieInfoCard from "@/components/MovieInfoCard";
@@ -147,14 +147,6 @@ const MovieDetail = () => {
               title={movie.title}
               posterPath={movie.poster_path}
               variant="outline"
-            />
-            <AddToWatchedButton
-              itemId={movie.id}
-              itemType="movie"
-              title={movie.title}
-              posterPath={movie.poster_path}
-              variant="outline"
-              genres={movie.genres?.map((g: any) => g.id)}
             />
           </>
         )}

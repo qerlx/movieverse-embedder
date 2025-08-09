@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
-import AddToWatchedButton from "@/components/AddToWatchedButton";
+
 import WatchProviders from "@/components/WatchProviders";
 import EpisodeSelector from "@/components/EpisodeSelector";
 import LogoTitle from "@/components/LogoTitle";
@@ -181,14 +181,6 @@ const TVShowDetail = () => {
               title={tvShow.name}
               posterPath={tvShow.poster_path}
               variant="outline"
-            />
-            <AddToWatchedButton
-              itemId={tvShow.id}
-              itemType="tv"
-              title={tvShow.name}
-              posterPath={tvShow.poster_path}
-              variant="outline"
-              genres={tvShow.genres?.map((g: any) => g.id)}
             />
           </>
         )}

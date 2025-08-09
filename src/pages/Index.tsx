@@ -11,7 +11,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
 import Favorites from "@/components/Favorites";
-import ContinueWatchingRow from "@/components/ContinueWatchingRow";
+import RecentlyWatchedList from "@/components/RecentlyWatchedList";
 import { Heart, TrendingUp, Star, Tv, Film } from "lucide-react";
 import { motion } from "framer-motion";
 import { getRecentlyWatched } from "@/lib/firebase-watch";
@@ -116,16 +116,6 @@ const Index = () => {
       {!isLoading && (
         <div className="relative -mt-12 z-10">
           <div className="container mx-auto px-4 space-y-8">
-            {/* Continue Watching */}
-            {currentUser && continueWatchingItems.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <ContinueWatchingRow items={continueWatchingItems} />
-              </motion.div>
-            )}
             
             {/* My List/Favorites */}
             {currentUser && (
