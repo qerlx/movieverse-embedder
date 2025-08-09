@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Eye, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { addToWatchHistory, getWatchProgress } from "@/lib/watchService";
+import { addToWatchHistory, getWatchProgress } from "@/lib/firebase-watch";
 import { toast } from "sonner";
 
 interface AddToWatchedButtonProps {
@@ -38,7 +38,7 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
       }
       
       try {
-        const progress = await getWatchProgress(currentUser, itemType, itemId);
+        const progress = await getWatchProgress(currentUser, itemType, itemId.toString());
         setIsAdded(progress !== null);
       } catch (error) {
         console.error("Error checking watch status:", error);
@@ -65,8 +65,8 @@ const AddToWatchedButton: React.FC<AddToWatchedButtonProps> = ({
     try {
       // Add to watch history
       await addToWatchHistory(currentUser, {
-        id: itemId,
-        type: itemType,
+        mediaId: itemId.toString(),
+        mediaType: itemType,
         title,
         posterPath,
         progress: itemType === "movie" ? 100 : undefined,

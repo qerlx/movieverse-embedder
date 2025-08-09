@@ -14,7 +14,7 @@ import Favorites from "@/components/Favorites";
 import ContinueWatchingRow from "@/components/ContinueWatchingRow";
 import { Heart, TrendingUp, Star, Tv, Film } from "lucide-react";
 import { motion } from "framer-motion";
-import { getWatchHistory } from "@/lib/watchService";
+import { getRecentlyWatched } from "@/lib/firebase-watch";
 import { ContinueWatchingItem } from "@/components/ContinueWatchingRow";
 import StreamingProviders from "@/components/StreamingProviders";
 
@@ -54,15 +54,18 @@ const Index = () => {
         // Fetch continue watching data for logged in users
         if (currentUser) {
           try {
-            const watchHistory = await getWatchHistory(currentUser);
+            const watchHistory = await getRecentlyWatched(currentUser, 6);
             if (watchHistory && watchHistory.length > 0) {
               const formattedWatchHistory = watchHistory.map(item => ({
-                ...item,
-                poster_path: item.poster_path || item.posterPath || null,
-                posterPath: item.posterPath || item.poster_path || null
+                id: parseInt(item.mediaId),
+                type: item.mediaType,
+                title: item.title,
+                poster_path: item.posterPath,
+                progress: item.progress,
+                lastEpisode: item.lastEpisode
               }));
               
-              setContinueWatchingItems(formattedWatchHistory.slice(0, 6));
+              setContinueWatchingItems(formattedWatchHistory);
             }
           } catch (error) {
             console.error("Error fetching watch history:", error);

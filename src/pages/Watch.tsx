@@ -5,7 +5,7 @@ import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { addToWatchHistory } from "@/lib/watchService";
+import { addToWatchHistory } from "@/lib/firebase-watch";
 
 // Vidora theme color - vibrant purple that matches theme
 const VIDORA_THEME_COLOR = "8B5CF6"; // Purple color
@@ -164,8 +164,8 @@ const Watch = () => {
             const progress = mediaData.progress?.percent || 0;
             try {
               addToWatchHistory(currentUser, {
-                id: mediaData.id,
-                type: mediaData.type,
+                mediaId: mediaData.id.toString(),
+                mediaType: mediaData.type,
                 title: mediaData.title || '',
                 posterPath: mediaData.poster_path || '',
                 progress: progress,
@@ -200,8 +200,8 @@ const Watch = () => {
           if (currentUser) {
             try {
               await addToWatchHistory(currentUser, {
-                id: itemId,
-                type: "movie",
+                mediaId: itemId.toString(),
+                mediaType: "movie",
                 title: movieData.title,
                 posterPath: movieData.poster_path || '',
                 progress: 0,
@@ -236,8 +236,8 @@ const Watch = () => {
             if (currentUser) {
               try {
                 await addToWatchHistory(currentUser, {
-                  id: itemId,
-                  type: "tv",
+                  mediaId: itemId.toString(),
+                  mediaType: "tv",
                   title: tvData.name,
                   posterPath: tvData.poster_path || '',
                   lastEpisode: {

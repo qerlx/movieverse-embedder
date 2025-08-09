@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getFavorites } from "@/lib/favorites";
+import { getFavorites } from "@/lib/firebase-favorites";
+import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import MovieCard from "@/components/MovieCard";
 
 function FavoritesPage() {
+  const { currentUser } = useAuth();
+  
   const { data: favorites, isLoading } = useQuery({
-    queryKey: ["favorites"],
-    queryFn: getFavorites,
+    queryKey: ["favorites", currentUser?.uid],
+    queryFn: () => {
+      if (!currentUser) return Promise.resolve([]);
+      return getFavorites(currentUser);
+    },
+    enabled: !!currentUser,
   });
 
   if (isLoading) {

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { toggleFavorite, checkFavoriteStatus } from "@/lib/favorites";
+import { toggleFavorite, checkFavoriteStatus } from "@/lib/firebase-favorites";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -55,7 +55,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 
       setIsLoading(true);
       try {
-        const result = await checkFavoriteStatus({
+        const result = await checkFavoriteStatus(currentUser, {
           mediaId: id.toString(),
           mediaType: type,
         });
@@ -90,7 +90,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     
     setIsLoading(true);
     try {
-      const result = await toggleFavorite({
+      const result = await toggleFavorite(currentUser, {
         mediaId: id.toString(),
         mediaType: type,
         title: displayName,
