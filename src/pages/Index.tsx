@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import PersonalizedRecommendations from "@/components/PersonalizedRecommendations";
 import Favorites from "@/components/Favorites";
 import RecentlyWatchedList from "@/components/RecentlyWatchedList";
-import { Heart, TrendingUp, Star, Tv, Film } from "lucide-react";
+import { Heart, TrendingUp, Star, Tv, Film, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { getRecentlyWatched } from "@/lib/firebase-watch";
 import { ContinueWatchingItem } from "@/components/ContinueWatchingRow";
@@ -117,14 +117,32 @@ const Index = () => {
         <div className="relative -mt-12 z-10">
           <div className="container mx-auto px-4 space-y-8">
             
-            {/* My List/Favorites */}
+            {/* Recently Watched */}
             {currentUser && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
               >
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-4">My List</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-primary" />
+                  Continue Watching
+                </h2>
+                <RecentlyWatchedList limit={6} />
+              </motion.div>
+            )}
+
+            {/* My List/Favorites */}
+            {currentUser && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.15 }}
+              >
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-primary" />
+                  My List
+                </h2>
                 <Favorites limit={6} />
               </motion.div>
             )}
@@ -133,7 +151,7 @@ const Index = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
             >
               <StreamingProviders />
             </motion.div>

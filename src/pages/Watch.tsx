@@ -22,7 +22,7 @@ interface VideoSource {
 const videoSources: VideoSource[] = [
   {
     id: "vidora",
-    name: "Vidora",
+    name: "Vidora Pro",
     getUrl: (type, id, season, episode) => {
       const baseUrl = type === "movie" 
         ? `https://vidora.su/movie/${id}?autoplay=true&colour=${VIDORA_THEME_COLOR}`
@@ -37,12 +37,23 @@ const videoSources: VideoSource[] = [
   },
   {
     id: "vidsrc",
-    name: "VidSrc",
+    name: "VidSrc HD",
     getUrl: (type, id, season, episode) => {
       if (type === "movie") {
         return `https://vidsrc.cc/v2/embed/movie/${id}`;
       } else {
         return `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`;
+      }
+    }
+  },
+  {
+    id: "vidsrcpro",
+    name: "VidSrc Pro",
+    getUrl: (type, id, season, episode) => {
+      if (type === "movie") {
+        return `https://vidsrc.pro/embed/movie/${id}`;
+      } else {
+        return `https://vidsrc.pro/embed/tv/${id}/${season}/${episode}`;
       }
     }
   },
@@ -58,13 +69,13 @@ const videoSources: VideoSource[] = [
     }
   },
   {
-    id: "vidjoy",
-    name: "Vidjoy",
+    id: "embedsu",
+    name: "EmbedSu",
     getUrl: (type, id, season, episode) => {
       if (type === "movie") {
-        return `https://vidjoy.pro/embed/movie/${id}?adFree=true`;
+        return `https://embed.su/embed/movie/${id}`;
       } else {
-        return `https://vidjoy.pro/embed/tv/${id}/${season}/${episode}?adFree=true`;
+        return `https://embed.su/embed/tv/${id}/${season}/${episode}`;
       }
     }
   }
@@ -275,45 +286,105 @@ const Watch = () => {
   return (
     <div className="min-h-screen bg-black">
       <div className="h-screen w-screen relative">
-        {/* Enhanced source switcher with better mobile support */}
-        <div className="absolute top-4 left-0 right-0 z-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4 sm:px-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackNavigation}
-            className="bg-black/50 backdrop-blur-md text-white hover:bg-black/70 rounded-full transition-all duration-200 border border-white/10 shadow-lg"
-          >
-            <ArrowLeft size={18} className="mr-2" />
-            <span className="hidden sm:inline">Back</span>
-          </Button>
-          
-          <div className="flex flex-wrap gap-2 justify-end w-full sm:w-auto">
-            {videoSources.map((source) => (
-              <Button 
-                key={source.id}
-                size="sm"
-                variant={activeSource.id === source.id ? "default" : "outline"}
-                onClick={() => switchVideoSource(source)}
-                className={`
-                  ${activeSource.id === source.id 
-                    ? 'bg-purple-600 hover:bg-purple-700 border-purple-500 shadow-lg shadow-purple-600/20' 
-                    : 'bg-black/50 text-white border-white/20 hover:bg-black/70 backdrop-blur-md'
-                  }
-                  rounded-full transition-all duration-200 text-xs sm:text-sm font-medium min-w-[60px] shadow-lg
-                `}
-              >
-                {source.name}
-              </Button>
-            ))}
+        {/* Enhanced Player Controls */}
+        <div className="absolute top-0 left-0 w-full h-full z-40 opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+          {/* Top Control Bar */}
+          <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/90 via-black/50 to-transparent p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 pointer-events-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBackNavigation}
+                  className="bg-white/10 backdrop-blur-xl text-white hover:bg-white/20 rounded-full transition-all duration-300 border border-white/10 shadow-lg hover:shadow-xl hover:scale-105"
+                >
+                  <ArrowLeft size={16} className="mr-2" />
+                  <span className="font-medium">Back</span>
+                </Button>
+                
+                <div className="hidden sm:block">
+                  <h1 className="text-lg font-bold text-white/90 max-w-md truncate">
+                    {title}
+                  </h1>
+                  <p className="text-xs text-white/60 mt-1">
+                    Playing on {activeSource.name}
+                  </p>
+                </div>
+              </div>
+
+              {/* Source Switcher */}
+              <div className="flex items-center gap-2 pointer-events-auto">
+                <span className="text-xs text-white/60 hidden sm:block mr-2">Quality:</span>
+                {videoSources.map((source) => (
+                  <Button 
+                    key={source.id}
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => switchVideoSource(source)}
+                    className={`
+                      ${activeSource.id === source.id 
+                        ? 'bg-primary/20 text-primary border-primary/30 shadow-lg shadow-primary/20' 
+                        : 'bg-white/5 text-white/80 border-white/10 hover:bg-white/10 hover:border-white/20'
+                      }
+                      rounded-lg transition-all duration-300 text-xs font-medium min-w-[50px] border backdrop-blur-xl hover:scale-105 shadow-md
+                    `}
+                  >
+                    {source.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Control Bar */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="pointer-events-auto">
+                <p className="text-sm font-medium text-white/90 mb-1">{title}</p>
+                <div className="flex items-center gap-2 text-xs text-white/60">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                    <span>Live</span>
+                  </div>
+                  <span>•</span>
+                  <span>{activeSource.name}</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 pointer-events-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="bg-white/10 backdrop-blur-xl text-white hover:bg-white/20 rounded-lg transition-all duration-300 border border-white/10"
+                >
+                  HD
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
         
         {/* Enhanced loading indicator */}
         {isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-40">
-            <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-white text-lg font-medium">Loading {activeSource.name}...</p>
-            <p className="text-gray-400 text-sm mt-2">{title}</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black z-50">
+            <div className="relative mb-8">
+              <div className="w-20 h-20 border-4 border-primary/20 rounded-full"></div>
+              <div className="absolute inset-0 w-20 h-20 border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+            </div>
+            <div className="text-center max-w-md px-4">
+              <h2 className="text-white text-xl font-bold mb-2">Loading Video</h2>
+              <p className="text-white/80 text-lg font-medium mb-2">{activeSource.name}</p>
+              <p className="text-white/60 text-sm">{title}</p>
+              <div className="mt-4 flex items-center justify-center gap-1">
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="w-2 h-2 bg-primary rounded-full animate-pulse"
+                    style={{ animationDelay: `${i * 0.2}s` }}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         )}
         

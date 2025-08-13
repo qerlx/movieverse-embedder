@@ -180,7 +180,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                   <div>
                     <h3 className="text-lg md:text-xl font-bold text-white mb-2 flex items-center gap-3">
                       <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                        Season {season.season_number}
+                        {season.name || `Season ${season.season_number}`}
                       </span>
                       {expandedSeason === season.season_number && (
                         <span className="text-xs bg-gradient-to-r from-primary/20 to-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
