@@ -1,11 +1,11 @@
 import { MovieResult, TVResult, ConfigurationResponse, Genre } from "@/types";
 import { getCachedData, setCachedData, createCacheKey } from "./api-cache";
+import { safeFetch } from "@/utils/api";
+import { TMDB_BASE_URL } from "@/constants";
 
 const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMzQzYzU2N2ZhZTk3Y2JlZGM0OGQ1YWQ0Yjg5M2YzMSIsIm5iZiI6MTc0MTc1NzA2NC43MzMsInN1YiI6IjY3ZDExYTg4MTM5OTBhMDU4YjYwYWExMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.PfUfbFyxCtI3bJehMrDRUuuKOPp58WC-_4B4aUovCyA";
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
-const EMBED_BASE_URL = "https://vidora.su";
 
-const API_OPTIONS = {
+const API_OPTIONS: RequestInit = {
   method: 'GET',
   headers: {
     accept: 'application/json',
@@ -14,45 +14,30 @@ const API_OPTIONS = {
 };
 
 // Get TMDb configuration
-export const getConfiguration = async (): Promise<ConfigurationResponse> => {
-  try {
-    const response = await fetch(`${TMDB_BASE_URL}/configuration`, API_OPTIONS);
-    if (!response.ok) throw new Error('Failed to fetch configuration');
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching configuration:', error);
-    throw error;
-  }
+export const getConfiguration = async (): Promise<ConfigurationResponse | null> => {
+  const data = await safeFetch<ConfigurationResponse>(`${TMDB_BASE_URL}/configuration`, API_OPTIONS);
+  return data;
 };
 
 // Get popular movies with caching
-export const getPopularMovies = async (page = 1): Promise<MovieResult> => {
+export const getPopularMovies = async (page = 1): Promise<MovieResult | null> => {
   const cacheKey = createCacheKey('popular', 'movies', page);
   const cached = getCachedData<MovieResult>(cacheKey);
   if (cached) return cached;
 
-  try {
-    const response = await fetch(`${TMDB_BASE_URL}/movie/popular?language=en-US&page=${page}`, API_OPTIONS);
-    if (!response.ok) throw new Error('Failed to fetch popular movies');
-    const data = await response.json();
+  const data = await safeFetch<MovieResult>(`${TMDB_BASE_URL}/movie/popular?language=en-US&page=${page}`, API_OPTIONS);
+  
+  if (data) {
     setCachedData(cacheKey, data, { ttl: 1000 * 60 * 15 }); // Cache for 15 minutes
-    return data;
-  } catch (error) {
-    console.error('Error fetching popular movies:', error);
-    throw error;
   }
+  
+  return data;
 };
 
 // Get trending movies
-export const getTrendingMovies = async (timeWindow = 'week'): Promise<MovieResult> => {
-  try {
-    const response = await fetch(`${TMDB_BASE_URL}/trending/movie/${timeWindow}`, API_OPTIONS);
-    if (!response.ok) throw new Error('Failed to fetch trending movies');
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching trending movies:', error);
-    throw error;
-  }
+export const getTrendingMovies = async (timeWindow = 'week'): Promise<MovieResult | null> => {
+  const data = await safeFetch<MovieResult>(`${TMDB_BASE_URL}/trending/movie/${timeWindow}`, API_OPTIONS);
+  return data;
 };
 
 // Get now playing movies
@@ -95,33 +80,24 @@ export const getMoviesByGenre = async (genreId: number, page = 1): Promise<Movie
 };
 
 // Get popular TV shows with caching
-export const getPopularTVShows = async (page = 1): Promise<TVResult> => {
+export const getPopularTVShows = async (page = 1): Promise<TVResult | null> => {
   const cacheKey = createCacheKey('popular', 'tv', page);
   const cached = getCachedData<TVResult>(cacheKey);
   if (cached) return cached;
 
-  try {
-    const response = await fetch(`${TMDB_BASE_URL}/tv/popular?language=en-US&page=${page}`, API_OPTIONS);
-    if (!response.ok) throw new Error('Failed to fetch popular TV shows');
-    const data = await response.json();
+  const data = await safeFetch<TVResult>(`${TMDB_BASE_URL}/tv/popular?language=en-US&page=${page}`, API_OPTIONS);
+  
+  if (data) {
     setCachedData(cacheKey, data, { ttl: 1000 * 60 * 15 }); // Cache for 15 minutes
-    return data;
-  } catch (error) {
-    console.error('Error fetching popular TV shows:', error);
-    throw error;
   }
+  
+  return data;
 };
 
 // Get trending TV shows
-export const getTrendingTVShows = async (timeWindow = 'week'): Promise<TVResult> => {
-  try {
-    const response = await fetch(`${TMDB_BASE_URL}/trending/tv/${timeWindow}`, API_OPTIONS);
-    if (!response.ok) throw new Error('Failed to fetch trending TV shows');
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching trending TV shows:', error);
-    throw error;
-  }
+export const getTrendingTVShows = async (timeWindow = 'week'): Promise<TVResult | null> => {
+  const data = await safeFetch<TVResult>(`${TMDB_BASE_URL}/trending/tv/${timeWindow}`, API_OPTIONS);
+  return data;
 };
 
 // Get top rated TV shows
@@ -175,44 +151,41 @@ export const getTVShowDetails = async (id: number) => {
   }
 };
 
-// Get TV show season details - improved error handling
+// Get TV show season details with improved validation
 export const getTVShowSeasonDetails = async (id: number, seasonNumber: number) => {
-  try {
-    console.log(`Fetching season details for show ${id}, season ${seasonNumber}`);
-    const response = await fetch(`${TMDB_BASE_URL}/tv/${id}/season/${seasonNumber}`, API_OPTIONS);
-    
-    const data = await response.json();
-    
-    // Even if we get a response, check for error structure in the response
-    if (!response.ok || data.success === false) {
-      console.error('API error response:', data);
-      return { 
-        success: false, 
-        status_message: data.status_message || `Failed with status: ${response.status}`, 
-        episodes: [] 
-      };
-    }
-    
-    // Safety check to ensure episodes exist
-    if (!data.episodes || !Array.isArray(data.episodes)) {
-      console.error('No episodes array in response:', data);
-      return { 
-        success: false, 
-        status_message: 'No episodes data available', 
-        episodes: [] 
-      };
-    }
-    
-    // Success case
-    return { ...data, success: true };
-  } catch (error) {
-    console.error('Error fetching TV show season details:', error);
+  console.log(`Fetching season details for show ${id}, season ${seasonNumber}`);
+  
+  const data = await safeFetch<any>(`${TMDB_BASE_URL}/tv/${id}/season/${seasonNumber}`, API_OPTIONS);
+  
+  if (!data) {
     return { 
       success: false, 
-      status_message: 'Network or server error', 
+      status_message: 'Failed to fetch season data', 
       episodes: [] 
     };
   }
+  
+  // Check for API error structure
+  if (data.success === false) {
+    console.error('API error response:', data);
+    return { 
+      success: false, 
+      status_message: data.status_message || 'API returned error', 
+      episodes: [] 
+    };
+  }
+  
+  // Validate episodes array
+  if (!data.episodes || !Array.isArray(data.episodes)) {
+    console.error('No episodes array in response:', data);
+    return { 
+      success: false, 
+      status_message: 'No episodes data available', 
+      episodes: [] 
+    };
+  }
+  
+  return { ...data, success: true };
 };
 
 // Get TV show episodes
@@ -294,6 +267,8 @@ interface VidoraParams {
   pausescreen?: boolean;
   idlecheck?: number; // minutes, 0 to disable
 }
+
+const EMBED_BASE_URL = "https://vidora.su";
 
 export const getVidoraMovieEmbedUrl = (tmdbId: number, params?: VidoraParams): string => {
   const url = new URL(`${EMBED_BASE_URL}/movie/${tmdbId}`);

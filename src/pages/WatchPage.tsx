@@ -1,0 +1,442 @@
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { toast } from "sonner";
+import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { addToWatchHistory } from "@/lib/firebase-watch";
+import { STORAGE_KEYS } from "@/constants";
+import { videoSources, getVideoSource, buildVideoUrl, isValidVideoSource } from "@/utils/video";
+import { validateMediaId, validateSeasonEpisode, sanitizeText } from "@/utils/api";
+import VideoPlayerControls from "@/components/VideoPlayerControls";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface WatchPageState {
+  title: string;
+  isLoading: boolean;
+  error: string | null;
+  videoUrl: string;
+  currentSource: typeof videoSources[0];
+  isPlaying: boolean;
+  volume: number;
+  isMuted: boolean;
+  controlsVisible: boolean;
+}
+
+const WatchPage: React.FC = () => {
+  const { type, id, season, episode } = useParams<{
+    type: string;
+    id: string;
+    season?: string;
+    episode?: string;
+  }>();
+  
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { currentUser } = useAuth();
+  
+  const [state, setState] = useState<WatchPageState>({
+    title: "",
+    isLoading: true,
+    error: null,
+    videoUrl: "",
+    currentSource: videoSources[0],
+    isPlaying: false,
+    volume: 1,
+    isMuted: false,
+    controlsVisible: true
+  });
+  
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Validate parameters
+  const validatedParams = useMemo(() => {
+    if (!type || !id) return null;
+    
+    const mediaId = validateMediaId(id);
+    if (!mediaId) return null;
+    
+    if (type === "tv") {
+      if (!season || !episode) return null;
+      const validatedEpisode = validateSeasonEpisode(season, episode);
+      if (!validatedEpisode) return null;
+      
+      return {
+        type,
+        id: mediaId,
+        season: validatedEpisode.season,
+        episode: validatedEpisode.episode
+      };
+    }
+    
+    if (type === "movie") {
+      return { type, id: mediaId };
+    }
+    
+    return null;
+  }, [type, id, season, episode]);
+
+  // Handle source switching
+  const switchVideoSource = useCallback((sourceId: string) => {
+    if (!validatedParams) return;
+    
+    const newSource = getVideoSource(sourceId);
+    const newUrl = buildVideoUrl(
+      newSource,
+      validatedParams.type,
+      validatedParams.id.toString(),
+      validatedParams.type === "tv" ? validatedParams.season?.toString() : undefined,
+      validatedParams.type === "tv" ? validatedParams.episode?.toString() : undefined
+    );
+    
+    if (!newUrl || !isValidVideoSource(newUrl)) {
+      toast.error("Invalid video source selected");
+      return;
+    }
+    
+    setState(prev => ({
+      ...prev,
+      isLoading: true,
+      currentSource: newSource,
+      videoUrl: newUrl
+    }));
+    
+    // Update URL with source parameter
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.set('source', sourceId);
+    const newLocation = `${location.pathname}?${searchParams.toString()}`;
+    window.history.replaceState(null, '', newLocation);
+    
+    setTimeout(() => {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }, 1000);
+  }, [validatedParams, location]);
+
+  // Handle back navigation with validation
+  const handleBackNavigation = useCallback(() => {
+    if (!validatedParams) {
+      navigate('/');
+      return;
+    }
+    
+    if (location.key !== "default") {
+      navigate(-1);
+    } else {
+      const backPath = validatedParams.type === "movie" 
+        ? `/movie/${validatedParams.id}`
+        : `/tv/${validatedParams.id}`;
+      navigate(backPath);
+    }
+  }, [validatedParams, location.key, navigate]);
+
+  // Media message handling for progress tracking
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Security: validate origin
+      const allowedOrigins = ['https://vidora.su', 'https://vidsrc.cc', 'https://vidsrc.pro', 'https://embed.su'];
+      if (!allowedOrigins.some(origin => event.origin.includes(origin))) {
+        return;
+      }
+      
+      if (event.data?.type === 'MEDIA_DATA') {
+        const mediaData = event.data.data;
+        if (mediaData?.id && (mediaData.type === 'movie' || mediaData.type === 'tv')) {
+          console.log('Progress update received:', mediaData);
+          
+          // Update local storage
+          try {
+            const watchProgress = JSON.parse(localStorage.getItem(STORAGE_KEYS.WATCH_PROGRESS) || '{}');
+            watchProgress[mediaData.id] = {
+              ...watchProgress[mediaData.id],
+              ...mediaData,
+              last_updated: Date.now()
+            };
+            localStorage.setItem(STORAGE_KEYS.WATCH_PROGRESS, JSON.stringify(watchProgress));
+            
+            // Update Firebase for authenticated users
+            if (currentUser && validatedParams) {
+              const progress = mediaData.progress?.percent || 0;
+              addToWatchHistory(currentUser, {
+                mediaId: validatedParams.id.toString(),
+                mediaType: validatedParams.type as "movie" | "tv",
+                title: state.title,
+                posterPath: mediaData.poster_path || '',
+                progress: progress,
+              }).catch(err => console.error("Failed to update watch history:", err));
+            }
+          } catch (error) {
+            console.error("Error updating watch progress:", error);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [currentUser, validatedParams, state.title]);
+
+  // Controls visibility management
+  useEffect(() => {
+    const showControls = () => {
+      setState(prev => ({ ...prev, controlsVisible: true }));
+      
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      
+      controlsTimeoutRef.current = setTimeout(() => {
+        setState(prev => ({ ...prev, controlsVisible: false }));
+      }, 3000);
+    };
+
+    const handleMouseMove = () => showControls();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setState(prev => ({ ...prev, isPlaying: !prev.isPlaying }));
+      }
+      showControls();
+    };
+
+    if (containerRef.current) {
+      containerRef.current.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Fetch media details and setup video
+  useEffect(() => {
+    if (!validatedParams) {
+      setState(prev => ({ ...prev, error: "Invalid media parameters", isLoading: false }));
+      return;
+    }
+
+    const fetchMediaDetails = async () => {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      try {
+        let mediaData: any;
+        let mediaTitle: string;
+        
+        if (validatedParams.type === "movie") {
+          mediaData = await getMovieDetails(validatedParams.id);
+          mediaTitle = sanitizeText(mediaData?.title || "Unknown Movie");
+        } else {
+          mediaData = await getTVShowDetails(validatedParams.id);
+          mediaTitle = `${sanitizeText(mediaData?.name || "Unknown Show")} - S${validatedParams.season} E${validatedParams.episode}`;
+        }
+        
+        if (!mediaData) {
+          throw new Error("Failed to load media details");
+        }
+        
+        // Get initial source from URL params
+        const searchParams = new URLSearchParams(location.search);
+        const sourceParam = searchParams.get('source');
+        const source = getVideoSource(sourceParam || undefined);
+        
+        // Build video URL
+        const videoUrl = buildVideoUrl(
+          source,
+          validatedParams.type,
+          validatedParams.id.toString(),
+          validatedParams.type === "tv" ? validatedParams.season?.toString() : undefined,
+          validatedParams.type === "tv" ? validatedParams.episode?.toString() : undefined
+        );
+        
+        if (!videoUrl || !isValidVideoSource(videoUrl)) {
+          throw new Error("Failed to generate valid video URL");
+        }
+        
+        setState(prev => ({
+          ...prev,
+          title: mediaTitle,
+          videoUrl,
+          currentSource: source,
+          isLoading: false
+        }));
+        
+        // Add to watch history
+        if (currentUser) {
+          try {
+            if (validatedParams.type === "tv") {
+              // Get episode details for TV shows
+              const seasonDetails = await getTVShowSeasonDetails(validatedParams.id, validatedParams.season!);
+              let episodeName = "";
+              
+              if (seasonDetails?.success && seasonDetails.episodes) {
+                const episodeData = seasonDetails.episodes.find((e: any) => e.episode_number === validatedParams.episode);
+                episodeName = episodeData?.name || `Episode ${validatedParams.episode}`;
+              }
+              
+              await addToWatchHistory(currentUser, {
+                mediaId: validatedParams.id.toString(),
+                mediaType: "tv",
+                title: sanitizeText(mediaData.name || ""),
+                posterPath: mediaData.poster_path || '',
+                lastEpisode: {
+                  season: validatedParams.season!,
+                  episode: validatedParams.episode!,
+                  name: episodeName
+                },
+                genres: mediaData.genres?.map((g: any) => g.id) || []
+              });
+            } else {
+              await addToWatchHistory(currentUser, {
+                mediaId: validatedParams.id.toString(),
+                mediaType: "movie",
+                title: sanitizeText(mediaData.title || ""),
+                posterPath: mediaData.poster_path || '',
+                progress: 0,
+                genres: mediaData.genres?.map((g: any) => g.id) || []
+              });
+            }
+          } catch (error) {
+            console.error("Error adding to watch history:", error);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching media details:", error);
+        setState(prev => ({ 
+          ...prev, 
+          error: "Failed to load media. Please try again.",
+          isLoading: false 
+        }));
+        
+        setTimeout(() => {
+          handleBackNavigation();
+        }, 3000);
+      }
+    };
+
+    fetchMediaDetails();
+  }, [validatedParams, currentUser, location.search, handleBackNavigation]);
+
+  if (!validatedParams) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-4">Invalid Parameters</h1>
+          <p className="text-muted-foreground mb-4">The video parameters are not valid.</p>
+          <button 
+            onClick={() => navigate('/')}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg"
+          >
+            Go Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-4">Error</h1>
+          <p className="text-muted-foreground mb-4">{state.error}</p>
+          <button 
+            onClick={handleBackNavigation}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="min-h-screen bg-black">
+      <div className="h-screen w-screen relative">
+        {/* Video Player Controls */}
+        <VideoPlayerControls
+          title={state.title}
+          isPlaying={state.isPlaying}
+          volume={state.volume}
+          isMuted={state.isMuted}
+          activeSource={state.currentSource.name}
+          onGoBack={handleBackNavigation}
+          onTogglePlay={() => setState(prev => ({ ...prev, isPlaying: !prev.isPlaying }))}
+          onToggleMute={() => setState(prev => ({ ...prev, isMuted: !prev.isMuted }))}
+          isVisible={state.controlsVisible}
+        />
+        
+        {/* Source Switcher */}
+        <div className="absolute top-4 right-4 z-40 flex gap-2">
+          {videoSources.map((source) => (
+            <button
+              key={source.id}
+              onClick={() => switchVideoSource(source.id)}
+              className={`
+                px-3 py-1 text-xs rounded-full border transition-all duration-300
+                ${state.currentSource.id === source.id 
+                  ? 'bg-primary text-primary-foreground border-primary' 
+                  : 'bg-black/50 text-white border-white/20 hover:bg-white/10'
+                }
+              `}
+            >
+              {source.name}
+            </button>
+          ))}
+        </div>
+        
+        {/* Loading Screen */}
+        <AnimatePresence>
+          {state.isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black z-50"
+            >
+              <div className="relative mb-8">
+                <div className="w-20 h-20 border-4 border-primary/20 rounded-full"></div>
+                <motion.div 
+                  className="absolute inset-0 w-20 h-20 border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                />
+              </div>
+              <div className="text-center max-w-md px-4">
+                <h2 className="text-white text-xl font-bold mb-2">Loading Video</h2>
+                <p className="text-white/80 text-lg font-medium mb-2">{state.currentSource.name}</p>
+                <p className="text-white/60 text-sm">{state.title}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {/* Video Player iframe */}
+        {state.videoUrl && (
+          <div
+            className="w-full h-full"
+            style={{ visibility: state.isLoading ? 'hidden' : 'visible' }}
+          >
+            <iframe
+              ref={iframeRef}
+              src={state.videoUrl}
+              title={state.title}
+              frameBorder="0"
+              allowFullScreen
+              className="w-full h-full absolute inset-0 bg-black"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              style={{ zIndex: 10 }}
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default WatchPage;

@@ -1,7 +1,7 @@
-
-import React from 'react';
-import { ArrowLeft, Play, Volume, Volume1, Volume2, VolumeOff, Pause } from 'lucide-react';
+import React, { useCallback } from 'react';
+import { ArrowLeft, Play, Volume, Volume1, Volume2, VolumeOff, Pause, Settings, Maximize } from 'lucide-react';
 import { Button } from './ui/button';
+import { motion } from 'framer-motion';
 
 interface VideoPlayerControlsProps {
   title: string;
@@ -14,6 +14,8 @@ interface VideoPlayerControlsProps {
   onToggleMute?: () => void;
   isMuted?: boolean;
   activeSource?: string;
+  onFullscreen?: () => void;
+  isVisible?: boolean;
 }
 
 const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
@@ -24,65 +26,128 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
   onGoBack,
   onToggleMute,
   isMuted = false,
-  activeSource = 'vidora'
+  activeSource = 'vidora',
+  onFullscreen,
+  isVisible = true
 }) => {
-  // Volume icon based on current level
-  const getVolumeIcon = () => {
+  // Volume icon based on current level with memoization
+  const getVolumeIcon = useCallback(() => {
     if (isMuted || volume === 0) return <VolumeOff size={16} />;
     if (volume < 0.3) return <Volume size={16} />;
     if (volume < 0.7) return <Volume1 size={16} />;
     return <Volume2 size={16} />;
-  };
+  }, [isMuted, volume]);
+
+  const handleBackClick = useCallback(() => {
+    onGoBack();
+  }, [onGoBack]);
+
+  const handlePlayToggle = useCallback(() => {
+    onTogglePlay?.();
+  }, [onTogglePlay]);
+
+  const handleMuteToggle = useCallback(() => {
+    onToggleMute?.();
+  }, [onToggleMute]);
+
+  const handleFullscreenClick = useCallback(() => {
+    onFullscreen?.();
+  }, [onFullscreen]);
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full z-30 flex flex-col justify-between opacity-0 hover:opacity-100 transition-opacity duration-150 pointer-events-none">
-      {/* Top controls - only back button */}
-      <div className="flex justify-start items-center p-3 bg-gradient-to-b from-black/80 to-transparent pointer-events-auto">
+    <motion.div 
+      className="absolute top-0 left-0 w-full h-full z-30 flex flex-col justify-between pointer-events-none"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isVisible ? 1 : 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      {/* Top controls - Back button and title */}
+      <motion.div 
+        className="flex justify-start items-center p-3 bg-gradient-to-b from-black/90 via-black/60 to-transparent pointer-events-auto"
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <Button 
           variant="ghost"
           size="sm" 
-          onClick={onGoBack}
-          className="text-white hover:bg-white/10 rounded-full"
+          onClick={handleBackClick}
+          className="text-white hover:bg-white/20 rounded-full border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-105"
+          aria-label="Go back"
         >
           <ArrowLeft size={16} />
-          <span className="ml-1">Back</span>
+          <span className="ml-1 font-medium">Back</span>
         </Button>
         
-        <h1 className="ml-3 text-base font-medium text-white truncate">
-          {title}
-          {activeSource !== 'vidora' && (
-            <span className="ml-2 opacity-70 text-sm">({activeSource})</span>
+        <div className="ml-3 flex-1 min-w-0">
+          <h1 className="text-base font-semibold text-white truncate mb-1">
+            {title || 'Loading...'}
+          </h1>
+          {activeSource && activeSource !== 'vidora' && (
+            <p className="text-xs text-white/70">
+              Playing on {activeSource}
+            </p>
           )}
-        </h1>
-      </div>
+        </div>
+      </motion.div>
       
-      {/* Bottom controls */}
-      <div className="p-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between pointer-events-auto">
-        {onTogglePlay && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onTogglePlay}
-            className="text-white hover:bg-white/10 rounded-full w-9 h-9"
-          >
-            {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-          </Button>
-        )}
-        
-        <div className="flex items-center gap-1">
+      {/* Bottom controls - Play/pause and volume */}
+      <motion.div 
+        className="p-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent flex items-center justify-between pointer-events-auto"
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <div className="flex items-center gap-2">
+          {onTogglePlay && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handlePlayToggle}
+              className="text-white hover:bg-white/20 rounded-full w-10 h-10 border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-105"
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+            </Button>
+          )}
+          
           {onToggleMute && (
             <Button
               variant="ghost"
               size="icon"
-              onClick={onToggleMute}
-              className="text-white hover:bg-white/10 rounded-full w-7 h-7"
+              onClick={handleMuteToggle}
+              className="text-white hover:bg-white/20 rounded-full w-8 h-8 border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-105"
+              aria-label={isMuted ? 'Unmute' : 'Mute'}
             >
               {getVolumeIcon()}
             </Button>
           )}
         </div>
-      </div>
-    </div>
+        
+        <div className="flex items-center gap-2">
+          {onFullscreen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleFullscreenClick}
+              className="text-white hover:bg-white/20 rounded-full w-8 h-8 border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-105"
+              aria-label="Enter fullscreen"
+            >
+              <Maximize size={16} />
+            </Button>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/20 rounded-full w-8 h-8 border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-105"
+            aria-label="Settings"
+          >
+            <Settings size={16} />
+          </Button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
