@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { TVShow, Genre } from "@/types";
 import MovieCard from "@/components/MovieCard";
+import DomeGallery from "@/components/DomeGallery";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getTopRatedTVShows, 
@@ -9,7 +10,8 @@ import {
   getTVGenres 
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
+import { Filter, Grid, Globe } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +25,7 @@ import { motion } from "framer-motion";
 
 const TVShows = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [tvShows, setTVShows] = useState<TVShow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,6 +33,7 @@ const TVShows = () => {
   const [category, setCategory] = useState<"top_rated" | "genre">("top_rated");
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "dome">("grid");
 
   // Fetch TV genres
   useEffect(() => {
@@ -89,6 +93,21 @@ const TVShows = () => {
     setCurrentPage(1);
   };
 
+  const handleTVShowClick = (show: any) => {
+    navigate(`/tv/${show.id}`);
+  };
+
+  const formatTVShowsForDome = (shows: TVShow[]) => {
+    return shows.map(show => ({
+      src: show.poster_path 
+        ? `https://image.tmdb.org/t/p/w500${show.poster_path}` 
+        : '/placeholder.svg',
+      alt: show.name,
+      id: show.id,
+      title: show.name
+    }));
+  };
+
   // Animation variants for staggered loading
   const container = {
     hidden: { opacity: 0 },
@@ -136,6 +155,25 @@ const TVShows = () => {
         </div>
         
         <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="transition-all duration-300"
+            >
+              <Grid size={16} />
+            </Button>
+            <Button
+              variant={viewMode === "dome" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("dome")}
+              className="transition-all duration-300"
+            >
+              <Globe size={16} />
+            </Button>
+          </div>
+          
           {genres.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -176,26 +214,37 @@ const TVShows = () => {
         </div>
       ) : (
         <>
-          <motion.div 
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            {tvShows.map((show, index) => (
-              <motion.div 
-                key={show.id}
-                variants={item}
-                transition={{ duration: 0.4 }}
-              >
-                <MovieCard 
-                  item={show} 
-                  type="tv" 
-                  priority={index < 12}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
+          {viewMode === "grid" ? (
+            <motion.div 
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
+              variants={container}
+              initial="hidden"
+              animate="show"
+            >
+              {tvShows.map((show, index) => (
+                <motion.div 
+                  key={show.id}
+                  variants={item}
+                  transition={{ duration: 0.4 }}
+                >
+                  <MovieCard 
+                    item={show} 
+                    type="tv" 
+                    priority={index < 12}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <div className="h-[80vh] w-full">
+              <DomeGallery 
+                images={formatTVShowsForDome(tvShows)}
+                onItemClick={handleTVShowClick}
+                overlayBlurColor="hsl(var(--background))"
+                grayscale={false}
+              />
+            </div>
+          )}
 
           {/* Pagination */}
           <div className="mt-12 flex justify-center">

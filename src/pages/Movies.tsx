@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Movie, Genre } from "@/types";
 import MovieCard from "@/components/MovieCard";
+import DomeGallery from "@/components/DomeGallery";
 import { useToast } from "@/hooks/use-toast";
 import { 
   getPopularMovies, 
@@ -11,7 +12,7 @@ import {
   getMovieGenres 
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Filter } from "lucide-react";
+import { ChevronDown, Filter, Grid, Globe } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,9 +21,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 const Movies = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,6 +33,7 @@ const Movies = () => {
   const [category, setCategory] = useState<"popular" | "now_playing" | "top_rated" | "genre">("popular");
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "dome">("grid");
 
   // Fetch movie genres
   useEffect(() => {
@@ -106,6 +110,21 @@ const Movies = () => {
     setCurrentPage(1);
   };
 
+  const handleMovieClick = (movie: any) => {
+    navigate(`/movie/${movie.id}`);
+  };
+
+  const formatMoviesForDome = (movies: Movie[]) => {
+    return movies.map(movie => ({
+      src: movie.poster_path 
+        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` 
+        : '/placeholder.svg',
+      alt: movie.title,
+      id: movie.id,
+      title: movie.title
+    }));
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
@@ -124,6 +143,25 @@ const Movies = () => {
         </div>
         
         <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="transition-all duration-300"
+            >
+              <Grid size={16} />
+            </Button>
+            <Button
+              variant={viewMode === "dome" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("dome")}
+              className="transition-all duration-300"
+            >
+              <Globe size={16} />
+            </Button>
+          </div>
+          
           <Button
             variant={category === "popular" && !selectedGenre ? "default" : "outline"}
             onClick={() => changeCategory("popular")}
@@ -181,16 +219,27 @@ const Movies = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-            {movies.map((movie, index) => (
-              <MovieCard 
-                key={movie.id} 
-                item={movie} 
-                type="movie" 
-                priority={index < 12}
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+              {movies.map((movie, index) => (
+                <MovieCard 
+                  key={movie.id} 
+                  item={movie} 
+                  type="movie" 
+                  priority={index < 12}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="h-[80vh] w-full">
+              <DomeGallery 
+                images={formatMoviesForDome(movies)}
+                onItemClick={handleMovieClick}
+                overlayBlurColor="hsl(var(--background))"
+                grayscale={false}
               />
-            ))}
-          </div>
+            </div>
+          )}
 
           {/* Pagination */}
           <div className="mt-12 flex justify-center">
