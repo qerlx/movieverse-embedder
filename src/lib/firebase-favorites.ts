@@ -104,6 +104,50 @@ export async function getFavorites(user: User): Promise<FavoriteItem[]> {
 }
 
 /**
+ * Remove a specific favorite item
+ */
+export async function removeFavorite(
+  user: User,
+  favoriteId: string
+): Promise<boolean> {
+  if (!user) return false;
+
+  try {
+    await deleteDoc(doc(db, "favorites", favoriteId));
+    return true;
+  } catch (error) {
+    console.error("Error removing favorite:", error);
+    return false;
+  }
+}
+
+/**
+ * Clear all favorites for a user
+ */
+export async function clearAllFavorites(user: User): Promise<boolean> {
+  if (!user) return false;
+
+  try {
+    const favoritesRef = collection(db, "favorites");
+    const q = query(
+      favoritesRef,
+      where("userId", "==", user.uid)
+    );
+
+    const snapshot = await getDocs(q);
+    const deletePromises = snapshot.docs.map(docSnap => 
+      deleteDoc(doc(db, "favorites", docSnap.id))
+    );
+
+    await Promise.all(deletePromises);
+    return true;
+  } catch (error) {
+    console.error("Error clearing favorites:", error);
+    return false;
+  }
+}
+
+/**
  * Check if a media item is favorited
  */
 export async function checkFavoriteStatus(

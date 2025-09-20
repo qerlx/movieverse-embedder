@@ -2,6 +2,7 @@ import {
   collection, 
   doc, 
   setDoc, 
+  deleteDoc,
   getDocs, 
   query, 
   where, 
@@ -180,6 +181,52 @@ export async function updateWatchProgress(
     return true;
   } catch (error) {
     console.error("Error updating watch progress:", error);
+    return false;
+  }
+}
+
+/**
+ * Remove a specific watch history item
+ */
+export async function removeFromWatchHistory(
+  user: User,
+  mediaType: "movie" | "tv",
+  mediaId: string
+): Promise<boolean> {
+  if (!user) return false;
+
+  try {
+    const watchRef = doc(db, "watchHistory", `${user.uid}_${mediaType}_${mediaId}`);
+    await deleteDoc(watchRef);
+    return true;
+  } catch (error) {
+    console.error("Error removing from watch history:", error);
+    return false;
+  }
+}
+
+/**
+ * Clear all watch history for a user
+ */
+export async function clearWatchHistory(user: User): Promise<boolean> {
+  if (!user) return false;
+
+  try {
+    const watchRef = collection(db, "watchHistory");
+    const q = query(
+      watchRef,
+      where("userId", "==", user.uid)
+    );
+
+    const snapshot = await getDocs(q);
+    const deletePromises = snapshot.docs.map(docSnap => 
+      deleteDoc(doc(db, "watchHistory", docSnap.id))
+    );
+
+    await Promise.all(deletePromises);
+    return true;
+  } catch (error) {
+    console.error("Error clearing watch history:", error);
     return false;
   }
 }

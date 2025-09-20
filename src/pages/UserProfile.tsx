@@ -5,12 +5,28 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Navigate } from "react-router-dom";
 import { LogOut, User, Heart, Clock } from "lucide-react";
-import Favorites from "@/components/Favorites";
-import RecentlyWatched from "@/components/RecentlyWatched";
+import FavoritesList from "@/components/FavoritesList";
+import WatchHistoryList from "@/components/WatchHistoryList";
+import { useQuery } from "@tanstack/react-query";
+import { getFavorites } from "@/lib/firebase-favorites";
+import { getRecentlyWatched } from "@/lib/firebase-watch";
 
 const UserProfile = () => {
   const { currentUser, signOut } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Fetch user statistics
+  const { data: favorites = [] } = useQuery({
+    queryKey: ["favorites", currentUser?.uid],
+    queryFn: () => currentUser ? getFavorites(currentUser) : Promise.resolve([]),
+    enabled: !!currentUser,
+  });
+
+  const { data: recentlyWatched = [] } = useQuery({
+    queryKey: ["recentlyWatched", currentUser?.uid],
+    queryFn: () => currentUser ? getRecentlyWatched(currentUser, 100) : Promise.resolve([]),
+    enabled: !!currentUser,
+  });
 
   // Redirect if not logged in
   if (!currentUser) {
@@ -74,13 +90,13 @@ const UserProfile = () => {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4 w-full mb-6">
-                  <div className="bg-background/50 rounded-lg p-3 border border-border/50">
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:bg-background/70 transition-colors">
                     <div className="text-sm text-muted-foreground">Favorites</div>
-                    <div className="text-lg font-bold text-primary">0</div>
+                    <div className="text-2xl font-bold text-primary">{favorites.length}</div>
                   </div>
-                  <div className="bg-background/50 rounded-lg p-3 border border-border/50">
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:bg-background/70 transition-colors">
                     <div className="text-sm text-muted-foreground">Watched</div>
-                    <div className="text-lg font-bold text-primary">0</div>
+                    <div className="text-2xl font-bold text-primary">{recentlyWatched.length}</div>
                   </div>
                 </div>
 
@@ -122,7 +138,7 @@ const UserProfile = () => {
                       <p className="text-muted-foreground">Movies and shows you love</p>
                     </div>
                   </div>
-                  <Favorites />
+                  <FavoritesList />
                 </div>
               </TabsContent>
               
@@ -133,11 +149,11 @@ const UserProfile = () => {
                       <Clock size={20} className="text-primary" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold">Recently Watched</h2>
-                      <p className="text-muted-foreground">Continue where you left off</p>
+                      <h2 className="text-2xl font-bold">Watch History</h2>
+                      <p className="text-muted-foreground">All your viewing activity</p>
                     </div>
                   </div>
-                  <RecentlyWatched />
+                  <WatchHistoryList />
                 </div>
               </TabsContent>
             </Tabs>
