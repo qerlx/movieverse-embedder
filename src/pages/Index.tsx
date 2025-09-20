@@ -9,7 +9,7 @@ import {
   getTrendingTVShows 
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import Favorites from "@/components/Favorites";
+import FavoritesList from "@/components/FavoritesList";
 import RecentlyWatchedList from "@/components/RecentlyWatchedList";
 import { Heart, Clock } from "lucide-react";
 import { motion } from "framer-motion";
@@ -167,12 +167,15 @@ const Index: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.15 }}
+                className="mb-8"
               >
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-6 flex items-center gap-2">
                   <Heart className="w-5 h-5 text-primary" />
                   My List
                 </h2>
-                <Favorites limit={6} />
+                <div className="max-h-96 overflow-hidden">
+                  <FavoritesList />
+                </div>
               </motion.div>
             )}
 

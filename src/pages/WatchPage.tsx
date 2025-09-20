@@ -7,8 +7,9 @@ import { addToWatchHistory } from "@/lib/firebase-watch";
 import { STORAGE_KEYS } from "@/constants";
 import { videoSources, getVideoSource, buildVideoUrl, isValidVideoSource } from "@/utils/video";
 import { validateMediaId, validateSeasonEpisode, sanitizeText } from "@/utils/api";
-import VideoPlayerControls from "@/components/VideoPlayerControls";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface WatchPageState {
   title: string;
@@ -357,18 +358,24 @@ const WatchPage: React.FC = () => {
   return (
     <div ref={containerRef} className="min-h-screen bg-black">
       <div className="h-screen w-screen relative">
-        {/* Video Player Controls */}
-        <VideoPlayerControls
-          title={state.title}
-          isPlaying={state.isPlaying}
-          volume={state.volume}
-          isMuted={state.isMuted}
-          activeSource={state.currentSource.name}
-          onGoBack={handleBackNavigation}
-          onTogglePlay={() => setState(prev => ({ ...prev, isPlaying: !prev.isPlaying }))}
-          onToggleMute={() => setState(prev => ({ ...prev, isMuted: !prev.isMuted }))}
-          isVisible={state.controlsVisible}
-        />
+        {/* Simple Back Button - No custom video controls */}
+        <motion.div 
+          className="absolute top-4 left-4 z-40"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Button 
+            variant="ghost"
+            size="sm" 
+            onClick={handleBackNavigation}
+            className="bg-black/50 hover:bg-black/70 text-white rounded-full border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-105"
+            aria-label="Go back"
+          >
+            <ArrowLeft size={16} />
+            <span className="ml-1 font-medium hidden sm:inline">Back</span>
+          </Button>
+        </motion.div>
         
         {/* Source Switcher */}
         <div className="absolute top-4 right-4 z-40 flex gap-2">

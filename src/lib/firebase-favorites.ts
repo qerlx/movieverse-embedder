@@ -93,10 +93,13 @@ export async function getFavorites(user: User): Promise<FavoriteItem[]> {
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
+    const favorites = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     } as FavoriteItem));
+    
+    console.log(`Fetched ${favorites.length} favorites for user ${user.uid}`);
+    return favorites;
   } catch (error) {
     console.error("Error fetching favorites:", error);
     return [];

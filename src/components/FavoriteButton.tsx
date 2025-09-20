@@ -83,6 +83,8 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       return;
     }
     
+    if (isLoading) return; // Prevent double clicks
+    
     // Optimistic update
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
@@ -100,20 +102,28 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       setIsFavorite(result.isFavorite);
       localStorage.setItem(localStorageKey, result.isFavorite.toString());
       
-      // Invalidate favorites query to refresh the favorites list
+      // Invalidate all favorites-related queries
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      queryClient.invalidateQueries({ queryKey: ["recently-watched"] });
+      queryClient.invalidateQueries({ queryKey: ["user-favorites"] });
       
       if (result.isFavorite) {
-        toast.success(`Added ${displayName} to favorites`);
+        toast.success(`❤️ Added to favorites`, {
+          description: displayName
+        });
       } else {
-        toast.success(`Removed ${displayName} from favorites`);
+        toast.success(`Removed from favorites`, {
+          description: displayName
+        });
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
       // Revert optimistic update on error
       setIsFavorite(!newFavoriteState);
       localStorage.setItem(localStorageKey, (!newFavoriteState).toString());
-      toast.error("Failed to update favorites. Please try again.");
+      toast.error("Failed to update favorites", {
+        description: "Please try again"
+      });
     } finally {
       setIsLoading(false);
     }

@@ -12,6 +12,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 
 import WatchProviders from "@/components/WatchProviders";
 import EpisodeSelector from "@/components/EpisodeSelector";
+import EpisodesButton from "@/components/EpisodesButton";
 import LogoTitle from "@/components/LogoTitle";
 import MovieInfoCard from "@/components/MovieInfoCard";
 import { motion } from "framer-motion";
@@ -173,17 +174,28 @@ const TVShowDetail = () => {
         }} 
         onWatchClick={() => handleWatchClick()}
       >
-        {currentUser && (
-          <>
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Episodes Button - Mobile Friendly */}
+          {tvShow.seasons && tvShow.seasons.length > 0 && (
+            <EpisodesButton
+              showId={tvShow.id}
+              seasons={tvShow.seasons}
+              showTitle={tvShow.name}
+              className="w-full sm:w-auto"
+            />
+          )}
+          
+          {currentUser && (
             <FavoriteButton
               id={tvShow.id} 
               type="tv" 
               title={tvShow.name}
               posterPath={tvShow.poster_path}
               variant="outline"
+              className="w-full sm:w-auto"
             />
-          </>
-        )}
+          )}
+        </div>
       </MovieInfoCard>
 
       {/* Content Section */}

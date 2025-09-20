@@ -82,6 +82,10 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
                 type={type}
                 isRanked={isRanked}
                 rank={isRanked ? index + 1 : undefined}
+                size="md"
+                variant="default"
+                showFavorite={true}
+                priority={index < 4} // Prioritize first 4 images
               />
             </motion.div>
           ))}
