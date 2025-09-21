@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { storageService } from "@/lib/storage-service";
 import { addToWatchHistory } from "@/lib/firebase-watch";
 import { STORAGE_KEYS } from "@/constants";
 import { videoSources, getVideoSource, buildVideoUrl, isValidVideoSource } from "@/utils/video";
@@ -10,6 +11,7 @@ import { validateMediaId, validateSeasonEpisode, sanitizeText } from "@/utils/ap
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import InPlayerEpisodeSelector from "@/components/InPlayerEpisodeSelector";
 
 interface WatchPageState {
   title: string;
@@ -47,6 +49,7 @@ const WatchPage: React.FC = () => {
     controlsVisible: true
   });
   
+  const [showData, setShowData] = useState<any>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
@@ -158,13 +161,15 @@ const WatchPage: React.FC = () => {
             // Update Firebase for authenticated users
             if (currentUser && validatedParams) {
               const progress = mediaData.progress?.percent || 0;
-              addToWatchHistory(currentUser, {
-                mediaId: validatedParams.id.toString(),
-                mediaType: validatedParams.type as "movie" | "tv",
-                title: state.title,
-                posterPath: mediaData.poster_path || '',
-                progress: progress,
-              }).catch(err => console.error("Failed to update watch history:", err));
+              storageService.addToWatchHistory(
+                validatedParams.id.toString(),
+                validatedParams.type as "movie" | "tv",
+                state.title,
+                mediaData.poster_path || '',
+                progress,
+                undefined,
+                currentUser
+              ).catch(err => console.error("Failed to update watch history:", err));
             }
           } catch (error) {
             console.error("Error updating watch progress:", error);
@@ -232,6 +237,7 @@ const WatchPage: React.FC = () => {
           mediaTitle = sanitizeText(mediaData?.title || "Unknown Movie");
         } else {
           mediaData = await getTVShowDetails(validatedParams.id);
+          setShowData(mediaData);
           mediaTitle = `${sanitizeText(mediaData?.name || "Unknown Show")} - S${validatedParams.season} E${validatedParams.episode}`;
         }
         
@@ -278,27 +284,29 @@ const WatchPage: React.FC = () => {
                 episodeName = episodeData?.name || `Episode ${validatedParams.episode}`;
               }
               
-              await addToWatchHistory(currentUser, {
-                mediaId: validatedParams.id.toString(),
-                mediaType: "tv",
-                title: sanitizeText(mediaData.name || ""),
-                posterPath: mediaData.poster_path || '',
-                lastEpisode: {
+              await storageService.addToWatchHistory(
+                validatedParams.id.toString(),
+                "tv",
+                sanitizeText(mediaData.name || ""),
+                mediaData.poster_path || '',
+                0,
+                {
                   season: validatedParams.season!,
                   episode: validatedParams.episode!,
                   name: episodeName
                 },
-                genres: mediaData.genres?.map((g: any) => g.id) || []
-              });
+                currentUser
+              );
             } else {
-              await addToWatchHistory(currentUser, {
-                mediaId: validatedParams.id.toString(),
-                mediaType: "movie",
-                title: sanitizeText(mediaData.title || ""),
-                posterPath: mediaData.poster_path || '',
-                progress: 0,
-                genres: mediaData.genres?.map((g: any) => g.id) || []
-              });
+              await storageService.addToWatchHistory(
+                validatedParams.id.toString(),
+                "movie",
+                sanitizeText(mediaData.title || ""),
+                mediaData.poster_path || '',
+                0,
+                undefined,
+                currentUser
+              );
             }
           } catch (error) {
             console.error("Error adding to watch history:", error);
@@ -440,6 +448,19 @@ const WatchPage: React.FC = () => {
               referrerPolicy="no-referrer"
             />
           </div>
+        )}
+
+        {/* In-Player Episode Selector for TV Shows */}
+        {validatedParams?.type === "tv" && showData && !state.isLoading && (
+          <InPlayerEpisodeSelector
+            showId={validatedParams.id}
+            currentSeason={validatedParams.season}
+            currentEpisode={validatedParams.episode}
+            showTitle={showData.name || "TV Show"}
+            onEpisodeSelect={(season, episode) => {
+              navigate(`/watch/tv/${validatedParams.id}/${season}/${episode}`);
+            }}
+          />
         )}
       </div>
     </div>

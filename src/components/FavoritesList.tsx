@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getFavorites, removeFavorite, clearAllFavorites } from "@/lib/firebase-favorites";
+import { storageService } from "@/lib/storage-service";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { Heart, Sparkles, Trash2, Filter } from "lucide-react";
@@ -21,11 +21,20 @@ const FavoritesList: React.FC = () => {
   
   const { data: favorites = [], isLoading, refetch } = useQuery({
     queryKey: ["favorites", currentUser?.uid],
-    queryFn: () => {
-      if (!currentUser) return Promise.resolve([]);
-      return getFavorites(currentUser);
+    queryFn: async () => {
+      const userFavorites = await storageService.getFavorites(currentUser || undefined);
+      // Convert to the expected format
+      return userFavorites.map(fav => ({
+        id: fav.id,
+        userId: currentUser?.uid || '',
+        mediaId: fav.mediaId,
+        mediaType: fav.mediaType,
+        title: fav.title,
+        posterPath: fav.posterPath,
+        addedAt: { toDate: () => new Date(fav.addedAt) }
+      }));
     },
-    enabled: !!currentUser,
+    enabled: true,
   });
 
   // Filter favorites based on search and type
@@ -36,22 +45,40 @@ const FavoritesList: React.FC = () => {
   });
 
   const handleRemoveFavorite = async (itemId: string, title: string) => {
-    if (!currentUser) return;
-    
     try {
-      await removeFavorite(currentUser, itemId);
-      toast.success(`Removed "${title}" from favorites`);
-      refetch();
+      // Extract mediaId and mediaType from the item
+      const favoriteItem = favorites.find(f => f.id === itemId);
+      if (favoriteItem) {
+        await storageService.toggleFavorite(
+          favoriteItem.mediaId,
+          favoriteItem.mediaType,
+          favoriteItem.title,
+          favoriteItem.posterPath || undefined,
+          currentUser || undefined
+        );
+        toast.success(`Removed "${title}" from favorites`);
+        refetch();
+      }
     } catch (error) {
       toast.error("Failed to remove from favorites");
     }
   };
 
   const handleClearAll = async () => {
-    if (!currentUser || favorites.length === 0) return;
+    if (favorites.length === 0) return;
     
     try {
-      await clearAllFavorites(currentUser);
+      // Clear all favorites by toggling each one
+      const clearPromises = favorites.map(fav => 
+        storageService.toggleFavorite(
+          fav.mediaId,
+          fav.mediaType,
+          fav.title,
+          fav.posterPath || undefined,
+          currentUser || undefined
+        )
+      );
+      await Promise.all(clearPromises);
       toast.success("All favorites cleared");
       refetch();
     } catch (error) {

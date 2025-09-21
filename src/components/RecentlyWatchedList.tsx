@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getRecentlyWatched } from "@/lib/firebase-watch";
+import { storageService } from "@/lib/storage-service";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { Clock, Play, Tv, Film } from "lucide-react";
@@ -18,11 +18,22 @@ const RecentlyWatchedList: React.FC<RecentlyWatchedListProps> = ({ limit = 6 }) 
   
   const { data: recentlyWatched, isLoading } = useQuery({
     queryKey: ["recentlyWatched", currentUser?.uid],
-    queryFn: () => {
-      if (!currentUser) return Promise.resolve([]);
-      return getRecentlyWatched(currentUser, limit);
+    queryFn: async () => {
+      const history = await storageService.getRecentlyWatched(currentUser || undefined, limit);
+      // Convert to the expected format
+      return history.map(item => ({
+        id: item.id,
+        userId: currentUser?.uid || '',
+        mediaId: item.mediaId,
+        mediaType: item.mediaType,
+        title: item.title,
+        posterPath: item.posterPath,
+        progress: item.progress,
+        lastEpisode: item.lastEpisode,
+        lastWatched: { toDate: () => new Date(item.lastWatched) }
+      }));
     },
-    enabled: !!currentUser,
+    enabled: true,
   });
 
   if (!currentUser) {
