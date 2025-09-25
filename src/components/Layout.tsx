@@ -4,7 +4,7 @@ import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { Film, Tv, Home, Menu, Search, User, Heart, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "./ui/logo";
-import SearchBar from "./SearchBar";
+import SmartSearchBar from "./enhanced/SmartSearchBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthModal from "./AuthModal";
@@ -144,7 +144,7 @@ const Layout = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <SearchBar />
+            <SmartSearchBar onSearchToggle={setSearchExpanded} />
             
             {/* Auth Button or User Menu */}
             {!searchExpanded && !currentUser && (
