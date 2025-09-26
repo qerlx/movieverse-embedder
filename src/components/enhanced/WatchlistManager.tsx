@@ -319,7 +319,6 @@ const WatchlistManager: React.FC = () => {
                           }}
                           type={item.mediaType}
                         />
-                        />
                         <Button
                           variant="destructive"
                           size="sm"
