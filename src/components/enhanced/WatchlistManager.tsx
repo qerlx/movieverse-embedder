@@ -114,7 +114,7 @@ const WatchlistManager: React.FC = () => {
         title: item.title,
         posterPath: item.posterPath,
         progress: item.progress || 0,
-        watchedAt: item.watchedAt,
+        watchedAt: item.watched_at || new Date().toISOString(),
         lastEpisode: item.lastEpisode
       })));
 
@@ -310,12 +310,15 @@ const WatchlistManager: React.FC = () => {
                     {viewMode === 'grid' ? (
                       <div className="relative">
                         <MovieCard
-                          id={Number(item.mediaId)}
-                          title={item.title}
-                          poster_path={item.posterPath}
-                          vote_average={0}
-                          release_date=""
+                          item={{
+                            id: Number(item.mediaId),
+                            title: item.title,
+                            poster_path: item.posterPath,
+                            vote_average: 0,
+                            release_date: ""
+                          }}
                           type={item.mediaType}
+                        />
                         />
                         <Button
                           variant="destructive"
