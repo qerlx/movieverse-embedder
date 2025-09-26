@@ -343,6 +343,7 @@ const UserDashboard: React.FC = () => {
                         release_date: ""
                       }}
                       type={item.mediaType}
+                    />
                   ))}
                 </div>
               ) : (
