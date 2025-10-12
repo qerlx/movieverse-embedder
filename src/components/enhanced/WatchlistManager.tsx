@@ -114,7 +114,7 @@ const WatchlistManager: React.FC = () => {
         title: item.title,
         posterPath: item.posterPath,
         progress: item.progress || 0,
-        watchedAt: item.watched_at || new Date().toISOString(),
+        watchedAt: (item as any).updatedAt || new Date().toISOString(),
         lastEpisode: item.lastEpisode
       })));
 
