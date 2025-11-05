@@ -138,8 +138,8 @@ const WatchPage: React.FC = () => {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       // Security: validate origin
-      const allowedOrigins = ['https://vidora.su', 'https://vidsrc.cc', 'https://vidsrc.pro', 'https://embed.su'];
-      if (!allowedOrigins.some(origin => event.origin.includes(origin))) {
+      const allowedOrigins = ['https://vidsrc.cc', 'https://vidlink.pro', 'https://player.autoembed.cc'];
+      if (!allowedOrigins.some(origin => event.origin === origin)) {
         return;
       }
       
