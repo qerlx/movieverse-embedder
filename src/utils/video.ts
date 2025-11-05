@@ -42,37 +42,13 @@ function formatAnimeId(id: string): string {
 
 /**
  * Video sources configuration with security validations
+ * Order: Movies/TV first, then Anime-specific sources
  */
 export const videoSources: VideoSource[] = [
   {
-    id: "vidsrc-anime",
-    name: "Vidsrc Anime",
-    fallbackOrder: 1,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      if (type !== "anime") return null;
-      
-      const animeId = formatAnimeId(id);
-      const episodeNum = episode ? parseInt(episode, 10) : 1;
-      const dubType = extraParams.dub ? 'dub' : 'sub';
-      
-      if (!episodeNum || episodeNum < 1) return null;
-      
-      const baseUrl = `https://vidsrc.cc/v2/embed/anime/${animeId}/${episodeNum}/${dubType}`;
-      
-      // Build query params
-      const queryParams: Record<string, string> = {};
-      if (extraParams.autoPlay) queryParams.autoPlay = 'true';
-      if (extraParams.autoSkipIntro) queryParams.autoSkipIntro = 'true';
-      
-      const searchParams = new URLSearchParams(queryParams);
-      return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
-    }
-  },
-  {
     id: "vidsrc",
     name: "VidSrc HD",
-    fallbackOrder: 2,
+    fallbackOrder: 1,
     getUrl: (type, id, season, episode, extraParams = {}) => {
       const mediaId = validateMediaId(id);
       if (!mediaId) return null;
@@ -103,38 +79,9 @@ export const videoSources: VideoSource[] = [
     }
   },
   {
-    id: "autoembed",
-    name: "AutoEmbed",
-    fallbackOrder: 3,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      const sanitizedId = sanitizeId(id);
-      if (!sanitizedId) return null;
-      
-      // AutoEmbed prefers IMDb IDs (tt prefix)
-      const formattedId = sanitizedId.startsWith('tt') ? sanitizedId : `tt${sanitizedId}`;
-      
-      if (type === "movie") {
-        const baseUrl = `https://player.autoembed.cc/embed/movie/${formattedId}`;
-        return baseUrl;
-      } else if (type === "tv" && season && episode) {
-        const validatedEpisode = validateSeasonEpisode(season, episode);
-        if (!validatedEpisode) return null;
-        
-        const baseUrl = `https://player.autoembed.cc/embed/tv/${formattedId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
-        const queryParams: Record<string, string> = {};
-        if (extraParams.server) queryParams.server = String(extraParams.server);
-        
-        const searchParams = new URLSearchParams(queryParams);
-        return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
-      }
-      
-      return null;
-    }
-  },
-  {
     id: "vidlink",
     name: "VidLink Pro",
-    fallbackOrder: 4,
+    fallbackOrder: 2,
     supportsAnime: true,
     getUrl: (type, id, season, episode, extraParams = {}) => {
       const mediaId = validateMediaId(id);
@@ -188,6 +135,60 @@ export const videoSources: VideoSource[] = [
       
       return null;
     }
+  },
+  {
+    id: "autoembed",
+    name: "AutoEmbed",
+    fallbackOrder: 3,
+    getUrl: (type, id, season, episode, extraParams = {}) => {
+      const sanitizedId = sanitizeId(id);
+      if (!sanitizedId) return null;
+      
+      // AutoEmbed prefers IMDb IDs (tt prefix)
+      const formattedId = sanitizedId.startsWith('tt') ? sanitizedId : `tt${sanitizedId}`;
+      
+      if (type === "movie") {
+        const baseUrl = `https://player.autoembed.cc/embed/movie/${formattedId}`;
+        return baseUrl;
+      } else if (type === "tv" && season && episode) {
+        const validatedEpisode = validateSeasonEpisode(season, episode);
+        if (!validatedEpisode) return null;
+        
+        const baseUrl = `https://player.autoembed.cc/embed/tv/${formattedId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
+        const queryParams: Record<string, string> = {};
+        if (extraParams.server) queryParams.server = String(extraParams.server);
+        
+        const searchParams = new URLSearchParams(queryParams);
+        return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
+      }
+      
+      return null;
+    }
+  },
+  {
+    id: "vidsrc-anime",
+    name: "Vidsrc Anime",
+    fallbackOrder: 4,
+    supportsAnime: true,
+    getUrl: (type, id, season, episode, extraParams = {}) => {
+      if (type !== "anime") return null;
+      
+      const animeId = formatAnimeId(id);
+      const episodeNum = episode ? parseInt(episode, 10) : 1;
+      const dubType = extraParams.dub ? 'dub' : 'sub';
+      
+      if (!episodeNum || episodeNum < 1) return null;
+      
+      const baseUrl = `https://vidsrc.cc/v2/embed/anime/${animeId}/${episodeNum}/${dubType}`;
+      
+      // Build query params
+      const queryParams: Record<string, string> = {};
+      if (extraParams.autoPlay) queryParams.autoPlay = 'true';
+      if (extraParams.autoSkipIntro) queryParams.autoSkipIntro = 'true';
+      
+      const searchParams = new URLSearchParams(queryParams);
+      return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
+    }
   }
 ];
 
@@ -200,7 +201,7 @@ export function getVideoSource(sourceId?: string): VideoSource {
     if (source) return source;
   }
   
-  // Return first source as default
+  // Return first source as default (VidSrc HD - supports movies/TV)
   return videoSources[0];
 }
 
