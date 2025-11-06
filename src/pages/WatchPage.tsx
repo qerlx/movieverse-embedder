@@ -303,7 +303,7 @@ const WatchPage: React.FC = () => {
         if (validatedParams.type === 'movie') {
           mediaData = await getMovieDetails(validatedParams.id);
           mediaTitle = sanitizeText(mediaData?.title || 'Unknown Movie');
-        } else {
+        } else if (validatedParams.type === 'tv') {
           mediaData = await getTVShowDetails(validatedParams.id);
           setShowData(mediaData);
           mediaTitle = `${sanitizeText(mediaData?.name || 'Unknown Show')} - S${validatedParams.season} E${validatedParams.episode}`;
