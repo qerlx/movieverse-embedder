@@ -50,6 +50,7 @@ const WatchPage: React.FC = () => {
   });
   
   const [showData, setShowData] = useState<any>(null);
+  const [animeDub, setAnimeDub] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
@@ -58,6 +59,14 @@ const WatchPage: React.FC = () => {
   const validatedParams = useMemo(() => {
     if (!type || !id) return null;
     
+    // Anime supports flexible IDs (prefix sanitized in source builder)
+    if (type === 'anime') {
+      if (!episode) return null;
+      const epNum = parseInt(episode, 10);
+      if (!epNum || epNum < 1) return null;
+      return { type: 'anime', id, episode: epNum } as const;
+    }
+
     const mediaId = validateMediaId(id);
     if (!mediaId) return null;
     
@@ -85,13 +94,36 @@ const WatchPage: React.FC = () => {
   const switchVideoSource = useCallback((sourceId: string) => {
     if (!validatedParams) return;
     
-    const newSource = getVideoSource(sourceId);
+    let newSource = getVideoSource(sourceId);
+
+    // Ensure anime uses an anime-capable source
+    if (validatedParams.type === 'anime' && !newSource.supportsAnime) {
+      const fallbackAnime = videoSources.find(src => src.supportsAnime);
+      if (!fallbackAnime) {
+        toast.error("No anime-compatible source available");
+        return;
+      }
+      newSource = fallbackAnime;
+    }
+
+    const seasonArg = validatedParams.type === 'tv' ? validatedParams.season?.toString() : undefined;
+    const episodeArg = validatedParams.type === 'tv'
+      ? validatedParams.episode?.toString()
+      : validatedParams.type === 'anime'
+        ? validatedParams.episode?.toString()
+        : undefined;
+
+    const extraParams = validatedParams.type === 'anime'
+      ? { dub: animeDub, autoPlay: true, autoSkipIntro: true }
+      : {};
+
     const newUrl = buildVideoUrl(
       newSource,
       validatedParams.type,
       validatedParams.id.toString(),
-      validatedParams.type === "tv" ? validatedParams.season?.toString() : undefined,
-      validatedParams.type === "tv" ? validatedParams.episode?.toString() : undefined
+      seasonArg,
+      episodeArg,
+      extraParams
     );
     
     if (!newUrl || !isValidVideoSource(newUrl)) {
@@ -108,16 +140,16 @@ const WatchPage: React.FC = () => {
     
     // Update URL with source parameter
     const searchParams = new URLSearchParams(location.search);
-    searchParams.set('source', sourceId);
+    searchParams.set('source', newSource.id);
     const newLocation = `${location.pathname}?${searchParams.toString()}`;
     window.history.replaceState(null, '', newLocation);
     
     setTimeout(() => {
       setState(prev => ({ ...prev, isLoading: false }));
     }, 1000);
-  }, [validatedParams, location]);
+  }, [validatedParams, location, animeDub]);
 
-  // Handle back navigation with validation
+  // Handle back/exit navigation with validation
   const handleBackNavigation = useCallback(() => {
     if (!validatedParams) {
       navigate('/');
@@ -126,11 +158,15 @@ const WatchPage: React.FC = () => {
     
     if (location.key !== "default") {
       navigate(-1);
+      return;
+    }
+
+    if (validatedParams.type === "movie") {
+      navigate(`/movie/${validatedParams.id}`);
+    } else if (validatedParams.type === "tv") {
+      navigate(`/tv/${validatedParams.id}`);
     } else {
-      const backPath = validatedParams.type === "movie" 
-        ? `/movie/${validatedParams.id}`
-        : `/tv/${validatedParams.id}`;
-      navigate(backPath);
+      navigate('/');
     }
   }, [validatedParams, location.key, navigate]);
 
@@ -229,38 +265,68 @@ const WatchPage: React.FC = () => {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
       
       try {
+        // Handle Anime separately (no TMDb fetch required)
+        if (validatedParams.type === 'anime') {
+          // Determine source from URL or fallback to first anime-capable
+          const searchParams = new URLSearchParams(location.search);
+          const sourceParam = searchParams.get('source');
+          let source = getVideoSource(sourceParam || undefined);
+          if (!source.supportsAnime) {
+            const fallbackAnime = videoSources.find(s => s.supportsAnime);
+            if (fallbackAnime) source = fallbackAnime;
+          }
+          const videoUrl = buildVideoUrl(
+            source,
+            'anime',
+            validatedParams.id.toString(),
+            undefined,
+            validatedParams.episode?.toString(),
+            { dub: animeDub, autoPlay: true, autoSkipIntro: true }
+          );
+          if (!videoUrl || !isValidVideoSource(videoUrl)) {
+            throw new Error('Failed to generate valid anime video URL');
+          }
+          setState(prev => ({
+            ...prev,
+            title: `Anime - Ep ${validatedParams.episode}`,
+            videoUrl,
+            currentSource: source,
+            isLoading: false
+          }));
+          return;
+        }
+        
+        // Movies and TV
         let mediaData: any;
         let mediaTitle: string;
         
-        if (validatedParams.type === "movie") {
+        if (validatedParams.type === 'movie') {
           mediaData = await getMovieDetails(validatedParams.id);
-          mediaTitle = sanitizeText(mediaData?.title || "Unknown Movie");
+          mediaTitle = sanitizeText(mediaData?.title || 'Unknown Movie');
         } else {
           mediaData = await getTVShowDetails(validatedParams.id);
           setShowData(mediaData);
-          mediaTitle = `${sanitizeText(mediaData?.name || "Unknown Show")} - S${validatedParams.season} E${validatedParams.episode}`;
+          mediaTitle = `${sanitizeText(mediaData?.name || 'Unknown Show')} - S${validatedParams.season} E${validatedParams.episode}`;
         }
         
         if (!mediaData) {
-          throw new Error("Failed to load media details");
+          throw new Error('Failed to load media details');
         }
         
-        // Get initial source from URL params
         const searchParams = new URLSearchParams(location.search);
         const sourceParam = searchParams.get('source');
         const source = getVideoSource(sourceParam || undefined);
         
-        // Build video URL
         const videoUrl = buildVideoUrl(
           source,
           validatedParams.type,
           validatedParams.id.toString(),
-          validatedParams.type === "tv" ? validatedParams.season?.toString() : undefined,
-          validatedParams.type === "tv" ? validatedParams.episode?.toString() : undefined
+          validatedParams.type === 'tv' ? validatedParams.season?.toString() : undefined,
+          validatedParams.type === 'tv' ? validatedParams.episode?.toString() : undefined
         );
         
         if (!videoUrl || !isValidVideoSource(videoUrl)) {
-          throw new Error("Failed to generate valid video URL");
+          throw new Error('Failed to generate valid video URL');
         }
         
         setState(prev => ({
@@ -274,34 +340,27 @@ const WatchPage: React.FC = () => {
         // Add to watch history
         if (currentUser) {
           try {
-            if (validatedParams.type === "tv") {
-              // Get episode details for TV shows
+            if (validatedParams.type === 'tv') {
               const seasonDetails = await getTVShowSeasonDetails(validatedParams.id, validatedParams.season!);
-              let episodeName = "";
-              
+              let episodeName = '';
               if (seasonDetails?.success && seasonDetails.episodes) {
                 const episodeData = seasonDetails.episodes.find((e: any) => e.episode_number === validatedParams.episode);
                 episodeName = episodeData?.name || `Episode ${validatedParams.episode}`;
               }
-              
               await storageService.addToWatchHistory(
                 validatedParams.id.toString(),
-                "tv",
-                sanitizeText(mediaData.name || ""),
+                'tv',
+                sanitizeText(mediaData.name || ''),
                 mediaData.poster_path || '',
                 0,
-                {
-                  season: validatedParams.season!,
-                  episode: validatedParams.episode!,
-                  name: episodeName
-                },
+                { season: validatedParams.season!, episode: validatedParams.episode!, name: episodeName },
                 currentUser
               );
             } else {
               await storageService.addToWatchHistory(
                 validatedParams.id.toString(),
-                "movie",
-                sanitizeText(mediaData.title || ""),
+                'movie',
+                sanitizeText(mediaData.title || ''),
                 mediaData.poster_path || '',
                 0,
                 undefined,
@@ -309,20 +368,13 @@ const WatchPage: React.FC = () => {
               );
             }
           } catch (error) {
-            console.error("Error adding to watch history:", error);
+            console.error('Error adding to watch history:', error);
           }
         }
       } catch (error) {
-        console.error("Error fetching media details:", error);
-        setState(prev => ({ 
-          ...prev, 
-          error: "Failed to load media. Please try again.",
-          isLoading: false 
-        }));
-        
-        setTimeout(() => {
-          handleBackNavigation();
-        }, 3000);
+        console.error('Error fetching media details:', error);
+        setState(prev => ({ ...prev, error: 'Failed to load media. Please try again.', isLoading: false }));
+        setTimeout(() => { handleBackNavigation(); }, 3000);
       }
     };
 
@@ -381,27 +433,46 @@ const WatchPage: React.FC = () => {
             aria-label="Go back"
           >
             <ArrowLeft size={16} />
-            <span className="ml-1 font-medium hidden sm:inline">Back</span>
+            <span className="ml-1 font-medium hidden sm:inline">Exit</span>
           </Button>
         </motion.div>
         
-        {/* Source Switcher */}
-        <div className="absolute top-4 right-4 z-40 flex gap-2">
-          {videoSources.map((source) => (
-            <button
-              key={source.id}
-              onClick={() => switchVideoSource(source.id)}
-              className={`
-                px-3 py-1 text-xs rounded-full border transition-all duration-300
-                ${state.currentSource.id === source.id 
-                  ? 'bg-primary text-primary-foreground border-primary' 
-                  : 'bg-black/50 text-white border-white/20 hover:bg-white/10'
-                }
-              `}
-            >
-              {source.name}
-            </button>
-          ))}
+        {/* Source Switcher + Anime Sub/Dub */}
+        <div className="absolute top-4 right-4 z-40 flex flex-col items-end gap-2">
+          <div className="flex gap-2">
+            {videoSources
+              .filter(src => (validatedParams?.type === 'anime' ? src.supportsAnime : src.id !== 'vidsrc-anime'))
+              .map((source) => (
+                <button
+                  key={source.id}
+                  onClick={() => switchVideoSource(source.id)}
+                  className={
+                    `px-3 py-1 text-xs rounded-full border transition-all duration-300 ` +
+                    (state.currentSource.id === source.id 
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'bg-black/50 text-white border-white/20 hover:bg-white/10')
+                  }
+                >
+                  {source.name}
+                </button>
+              ))}
+          </div>
+          {validatedParams?.type === 'anime' && (
+            <div className="flex gap-2 bg-black/40 border border-white/20 rounded-full p-1 backdrop-blur">
+              <button
+                onClick={() => { setAnimeDub(false); switchVideoSource(state.currentSource.id); }}
+                className={`px-3 py-1 text-xs rounded-full transition-all ` + (!animeDub ? 'bg-primary text-primary-foreground' : 'text-white hover:bg-white/10')}
+              >
+                Sub
+              </button>
+              <button
+                onClick={() => { setAnimeDub(true); switchVideoSource(state.currentSource.id); }}
+                className={`px-3 py-1 text-xs rounded-full transition-all ` + (animeDub ? 'bg-primary text-primary-foreground' : 'text-white hover:bg-white/10')}
+              >
+                Dub
+              </button>
+            </div>
+          )}
         </div>
         
         {/* Loading Screen */}
