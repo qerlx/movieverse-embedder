@@ -270,11 +270,21 @@ const WatchPage: React.FC = () => {
           // Determine source from URL or fallback to first anime-capable
           const searchParams = new URLSearchParams(location.search);
           const sourceParam = searchParams.get('source');
-          let source = getVideoSource(sourceParam || undefined);
-          if (!source.supportsAnime) {
-            const fallbackAnime = videoSources.find(s => s.supportsAnime);
-            if (fallbackAnime) source = fallbackAnime;
+          let source: typeof videoSources[0];
+          
+          if (sourceParam) {
+            const requestedSource = videoSources.find(s => s.id === sourceParam);
+            if (requestedSource?.supportsAnime) {
+              source = requestedSource;
+            } else {
+              // Requested source doesn't support anime, use fallback
+              source = videoSources.find(s => s.supportsAnime) || videoSources[0];
+            }
+          } else {
+            // No source specified, use first anime-capable source
+            source = videoSources.find(s => s.supportsAnime) || videoSources[0];
           }
+          
           const videoUrl = buildVideoUrl(
             source,
             'anime',
@@ -283,9 +293,15 @@ const WatchPage: React.FC = () => {
             validatedParams.episode?.toString(),
             { dub: animeDub, autoPlay: true, autoSkipIntro: true }
           );
-          if (!videoUrl || !isValidVideoSource(videoUrl)) {
-            throw new Error('Failed to generate valid anime video URL');
+          
+          if (!videoUrl) {
+            throw new Error('Failed to generate anime video URL');
           }
+          
+          if (!isValidVideoSource(videoUrl)) {
+            throw new Error('Invalid anime video source URL');
+          }
+          
           setState(prev => ({
             ...prev,
             title: `Anime - Ep ${validatedParams.episode}`,
@@ -418,64 +434,89 @@ const WatchPage: React.FC = () => {
   return (
     <div ref={containerRef} className="min-h-screen bg-black">
       <div className="h-screen w-screen relative">
-        {/* Simple Back Button - No custom video controls */}
+        {/* Exit Button */}
         <motion.div 
-          className="absolute top-4 left-4 z-40"
+          className="absolute top-6 left-6 z-40"
           initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+          animate={{ opacity: state.controlsVisible ? 1 : 0, x: 0 }}
           transition={{ duration: 0.3 }}
         >
           <Button 
             variant="ghost"
-            size="sm" 
+            size="lg" 
             onClick={handleBackNavigation}
-            className="bg-black/50 hover:bg-black/70 text-white rounded-full border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-105"
-            aria-label="Go back"
+            className="bg-black/80 hover:bg-black/90 text-white rounded-xl border border-white/30 backdrop-blur-xl transition-all duration-300 hover:scale-105 shadow-2xl px-5 py-3"
+            aria-label="Exit player"
           >
-            <ArrowLeft size={16} />
-            <span className="ml-1 font-medium hidden sm:inline">Exit</span>
+            <ArrowLeft className="mr-2" size={20} />
+            <span className="font-semibold text-base">Exit</span>
           </Button>
         </motion.div>
         
         {/* Source Switcher + Anime Sub/Dub */}
-        <div className="absolute top-4 right-4 z-40 flex flex-col items-end gap-2">
-          <div className="flex gap-2">
+        <motion.div 
+          className="absolute top-6 right-6 z-40 flex flex-col items-end gap-3"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: state.controlsVisible ? 1 : 0, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* Source buttons */}
+          <div className="flex flex-wrap gap-2 justify-end">
             {videoSources
               .filter(src => (validatedParams?.type === 'anime' ? src.supportsAnime : src.id !== 'vidsrc-anime'))
               .map((source) => (
-                <button
+                <motion.button
                   key={source.id}
                   onClick={() => switchVideoSource(source.id)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   className={
-                    `px-3 py-1 text-xs rounded-full border transition-all duration-300 ` +
+                    `px-4 py-2 text-sm font-medium rounded-xl border-2 transition-all duration-300 backdrop-blur-xl shadow-lg ` +
                     (state.currentSource.id === source.id 
-                      ? 'bg-primary text-primary-foreground border-primary' 
-                      : 'bg-black/50 text-white border-white/20 hover:bg-white/10')
+                      ? 'bg-primary/90 text-primary-foreground border-primary shadow-primary/50' 
+                      : 'bg-black/80 text-white border-white/30 hover:bg-white/20 hover:border-white/50')
                   }
                 >
                   {source.name}
-                </button>
+                </motion.button>
               ))}
           </div>
+          
+          {/* Sub/Dub toggle for anime */}
           {validatedParams?.type === 'anime' && (
-            <div className="flex gap-2 bg-black/40 border border-white/20 rounded-full p-1 backdrop-blur">
+            <motion.div 
+              className="flex gap-1 bg-black/80 border-2 border-white/30 rounded-xl p-1.5 backdrop-blur-xl shadow-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+            >
               <button
                 onClick={() => { setAnimeDub(false); switchVideoSource(state.currentSource.id); }}
-                className={`px-3 py-1 text-xs rounded-full transition-all ` + (!animeDub ? 'bg-primary text-primary-foreground' : 'text-white hover:bg-white/10')}
+                className={
+                  `px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 ` + 
+                  (!animeDub 
+                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
+                    : 'text-white/80 hover:text-white hover:bg-white/10')
+                }
               >
-                Sub
+                SUB
               </button>
               <button
                 onClick={() => { setAnimeDub(true); switchVideoSource(state.currentSource.id); }}
-                className={`px-3 py-1 text-xs rounded-full transition-all ` + (animeDub ? 'bg-primary text-primary-foreground' : 'text-white hover:bg-white/10')}
+                className={
+                  `px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 ` + 
+                  (animeDub 
+                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
+                    : 'text-white/80 hover:text-white hover:bg-white/10')
+                }
               >
-                Dub
+                DUB
               </button>
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
         
-        {/* Loading Screen */}
+        {/* Enhanced Loading Screen */}
         <AnimatePresence>
           {state.isLoading && (
             <motion.div
@@ -484,27 +525,48 @@ const WatchPage: React.FC = () => {
               exit={{ opacity: 0 }}
               className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black z-50"
             >
-              <div className="relative mb-8">
-                <div className="w-20 h-20 border-4 border-primary/20 rounded-full"></div>
+              <div className="relative mb-10">
+                <div className="w-24 h-24 border-4 border-primary/20 rounded-full"></div>
                 <motion.div 
-                  className="absolute inset-0 w-20 h-20 border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent rounded-full"
+                  className="absolute inset-0 w-24 h-24 border-4 border-t-primary border-r-primary/50 border-b-transparent border-l-transparent rounded-full"
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                />
+                <motion.div 
+                  className="absolute inset-2 w-20 h-20 border-4 border-t-transparent border-r-transparent border-b-primary/50 border-l-primary rounded-full"
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
                 />
               </div>
-              <div className="text-center max-w-md px-4">
-                <h2 className="text-white text-xl font-bold mb-2">Loading Video</h2>
-                <p className="text-white/80 text-lg font-medium mb-2">{state.currentSource.name}</p>
-                <p className="text-white/60 text-sm">{state.title}</p>
+              <div className="text-center max-w-md px-6">
+                <motion.h2 
+                  className="text-white text-2xl font-bold mb-3"
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  Loading Video
+                </motion.h2>
+                <motion.div
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <p className="text-primary text-lg font-semibold mb-2">{state.currentSource.name}</p>
+                  <p className="text-white/70 text-base">{state.title}</p>
+                </motion.div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
         
-        {/* Video Player iframe */}
+        {/* Video Player iframe - No sandbox restriction */}
         {state.videoUrl && (
-          <div
+          <motion.div
             className="w-full h-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: state.isLoading ? 0 : 1 }}
+            transition={{ duration: 0.3 }}
             style={{ visibility: state.isLoading ? 'hidden' : 'visible' }}
           >
             <iframe
@@ -518,7 +580,7 @@ const WatchPage: React.FC = () => {
               style={{ zIndex: 10 }}
               referrerPolicy="no-referrer"
             />
-          </div>
+          </motion.div>
         )}
 
         {/* In-Player Episode Selector for TV Shows */}
