@@ -2,7 +2,8 @@
 export const STORAGE_KEYS = {
   WATCH_PROGRESS: 'watch_progress',
   USER_PREFERENCES: 'user_preferences',
-  THEME: 'theme'
+  THEME: 'theme',
+  VIDEO_SOURCE: 'video_source'
 } as const;
 
 // Video sources configuration

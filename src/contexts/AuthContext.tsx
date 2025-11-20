@@ -54,7 +54,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       const authError = error as AuthError;
-      console.error("Error signing in with Google", authError);
       
       // Handle specific Google sign-in errors
       if (authError.code === 'auth/popup-closed-by-user') {
@@ -79,7 +78,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       const authError = error as AuthError;
-      console.error("Error signing in with email", authError);
       
       // Handle specific email sign-in errors
       if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password') {
@@ -103,7 +101,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast.success("Account successfully created!");
       }
     } catch (error: any) {
-      console.error("Error creating account", error);
       if (error.code === "auth/email-already-in-use") {
         toast.error("Email already in use. Try signing in instead.");
       } else if (error.code === "auth/weak-password") {
