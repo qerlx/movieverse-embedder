@@ -23,7 +23,7 @@ export const getCachedData = <T>(key: string): T | null => {
 };
 
 export const setCachedData = <T>(key: string, data: T, options: CacheOptions = {}): void => {
-  const ttl = options.ttl || 1000 * 60 * 10; // Default 10 minutes
+  const ttl = options.ttl || 1000 * 60 * 5; // Default 5 minutes for better freshness
   cache.set(key, {
     data,
     timestamp: Date.now(),
