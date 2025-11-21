@@ -67,145 +67,162 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
   
   return (
     <div 
-      className="relative w-full h-[60vh] md:h-[80vh] overflow-hidden"
+      className="relative w-full h-[70vh] md:h-[85vh] lg:h-[90vh] overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
-          initial={{ opacity: 0.4 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0.4 }}
-          transition={{ duration: 0.7 }}
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
           className="absolute inset-0"
         >
-          {/* Background */}
+          {/* Background Image with Ken Burns effect */}
           <div 
-            className="absolute inset-0 bg-cover bg-center brightness-[0.7]"
-            style={{ backgroundImage: `url(${backdrop})` }}
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ 
+              backgroundImage: `url(${backdrop})`,
+              filter: 'brightness(0.7) contrast(1.1)'
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          {/* Enhanced Gradients */}
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background" />
         </motion.div>
       </AnimatePresence>
       
       {/* Content */}
       <div className="absolute inset-0 flex items-center">
-        <div className="container mx-auto px-4 md:px-6">
-          <motion.div 
-            className="max-w-2xl"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
+        <div className="container mx-auto px-4 md:px-8 lg:px-12">
+          <AnimatePresence mode="wait">
             <motion.div 
-              className="flex items-center space-x-2 mb-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
+              key={currentSlide}
+              className="max-w-3xl"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 50 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              <div className="bg-primary/90 text-white text-xs px-2 py-1 rounded font-medium">
-                {type === "movie" ? "Movie" : "TV Show"}
-              </div>
-              
-              {currentItem.vote_average > 0 && (
-                <div className="bg-black/40 backdrop-blur-sm text-white text-xs px-2 py-1 rounded flex items-center">
-                  <Star size={12} className="text-yellow-400 mr-1" />
-                  <span>{currentItem.vote_average.toFixed(1)}</span>
-                </div>
-              )}
-              
-              {year && (
-                <div className="bg-black/40 backdrop-blur-sm text-white text-xs px-2 py-1 rounded flex items-center">
-                  <Clock size={12} className="mr-1" />
-                  <span>{year}</span>
-                </div>
-              )}
-            </motion.div>
-            
-            <motion.h1 
-              className="text-4xl md:text-6xl text-white font-bold mb-4 leading-tight"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
-            >
-              {title}
-            </motion.h1>
-            
-            <motion.p 
-              className="text-gray-200 mb-6 line-clamp-3 md:line-clamp-none"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.9 }}
-            >
-              {currentItem.overview}
-            </motion.p>
-            
-            <motion.div 
-              className="flex flex-wrap gap-4"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 1.1 }}
-            >
-              <Button 
-                size="lg" 
-                className="gap-2 text-white bg-primary hover:bg-primary/90"
-                onClick={navigateToWatch}
+              {/* Badges */}
+              <motion.div 
+                className="flex items-center flex-wrap gap-3 mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
               >
-                <Play size={18} />
-                Watch Now
-              </Button>
+                <div className="bg-gradient-to-r from-primary to-primary/80 text-white text-sm px-4 py-1.5 rounded-full font-semibold shadow-lg shadow-primary/30">
+                  {type === "movie" ? "Movie" : "TV Show"}
+                </div>
+                
+                {currentItem.vote_average > 0 && (
+                  <div className="bg-black/60 backdrop-blur-md text-white text-sm px-4 py-1.5 rounded-full flex items-center gap-2 border border-white/10">
+                    <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                    <span className="font-semibold">{currentItem.vote_average.toFixed(1)}</span>
+                  </div>
+                )}
+                
+                {year && (
+                  <div className="bg-black/60 backdrop-blur-md text-white text-sm px-4 py-1.5 rounded-full flex items-center gap-2 border border-white/10">
+                    <Clock size={14} />
+                    <span className="font-medium">{year}</span>
+                  </div>
+                )}
+              </motion.div>
               
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
-                onClick={navigateToDetail}
+              {/* Title */}
+              <motion.h1 
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white font-bold mb-6 leading-tight drop-shadow-2xl"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <Info size={18} className="mr-2" />
-                Details
-              </Button>
+                {title}
+              </motion.h1>
+              
+              {/* Overview */}
+              <motion.p 
+                className="text-gray-100 text-base md:text-lg mb-8 line-clamp-3 leading-relaxed drop-shadow-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                {currentItem.overview}
+              </motion.p>
+              
+              {/* Buttons */}
+              <motion.div 
+                className="flex flex-wrap gap-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.7 }}
+              >
+                <Button 
+                  size="lg" 
+                  className="gap-3 px-8 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white shadow-xl shadow-primary/40 hover:shadow-2xl hover:shadow-primary/50 transition-all hover:scale-105"
+                  onClick={navigateToWatch}
+                >
+                  <Play size={22} className="fill-current" />
+                  Watch Now
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  className="gap-3 px-8 py-6 text-lg font-semibold bg-white/10 backdrop-blur-md border-2 border-white/30 hover:bg-white/20 hover:border-white/50 text-white shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+                  onClick={navigateToDetail}
+                >
+                  <Info size={22} />
+                  More Info
+                </Button>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          </AnimatePresence>
         </div>
       </div>
       
       {/* Navigation buttons */}
-      <div className="absolute inset-y-0 left-0 flex items-center">
+      <div className="absolute inset-y-0 left-0 flex items-center z-20">
         <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="bg-black/30 backdrop-blur-sm hover:bg-black/50 text-white p-2 m-2 rounded-full transition-all"
+          whileHover={{ scale: 1.15, x: 5 }}
+          whileTap={{ scale: 0.95 }}
+          className="bg-black/40 backdrop-blur-md hover:bg-primary/90 text-white p-4 ml-4 rounded-full transition-all border border-white/20 shadow-xl"
           onClick={handlePrev}
+          aria-label="Previous slide"
         >
-          <ChevronLeft size={24} />
+          <ChevronLeft size={28} strokeWidth={2.5} />
         </motion.button>
       </div>
       
-      <div className="absolute inset-y-0 right-0 flex items-center">
+      <div className="absolute inset-y-0 right-0 flex items-center z-20">
         <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="bg-black/30 backdrop-blur-sm hover:bg-black/50 text-white p-2 m-2 rounded-full transition-all"
+          whileHover={{ scale: 1.15, x: -5 }}
+          whileTap={{ scale: 0.95 }}
+          className="bg-black/40 backdrop-blur-md hover:bg-primary/90 text-white p-4 mr-4 rounded-full transition-all border border-white/20 shadow-xl"
           onClick={handleNext}
+          aria-label="Next slide"
         >
-          <ChevronRight size={24} />
+          <ChevronRight size={28} strokeWidth={2.5} />
         </motion.button>
       </div>
       
       {/* Indicators */}
-      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+      <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-3 z-20">
         {filteredItems.map((_, index) => (
-          <button
+          <motion.button
             key={index}
+            whileHover={{ scale: 1.2 }}
             className={cn(
-              "transition-all",
+              "transition-all duration-300",
               currentSlide === index 
-                ? "bg-primary w-8 h-2 rounded-full" 
-                : "bg-white/30 hover:bg-white/60 h-2 w-2 rounded-full"
+                ? "bg-primary w-12 h-1.5 rounded-full shadow-lg shadow-primary/50" 
+                : "bg-white/40 hover:bg-white/70 h-1.5 w-1.5 rounded-full"
             )}
             onClick={() => setCurrentSlide(index)}
+            aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>

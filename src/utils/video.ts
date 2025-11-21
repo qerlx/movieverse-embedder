@@ -47,128 +47,206 @@ function formatAnimeId(id: string): string {
 export const videoSources: VideoSource[] = [
   {
     id: "vidsrc",
-    name: "VidSrc HD",
+    name: "VidSrc",
     fallbackOrder: 1,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
+    getUrl: (type, id, season, episode) => {
       const mediaId = validateMediaId(id);
       if (!mediaId) return null;
       
-      const version = extraParams.version || 'v2'; // v2 or v3
-      
       if (type === "movie") {
-        const baseUrl = `https://vidsrc.cc/${version}/embed/movie/${mediaId}`;
-        const queryParams: Record<string, string> = {};
-        if (extraParams.autoPlay !== undefined) queryParams.autoPlay = String(extraParams.autoPlay);
-        
-        const searchParams = new URLSearchParams(queryParams);
-        return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
+        return `https://vidsrc.xyz/embed/movie/${mediaId}`;
       } else if (type === "tv" && season && episode) {
         const validatedEpisode = validateSeasonEpisode(season, episode);
         if (!validatedEpisode) return null;
-        
-        const baseUrl = `https://vidsrc.cc/${version}/embed/tv/${mediaId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
-        const queryParams: Record<string, string> = {};
-        if (extraParams.poster !== undefined) queryParams.poster = String(extraParams.poster);
-        if (extraParams.autoPlay !== undefined) queryParams.autoPlay = String(extraParams.autoPlay);
-        
-        const searchParams = new URLSearchParams(queryParams);
-        return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
+        return `https://vidsrc.xyz/embed/tv/${mediaId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
       }
-      
       return null;
     }
   },
   {
-    id: "vidlink",
-    name: "VidLink Pro",
+    id: "superembed",
+    name: "SuperEmbed",
     fallbackOrder: 2,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
+    getUrl: (type, id, season, episode) => {
       const mediaId = validateMediaId(id);
+      if (!mediaId) return null;
       
       if (type === "movie") {
-        if (!mediaId) return null;
-        const baseUrl = `https://vidlink.pro/movie/${mediaId}`;
-        
-        // Add custom params
-        const queryParams: Record<string, string> = {};
-        if (extraParams.primaryColor) queryParams.primaryColor = sanitizeId(extraParams.primaryColor);
-        if (extraParams.secondaryColor) queryParams.secondaryColor = sanitizeId(extraParams.secondaryColor);
-        if (extraParams.iconColor) queryParams.iconColor = sanitizeId(extraParams.iconColor);
-        if (extraParams.icons) queryParams.icons = String(extraParams.icons);
-        if (extraParams.player) queryParams.player = String(extraParams.player);
-        if (extraParams.nextButton) queryParams.nextButton = 'true';
-        if (extraParams.startAt) queryParams.startAt = String(parseInt(extraParams.startAt, 10));
-        
-        const searchParams = new URLSearchParams(queryParams);
-        return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
+        return `https://multiembed.mov/?video_id=${mediaId}&tmdb=1`;
       } else if (type === "tv" && season && episode) {
-        if (!mediaId) return null;
         const validatedEpisode = validateSeasonEpisode(season, episode);
         if (!validatedEpisode) return null;
-        
-        const baseUrl = `https://vidlink.pro/tv/${mediaId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
-        
-        // Add custom params
-        const queryParams: Record<string, string> = {};
-        if (extraParams.primaryColor) queryParams.primaryColor = sanitizeId(extraParams.primaryColor);
-        if (extraParams.nextButton) queryParams.nextButton = 'true';
-        
-        const searchParams = new URLSearchParams(queryParams);
-        return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
-      } else if (type === "anime") {
-        // VidLink anime uses MAL ID (no prefix)
-        const malId = sanitizeId(id);
-        if (!malId) return null;
-        
-        const episodeNum = episode ? parseInt(episode, 10) : 1;
-        const dubType = extraParams.dub ? 'dub' : 'sub';
-        
-        const baseUrl = `https://vidlink.pro/anime/${malId}/${episodeNum}/${dubType}`;
-        
-        const queryParams: Record<string, string> = {};
-        if (extraParams.fallback) queryParams.fallback = 'true';
-        
-        const searchParams = new URLSearchParams(queryParams);
-        return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
+        return `https://multiembed.mov/?video_id=${mediaId}&tmdb=1&s=${validatedEpisode.season}&e=${validatedEpisode.episode}`;
       }
+      return null;
+    }
+  },
+  {
+    id: "moviesapi",
+    name: "MoviesAPI",
+    fallbackOrder: 3,
+    getUrl: (type, id, season, episode) => {
+      const mediaId = validateMediaId(id);
+      if (!mediaId) return null;
       
+      if (type === "movie") {
+        return `https://moviesapi.club/movie/${mediaId}`;
+      } else if (type === "tv" && season && episode) {
+        const validatedEpisode = validateSeasonEpisode(season, episode);
+        if (!validatedEpisode) return null;
+        return `https://moviesapi.club/tv/${mediaId}-${validatedEpisode.season}-${validatedEpisode.episode}`;
+      }
       return null;
     }
   },
   {
     id: "autoembed",
     name: "AutoEmbed",
-    fallbackOrder: 3,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      const sanitizedId = sanitizeId(id);
-      if (!sanitizedId) return null;
-      
-      // AutoEmbed prefers IMDb IDs (tt prefix)
-      const formattedId = sanitizedId.startsWith('tt') ? sanitizedId : `tt${sanitizedId}`;
+    fallbackOrder: 4,
+    getUrl: (type, id, season, episode) => {
+      const mediaId = validateMediaId(id);
+      if (!mediaId) return null;
       
       if (type === "movie") {
-        const baseUrl = `https://player.autoembed.cc/embed/movie/${formattedId}`;
-        return baseUrl;
+        return `https://player.autoembed.cc/embed/movie/${mediaId}`;
       } else if (type === "tv" && season && episode) {
         const validatedEpisode = validateSeasonEpisode(season, episode);
         if (!validatedEpisode) return null;
-        
-        const baseUrl = `https://player.autoembed.cc/embed/tv/${formattedId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
-        const queryParams: Record<string, string> = {};
-        if (extraParams.server) queryParams.server = String(extraParams.server);
-        
-        const searchParams = new URLSearchParams(queryParams);
-        return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
+        return `https://player.autoembed.cc/embed/tv/${mediaId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
       }
+      return null;
+    }
+  },
+  {
+    id: "smashystream",
+    name: "Smashystream",
+    fallbackOrder: 5,
+    getUrl: (type, id, season, episode) => {
+      const mediaId = validateMediaId(id);
+      if (!mediaId) return null;
       
+      if (type === "movie") {
+        return `https://player.smashy.stream/movie/${mediaId}`;
+      } else if (type === "tv" && season && episode) {
+        const validatedEpisode = validateSeasonEpisode(season, episode);
+        if (!validatedEpisode) return null;
+        return `https://player.smashy.stream/tv/${mediaId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
+      }
+      return null;
+    }
+  },
+  {
+    id: "vikingembed",
+    name: "VikingEmbed",
+    fallbackOrder: 6,
+    getUrl: (type, id, season, episode) => {
+      const mediaId = validateMediaId(id);
+      if (!mediaId) return null;
+      
+      if (type === "movie") {
+        return `https://vembed.online/play/${mediaId}?type=movie`;
+      } else if (type === "tv" && season && episode) {
+        const validatedEpisode = validateSeasonEpisode(season, episode);
+        if (!validatedEpisode) return null;
+        return `https://vembed.online/play/${mediaId}?type=tv&s=${validatedEpisode.season}&e=${validatedEpisode.episode}`;
+      }
+      return null;
+    }
+  },
+  {
+    id: "vidapi",
+    name: "VidAPI",
+    fallbackOrder: 7,
+    getUrl: (type, id, season, episode) => {
+      const mediaId = validateMediaId(id);
+      if (!mediaId) return null;
+      
+      if (type === "movie") {
+        return `https://vidapi.xyz/embed/movie/${mediaId}`;
+      } else if (type === "tv" && season && episode) {
+        const validatedEpisode = validateSeasonEpisode(season, episode);
+        if (!validatedEpisode) return null;
+        return `https://vidapi.xyz/embed/tv/${mediaId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
+      }
+      return null;
+    }
+  },
+  {
+    id: "rivestream",
+    name: "Rive Stream",
+    fallbackOrder: 8,
+    getUrl: (type, id, season, episode) => {
+      const mediaId = validateMediaId(id);
+      if (!mediaId) return null;
+      
+      if (type === "movie") {
+        return `https://rivestream.org/embed?type=movie&id=${mediaId}`;
+      } else if (type === "tv" && season && episode) {
+        const validatedEpisode = validateSeasonEpisode(season, episode);
+        if (!validatedEpisode) return null;
+        return `https://rivestream.org/embed?type=tv&id=${mediaId}&season=${validatedEpisode.season}&episode=${validatedEpisode.episode}`;
+      }
+      return null;
+    }
+  },
+  {
+    id: "anyembed",
+    name: "Anyembed",
+    fallbackOrder: 9,
+    getUrl: (type, id, season, episode) => {
+      const mediaId = validateMediaId(id);
+      if (!mediaId) return null;
+      
+      if (type === "movie") {
+        return `https://anyembed.xyz/movie/${mediaId}`;
+      } else if (type === "tv" && season && episode) {
+        const validatedEpisode = validateSeasonEpisode(season, episode);
+        if (!validatedEpisode) return null;
+        return `https://anyembed.xyz/tv/${mediaId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
+      }
+      return null;
+    }
+  },
+  {
+    id: "embedmaster",
+    name: "EmbedMaster",
+    fallbackOrder: 10,
+    getUrl: (type, id, season, episode) => {
+      const mediaId = validateMediaId(id);
+      if (!mediaId) return null;
+      
+      if (type === "movie") {
+        return `https://embedmaster.com/embed/movie/${mediaId}`;
+      } else if (type === "tv" && season && episode) {
+        const validatedEpisode = validateSeasonEpisode(season, episode);
+        if (!validatedEpisode) return null;
+        return `https://embedmaster.com/embed/tv/${mediaId}/${validatedEpisode.season}/${validatedEpisode.episode}`;
+      }
+      return null;
+    }
+  },
+  {
+    id: "multiembed",
+    name: "MultiEmbed",
+    fallbackOrder: 11,
+    getUrl: (type, id, season, episode) => {
+      const mediaId = validateMediaId(id);
+      if (!mediaId) return null;
+      
+      if (type === "movie") {
+        return `https://multiembed.mov/directstream.php?video_id=${mediaId}&tmdb=1`;
+      } else if (type === "tv" && season && episode) {
+        const validatedEpisode = validateSeasonEpisode(season, episode);
+        if (!validatedEpisode) return null;
+        return `https://multiembed.mov/directstream.php?video_id=${mediaId}&tmdb=1&s=${validatedEpisode.season}&e=${validatedEpisode.episode}`;
+      }
       return null;
     }
   },
   {
     id: "vidsrc-anime",
     name: "Vidsrc Anime",
-    fallbackOrder: 4,
+    fallbackOrder: 12,
     supportsAnime: true,
     getUrl: (type, id, season, episode, extraParams = {}) => {
       if (type !== "anime") return null;
@@ -179,15 +257,7 @@ export const videoSources: VideoSource[] = [
       
       if (!episodeNum || episodeNum < 1) return null;
       
-      const baseUrl = `https://vidsrc.cc/v2/embed/anime/${animeId}/${episodeNum}/${dubType}`;
-      
-      // Build query params
-      const queryParams: Record<string, string> = {};
-      if (extraParams.autoPlay) queryParams.autoPlay = 'true';
-      if (extraParams.autoSkipIntro) queryParams.autoSkipIntro = 'true';
-      
-      const searchParams = new URLSearchParams(queryParams);
-      return searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
+      return `https://vidsrc.cc/v2/embed/anime/${animeId}/${episodeNum}/${dubType}`;
     }
   }
 ];
@@ -245,10 +315,20 @@ export function isValidVideoSource(url: string): boolean {
   try {
     const urlObj = new URL(url);
     const allowedDomains = [
+      'vidsrc.xyz',
       'vidsrc.cc',
+      'multiembed.mov',
+      'moviesapi.club',
       'player.autoembed.cc',
       'autoembed.cc',
-      'vidlink.pro'
+      'player.smashy.stream',
+      'smashy.stream',
+      'vembed.online',
+      'vidapi.xyz',
+      'rivestream.org',
+      'anyembed.xyz',
+      'embedmaster.com',
+      'superembed.stream'
     ];
     
     return allowedDomains.some(domain => 
