@@ -40,10 +40,14 @@ const TVShowDetail = () => {
 
   // Enhanced video sources list
   const videoSources: VideoSource[] = [
-    { id: "vidora", name: "Vidora", icon: <Play size={16} className="mr-2" /> },
-    { id: "vidsrc", name: "VidSrc", icon: <Tv size={16} className="mr-2" /> },
-    { id: "vidzee", name: "Vidzee", icon: <Tv size={16} className="mr-2" /> },
-    { id: "vidjoy", name: "Vidjoy", icon: <Tv size={16} className="mr-2" /> }
+    { id: "vidsrc", name: "VidSrc", icon: <Play size={16} className="mr-2" /> },
+    { id: "superembed", name: "SuperEmbed", icon: <Tv size={16} className="mr-2" /> },
+    { id: "moviesapi", name: "MoviesAPI", icon: <Tv size={16} className="mr-2" /> },
+    { id: "autoembed", name: "AutoEmbed", icon: <Tv size={16} className="mr-2" /> },
+    { id: "smashystream", name: "Smashystream", icon: <Tv size={16} className="mr-2" /> },
+    { id: "vikingembed", name: "VikingEmbed", icon: <Tv size={16} className="mr-2" /> },
+    { id: "vidapi", name: "VidAPI", icon: <Tv size={16} className="mr-2" /> },
+    { id: "rivestream", name: "Rive Stream", icon: <Tv size={16} className="mr-2" /> },
   ];
   
   useEffect(() => {

@@ -20,24 +20,27 @@ export const SourceSwitcher: React.FC<SourceSwitcherProps> = ({
 
   return (
     <motion.div
-      className="flex items-center gap-2 backdrop-blur-xl bg-card/90 rounded-full px-4 py-2 border border-border/50 shadow-lg"
+      className="flex items-center gap-3 backdrop-blur-xl bg-card/95 rounded-2xl px-5 py-3 border border-primary/20 shadow-[0_8px_32px_rgba(147,51,234,0.15)]"
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
     >
-      <Monitor className="w-4 h-4 text-primary" aria-hidden="true" />
-      <select
-        value={currentSourceId}
-        onChange={(e) => onSwitch(e.target.value)}
-        className="bg-transparent text-sm font-medium text-foreground border-none outline-none focus:ring-0 cursor-pointer"
-        aria-label="Select video source"
-      >
-        {availableSources.map((source) => (
-          <option key={source.id} value={source.id} className="bg-card text-foreground">
-            {source.name}
-          </option>
-        ))}
-      </select>
+      <Monitor className="w-5 h-5 text-primary" aria-hidden="true" />
+      <div className="flex flex-col">
+        <span className="text-xs text-muted-foreground font-medium">Video Source</span>
+        <select
+          value={currentSourceId}
+          onChange={(e) => onSwitch(e.target.value)}
+          className="bg-transparent text-sm font-semibold text-foreground border-none outline-none focus:ring-0 cursor-pointer -ml-1 mt-0.5"
+          aria-label="Select video source"
+        >
+          {availableSources.map((source) => (
+            <option key={source.id} value={source.id} className="bg-card text-foreground py-2">
+              {source.name}
+            </option>
+          ))}
+        </select>
+      </div>
     </motion.div>
   );
 };

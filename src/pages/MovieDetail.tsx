@@ -12,7 +12,7 @@ import {
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
-
+import { cn } from "@/lib/utils";
 import WatchProviders from "@/components/WatchProviders";
 import LogoTitle from "@/components/LogoTitle";
 import MovieInfoCard from "@/components/MovieInfoCard";
@@ -39,12 +39,16 @@ const MovieDetail = () => {
   const [movie, setMovie] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Video sources list
+  // Video sources list with all available providers
   const videoSources: VideoSource[] = [
-    { id: "vidora", name: "Vidora", icon: <Play size={16} className="mr-1" /> },
-    { id: "vidsrc", name: "VidSrc", icon: <Film size={16} className="mr-1" /> },
-    { id: "vidzee", name: "Vidzee", icon: <Film size={16} className="mr-1" /> },
-    { id: "vidjoy", name: "Vidjoy", icon: <Film size={16} className="mr-1" /> }
+    { id: "vidsrc", name: "VidSrc", icon: <Play size={16} className="mr-2" /> },
+    { id: "superembed", name: "SuperEmbed", icon: <Film size={16} className="mr-2" /> },
+    { id: "moviesapi", name: "MoviesAPI", icon: <Film size={16} className="mr-2" /> },
+    { id: "autoembed", name: "AutoEmbed", icon: <Film size={16} className="mr-2" /> },
+    { id: "smashystream", name: "Smashystream", icon: <Film size={16} className="mr-2" /> },
+    { id: "vikingembed", name: "VikingEmbed", icon: <Film size={16} className="mr-2" /> },
+    { id: "vidapi", name: "VidAPI", icon: <Film size={16} className="mr-2" /> },
+    { id: "rivestream", name: "Rive Stream", icon: <Film size={16} className="mr-2" /> },
   ];
   
   useEffect(() => {
@@ -161,28 +165,35 @@ const MovieDetail = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-12"
         >
-          <div className="max-w-md mx-auto">
-            <div className="bg-card/50 backdrop-blur-md rounded-xl border border-white/10 p-6">
-              <h3 className="text-white text-lg font-semibold mb-4 text-center">Watch Options</h3>
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl rounded-2xl border border-primary/20 p-8 shadow-2xl shadow-primary/10">
+              <h3 className="text-white text-xl font-bold mb-6 text-center flex items-center justify-center gap-2">
+                <Play className="w-5 h-5 text-primary" />
+                Choose Your Server
+              </h3>
               
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {videoSources.map((source, index) => (
                   <Button 
                     key={source.id}
                     onClick={() => handleWatchClick(source.id)}
-                    className={
+                    className={cn(
+                      "w-full gap-2 rounded-xl py-6 text-base font-semibold transition-all hover:scale-105",
                       index === 0 
-                        ? "w-full bg-primary hover:bg-primary/90 text-white gap-2 rounded-lg py-3 text-base" 
-                        : "w-full bg-black/40 hover:bg-black/60 text-white gap-2 rounded-lg py-2 border border-white/10"
-                    }
-                    size={index === 0 ? "default" : "sm"}
+                        ? "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg shadow-primary/40" 
+                        : "bg-black/40 hover:bg-primary/20 text-white border border-white/10 hover:border-primary/40"
+                    )}
                   >
                     {source.icon}
                     {source.name}
-                    {index === 0 && <span className="text-xs opacity-70">(HD)</span>}
+                    {index === 0 && <span className="text-xs opacity-80 ml-1">(HD)</span>}
                   </Button>
                 ))}
               </div>
+              
+              <p className="text-center text-muted-foreground text-sm mt-6">
+                If one server doesn't work, try another. Auto-fallback is enabled.
+              </p>
             </div>
           </div>
         </motion.div>

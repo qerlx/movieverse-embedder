@@ -90,17 +90,68 @@ const Index: React.FC = () => {
   
   // Loading skeleton component
   const LoadingSkeleton = () => (
-    <div className="py-20 flex justify-center items-center">
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-background via-background/98 to-background">
       <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="relative w-16 h-16"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="relative"
       >
+        {/* Outer glowing ring */}
         <motion.div 
-          className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-primary"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-0 rounded-full blur-2xl bg-gradient-to-r from-primary via-primary/60 to-primary opacity-40"
+          animate={{ 
+            scale: [1, 1.3, 1],
+            rotate: [0, 180, 360]
+          }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         />
+        
+        {/* Main spinner */}
+        <motion.div 
+          className="relative w-20 h-20 rounded-full border-4 border-transparent border-t-primary border-r-primary shadow-2xl shadow-primary/30"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+        />
+        
+        {/* Inner pulse */}
+        <motion.div
+          className="absolute inset-4 rounded-full bg-gradient-to-br from-primary/30 to-transparent"
+          animate={{ 
+            scale: [0.8, 1.2, 0.8],
+            opacity: [0.5, 1, 0.5]
+          }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </motion.div>
+      
+      {/* Loading text */}
+      <motion.div
+        className="mt-8 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent mb-2">
+          Loading
+        </h2>
+        <div className="flex gap-1.5 justify-center">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className="w-2 h-2 bg-primary rounded-full"
+              animate={{
+                scale: [1, 1.5, 1],
+                opacity: [0.3, 1, 0.3],
+              }}
+              transition={{
+                duration: 1.2,
+                repeat: Infinity,
+                delay: i * 0.15,
+              }}
+            />
+          ))}
+        </div>
       </motion.div>
     </div>
   );
@@ -135,7 +186,8 @@ const Index: React.FC = () => {
           <Suspense fallback={<LoadingSkeleton />}>
             <HeroSlider items={state.heroItems} type="movie" />
           </Suspense>
-          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+          {/* Enhanced gradient blend */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
         </motion.div>
       )}
       
@@ -143,8 +195,8 @@ const Index: React.FC = () => {
       {state.isLoading && <LoadingSkeleton />}
       
       {!state.isLoading && (
-        <div className="relative -mt-12 z-10">
-          <div className="container mx-auto px-4 space-y-8">
+        <div className="relative -mt-20 z-10">
+          <div className="container mx-auto px-4 space-y-10">
             
             {/* Recently Watched */}
             {currentUser && (
@@ -153,9 +205,11 @@ const Index: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
               >
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-primary" />
-                  Continue Watching
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Clock className="w-6 h-6 text-primary" />
+                  <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                    Continue Watching
+                  </span>
                 </h2>
                 <RecentlyWatchedList limit={6} />
               </motion.div>
@@ -169,9 +223,11 @@ const Index: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.15 }}
                 className="mb-8"
               >
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-primary" />
-                  My List
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Heart className="w-6 h-6 text-primary" />
+                  <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                    My List
+                  </span>
                 </h2>
                 <div className="max-h-96 overflow-hidden">
                   <FavoritesList />
@@ -196,7 +252,7 @@ const Index: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
                 <CategoryRow
-                  title="Trending Now"
+                  title="🔥 Trending Now"
                   items={state.trendingMovies.slice(0, 10)}
                   type="movie"
                   isRanked={true}
@@ -212,7 +268,7 @@ const Index: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
                 <CategoryRow
-                  title="Popular TV Shows"
+                  title="📺 Popular TV Shows"
                   items={state.trendingTVShows}
                   type="tv"
                 />
@@ -227,7 +283,7 @@ const Index: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.5 }}
               >
                 <CategoryRow
-                  title="Popular Movies"
+                  title="🎬 Popular Movies"
                   items={state.popularMovies} 
                   type="movie"
                 />
@@ -242,7 +298,7 @@ const Index: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.6 }}
               >
                 <CategoryRow
-                  title="Binge-Worthy Series"
+                  title="⭐ Binge-Worthy Series"
                   items={state.popularTVShows} 
                   type="tv"
                 />
