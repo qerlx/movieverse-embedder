@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { storageService } from "@/lib/storage-service";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { Clock, Play, Tv, Film } from "lucide-react";
+import { Clock, Play, Tv, Film, Calendar, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { LazyImage } from "@/components/ui/lazy-image";
 
@@ -101,69 +102,104 @@ const RecentlyWatchedList: React.FC<RecentlyWatchedListProps> = ({ limit = 6 }) 
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recentlyWatched?.map((item, index) => (
-            <motion.div
-              key={`${item.mediaType}_${item.mediaId}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Link to={`/${item.mediaType === "movie" ? "movie" : "tv"}/${item.mediaId}`}>
-                <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 bg-card/50 backdrop-blur border-border/50 hover:border-primary/20">
-                  <CardContent className="p-0">
-                    <div className="flex h-32">
-                      <div className="w-20 flex-shrink-0">
-                        <LazyImage
-                          src={`https://image.tmdb.org/t/p/w154${item.posterPath}`}
-                          alt={item.title}
-                          className="w-full h-full object-cover rounded-l-lg"
-                          fallback="/placeholder.svg"
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {recentlyWatched?.map((item, index) => {
+            const progress = item.progress || 0;
+            const hasEpisode = item.lastEpisode && item.mediaType === "tv";
+            
+            return (
+              <motion.div
+                key={`${item.mediaType}_${item.mediaId}_${index}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ scale: 1.05, y: -4 }}
+                className="group relative"
+              >
+                <Link to={`/${item.mediaType}/${item.mediaId}`} className="block">
+                  <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted/20 border border-border/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <LazyImage
+                      src={item.posterPath ? `https://image.tmdb.org/t/p/w500${item.posterPath}` : "/placeholder.svg"}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Progress Bar */}
+                    {progress > 0 && progress < 100 && (
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/60">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progress}%` }}
+                          className="h-full bg-primary"
                         />
                       </div>
-                      <div className="flex-1 p-4 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            {item.mediaType === "movie" ? (
-                              <Film className="w-4 h-4 text-primary" />
-                            ) : (
-                              <Tv className="w-4 h-4 text-primary" />
-                            )}
-                            <span className="text-xs text-muted-foreground capitalize">
-                              {item.mediaType}
-                            </span>
-                          </div>
-                          <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                            {item.title}
-                          </h3>
-                        </div>
-                        <div className="mt-2">
-                          {item.mediaType === "tv" && item.lastEpisode ? (
-                            <p className="text-xs text-muted-foreground">
-                              S{item.lastEpisode.season}E{item.lastEpisode.episode}
-                              {item.lastEpisode.name && ` • ${item.lastEpisode.name}`}
-                            </p>
-                          ) : item.progress ? (
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 bg-muted rounded-full h-1">
-                                <div 
-                                  className="bg-primary h-1 rounded-full transition-all duration-300"
-                                  style={{ width: `${item.progress}%` }}
-                                />
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {Math.round(item.progress || 0)}%
-                              </span>
-                            </div>
-                          ) : null}
-                        </div>
+                    )}
+                    
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    {/* Play Button Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <motion.div 
+                        initial={{ scale: 0.8 }}
+                        whileHover={{ scale: 1.1 }}
+                        className="w-14 h-14 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center shadow-2xl"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const watchUrl = hasEpisode 
+                            ? `/watch/${item.mediaType}/${item.mediaId}?season=${item.lastEpisode.season}&episode=${item.lastEpisode.episode}`
+                            : `/watch/${item.mediaType}/${item.mediaId}`;
+                          window.location.href = watchUrl;
+                        }}
+                      >
+                        <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+                      </motion.div>
+                    </div>
+                    
+                    {/* Episode Badge */}
+                    {hasEpisode && (
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="secondary" className="text-xs backdrop-blur-sm bg-black/60 border-white/20">
+                          S{item.lastEpisode.season}E{item.lastEpisode.episode}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {/* Media Type Badge */}
+                    <div className="absolute top-2 left-2">
+                      <Badge variant={item.mediaType === "movie" ? "default" : "secondary"} className="text-xs backdrop-blur-sm">
+                        {item.mediaType === "movie" ? <><Film className="w-3 h-3 mr-1" />Movie</> : <><Tv className="w-3 h-3 mr-1" />TV</>}
+                      </Badge>
+                    </div>
+                    
+                    {/* Info on Hover */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <h3 className="text-white text-sm font-semibold line-clamp-2 mb-2">{item.title}</h3>
+                      {hasEpisode && (
+                        <p className="text-white/70 text-xs mb-2 line-clamp-1">{item.lastEpisode.name}</p>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          size="sm" 
+                          className="text-xs bg-primary hover:bg-primary/90"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const watchUrl = hasEpisode 
+                              ? `/watch/${item.mediaType}/${item.mediaId}?season=${item.lastEpisode.season}&episode=${item.lastEpisode.episode}`
+                              : `/watch/${item.mediaType}/${item.mediaId}`;
+                            window.location.href = watchUrl;
+                          }}
+                        >
+                          <Play className="w-3 h-3 mr-1" />
+                          {progress > 0 ? "Continue" : "Watch"}
+                        </Button>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </motion.div>
-          ))}
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </motion.div>

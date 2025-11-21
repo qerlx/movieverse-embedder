@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { collections } from "@/lib/collections";
+import { cn } from "@/lib/utils";
 
 const Collections = () => {
   const navigate = useNavigate();
@@ -257,9 +258,5 @@ const Collections = () => {
   );
 };
 
-// Helper function for conditional classes
-const cn = (...classes: (string | undefined | null | false)[]) => {
-  return classes.filter(Boolean).join(' ');
-};
 
 export default Collections;

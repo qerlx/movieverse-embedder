@@ -1,14 +1,15 @@
 
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getFavorites, FavoriteItem } from "@/lib/firebase-favorites";
+import { storageService } from "@/lib/storage-service";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { Heart, Sparkles } from "lucide-react";
+import { Heart, Sparkles, Play, Tv, Calendar, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import MovieCard from "@/components/MovieCard";
+import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { LazyImage } from "@/components/ui/lazy-image";
 
 interface FavoritesProps {
   limit?: number;
@@ -19,11 +20,9 @@ const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
   
   const { data: favorites, isLoading } = useQuery({
     queryKey: ["favorites", currentUser?.uid],
-    queryFn: () => {
-      if (!currentUser) return Promise.resolve([]);
-      return getFavorites(currentUser);
-    },
+    queryFn: () => storageService.getFavorites(currentUser || undefined),
     enabled: !!currentUser,
+    staleTime: 1000 * 60, // 1 minute
   });
 
   const favoriteItems = limit > 0 ? favorites?.slice(0, limit) : favorites;
@@ -102,18 +101,62 @@ const Favorites: React.FC<FavoritesProps> = ({ limit = 0 }) => {
               key={`${item.mediaType}_${item.mediaId}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.05 }}
+              whileHover={{ scale: 1.05, y: -4 }}
+              className="group relative"
             >
-              <MovieCard
-                item={{
-                  id: parseInt(item.mediaId),
-                  media_type: item.mediaType,
-                  title: item.title,
-                  name: item.title,
-                  poster_path: item.posterPath,
-                }}
-                type={item.mediaType as "movie" | "tv"}
-              />
+              <Link to={`/${item.mediaType}/${item.mediaId}`} className="block">
+                <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted/20 border border-border/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <LazyImage
+                    src={item.posterPath ? `https://image.tmdb.org/t/p/w500${item.posterPath}` : "/placeholder.svg"}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                  
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  {/* Play Button Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <motion.div 
+                      initial={{ scale: 0.8 }}
+                      whileHover={{ scale: 1.1 }}
+                      className="w-14 h-14 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center shadow-2xl"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = `/watch/${item.mediaType}/${item.mediaId}`;
+                      }}
+                    >
+                      <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+                    </motion.div>
+                  </div>
+                  
+                  {/* Media Type Badge */}
+                  <div className="absolute top-2 left-2">
+                    <Badge variant={item.mediaType === "movie" ? "default" : "secondary"} className="text-xs backdrop-blur-sm">
+                      {item.mediaType === "movie" ? "Movie" : <><Tv className="w-3 h-3 mr-1" />TV</>}
+                    </Badge>
+                  </div>
+                  
+                  {/* Info on Hover */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    <h3 className="text-white text-sm font-semibold line-clamp-2 mb-2">{item.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-xs bg-background/20 border-border/40 hover:bg-background/40"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.location.href = `/${item.mediaType}/${item.mediaId}`;
+                        }}
+                      >
+                        Details
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             </motion.div>
           ))}
         </div>
