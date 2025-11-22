@@ -69,7 +69,7 @@ export const MovieDetailModal = ({ movie, isOpen, onClose }: MovieDetailModalPro
 
                 {/* Title & Actions */}
                 <div className="absolute bottom-8 left-8 right-8">
-                  <h2 className="text-4xl font-bold text-white mb-4 drop-shadow-lg">
+                  <h2 className="text-4xl font-bold mb-4 drop-shadow-2xl bg-gradient-to-r from-foreground to-foreground/90 bg-clip-text text-transparent">
                     {movie.title}
                   </h2>
                   

@@ -187,7 +187,7 @@ const Index: React.FC = () => {
             <HeroSlider items={state.heroItems} type="movie" />
           </Suspense>
           {/* Enhanced gradient blend */}
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none z-10" />
         </motion.div>
       )}
       
@@ -195,8 +195,8 @@ const Index: React.FC = () => {
       {state.isLoading && <LoadingSkeleton />}
       
       {!state.isLoading && (
-        <div className="relative -mt-20 z-10">
-          <div className="container mx-auto px-4 space-y-10">
+        <div className="relative -mt-32 z-20">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 space-y-12 pb-16">
             
             {/* Recently Watched */}
             {currentUser && (
@@ -205,9 +205,9 @@ const Index: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
               >
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-3">
                   <Clock className="w-6 h-6 text-primary" />
-                  <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
                     Continue Watching
                   </span>
                 </h2>
@@ -221,17 +221,14 @@ const Index: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.15 }}
-                className="mb-8"
               >
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-3">
                   <Heart className="w-6 h-6 text-primary" />
-                  <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
                     My List
                   </span>
                 </h2>
-                <div className="max-h-96 overflow-hidden">
-                  <FavoritesList />
-                </div>
+                <FavoritesList />
               </motion.div>
             )}
 

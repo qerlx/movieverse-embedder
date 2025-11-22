@@ -41,10 +41,10 @@ export const CollectionRow = ({ collection, onMovieInfoClick, onMoviePlayClick }
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="relative group mb-8"
+      className="relative group mb-10"
     >
       {/* Collection Title */}
-      <h2 className="text-white text-xl md:text-2xl font-bold mb-4 px-6">
+      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-5 px-6 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
         {collection.name}
       </h2>
 
@@ -55,10 +55,10 @@ export const CollectionRow = ({ collection, onMovieInfoClick, onMoviePlayClick }
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 h-full w-12 bg-black/50 hover:bg-black/70 text-white rounded-none opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-12 w-12 bg-background/90 hover:bg-background border border-border/50 text-foreground rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl"
             onClick={() => scroll("left")}
           >
-            <ChevronLeft className="h-8 w-8" />
+            <ChevronLeft className="h-6 w-6" />
           </Button>
         )}
 
@@ -66,7 +66,7 @@ export const CollectionRow = ({ collection, onMovieInfoClick, onMoviePlayClick }
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex gap-3 overflow-x-auto scrollbar-hide px-6 py-2"
+          className="flex gap-4 overflow-x-auto scrollbar-hide px-6 py-2"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {collection.parts.map((movie) => (
@@ -84,10 +84,10 @@ export const CollectionRow = ({ collection, onMovieInfoClick, onMoviePlayClick }
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 h-full w-12 bg-black/50 hover:bg-black/70 text-white rounded-none opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-12 w-12 bg-background/90 hover:bg-background border border-border/50 text-foreground rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl"
             onClick={() => scroll("right")}
           >
-            <ChevronRight className="h-8 w-8" />
+            <ChevronRight className="h-6 w-6" />
           </Button>
         )}
       </div>

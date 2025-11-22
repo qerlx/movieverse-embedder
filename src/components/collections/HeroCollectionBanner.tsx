@@ -35,8 +35,8 @@ export const HeroCollectionBanner = ({ collection }: HeroCollectionBannerProps) 
       )}
 
       {/* Gradient Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/50 to-transparent" />
 
       {/* Content */}
       <div className="relative h-full flex items-end pb-24">
@@ -47,11 +47,11 @@ export const HeroCollectionBanner = ({ collection }: HeroCollectionBannerProps) 
             transition={{ duration: 0.8, delay: 0.2 }}
             className="max-w-2xl"
           >
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-4 drop-shadow-lg">
+            <h1 className="text-5xl md:text-7xl font-bold mb-4 drop-shadow-2xl bg-gradient-to-r from-foreground to-foreground/90 bg-clip-text text-transparent">
               {collection.name}
             </h1>
             
-            <p className="text-lg text-white/90 mb-6 line-clamp-3 drop-shadow-md">
+            <p className="text-lg text-foreground/90 mb-6 line-clamp-3 drop-shadow-lg">
               {collection.overview}
             </p>
 
