@@ -17,7 +17,7 @@ export async function fetchCollection(id: number): Promise<Collection> {
   return await response.json();
 }
 
-// All 31 TMDb collections
+// All 50 TMDb collections - Netflix-style premium collections
 export const COLLECTION_IDS = [
   { id: 2344, name: "Spider-Man Collection" },
   { id: 86311, name: "The Avengers Collection" },
@@ -49,7 +49,26 @@ export const COLLECTION_IDS = [
   { id: 1710, name: "Blade Runner Collection" },
   { id: 422837, name: "Knives Out Collection" },
   { id: 91361, name: "Kung Fu Panda Collection" },
-  { id: 386382, name: "Sonic the Hedgehog Collection" }
+  { id: 386382, name: "Sonic the Hedgehog Collection" },
+  { id: 119050, name: "Middle Earth Collection" },
+  { id: 726871, name: "Dune Collection" },
+  { id: 535313, name: "Godzilla Collection" },
+  { id: 295, name: "Pirates of the Caribbean Collection" },
+  { id: 645, name: "James Bond Collection" },
+  { id: 8945, name: "The Hobbit Collection" },
+  { id: 263, name: "The Dark Knight Collection" },
+  { id: 1575, name: "Star Trek Collection" },
+  { id: 131296, name: "X-Men Collection" },
+  { id: 2150, name: "Fantastic Four Collection" },
+  { id: 9485, name: "Hannibal Lecter Collection" },
+  { id: 404609, name: "A Quiet Place Collection" },
+  { id: 573436, name: "Venom Collection" },
+  { id: 535790, name: "Equalizer Collection" },
+  { id: 748783, name: "Kong / Godzilla Collection" },
+  { id: 403374, name: "Captain America Collection" },
+  { id: 131295, name: "Iron Man Collection" },
+  { id: 623911, name: "Thor Collection" },
+  { id: 284433, name: "Guardians of the Galaxy Collection" }
 ];
 
 export async function fetchAllCollections(): Promise<Collection[]> {

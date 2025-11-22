@@ -85,8 +85,8 @@ const MovieCard: React.FC<MovieCardProps> = ({
 
   return (
     <motion.div
-      whileHover={{ y: -6, scale: 1.03 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      whileHover={{ y: -8, scale: 1.05 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
         "relative group cursor-pointer",
         variant === "compact" ? "w-full" : "",
@@ -105,7 +105,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
         </motion.div>
       )}
 
-      <div className="relative overflow-hidden rounded-2xl shadow-xl bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-md border border-white/10 group-hover:border-primary/40 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-primary/20">
+      <div className="relative overflow-hidden rounded-2xl shadow-xl bg-gradient-to-br from-card to-card/80 backdrop-blur-md border border-border/50 group-hover:border-primary/50 transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-primary/30">
         {/* Poster Image */}
         <div className={cn("relative overflow-hidden", config.aspectRatio)}>
           <img

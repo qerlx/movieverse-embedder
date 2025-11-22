@@ -75,15 +75,17 @@ const Collections = () => {
       {heroCollection && <HeroCollectionBanner collection={heroCollection} />}
 
       {/* Collection Rows */}
-      <div className="pb-20 -mt-20 relative z-10">
-        {collections.map((collection) => (
-          <CollectionRow
-            key={collection.id}
-            collection={collection}
-            onMovieInfoClick={handleMovieInfoClick}
-            onMoviePlayClick={handleMoviePlayClick}
-          />
-        ))}
+      <div className="pb-20 -mt-32 relative z-20">
+        <div className="space-y-8">
+          {collections.map((collection) => (
+            <CollectionRow
+              key={collection.id}
+              collection={collection}
+              onMovieInfoClick={handleMovieInfoClick}
+              onMoviePlayClick={handleMoviePlayClick}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Empty State */}
