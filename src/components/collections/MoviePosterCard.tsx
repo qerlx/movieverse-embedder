@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
-import { Play, Info } from "lucide-react";
+import { Play, Star } from "lucide-react";
 import { Movie } from "@/types";
-import { useState } from "react";
 
 interface MoviePosterCardProps {
   movie: Movie;
@@ -10,86 +9,73 @@ interface MoviePosterCardProps {
 }
 
 export const MoviePosterCard = ({ movie, onInfoClick, onPlayClick }: MoviePosterCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
     : "/placeholder.svg";
 
+  const year = movie.release_date ? new Date(movie.release_date).getFullYear() : null;
+  const rating = movie.vote_average ? movie.vote_average.toFixed(1) : null;
+
   return (
     <motion.div
-      className="relative group cursor-pointer flex-shrink-0 w-40 md:w-48"
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      whileHover={{ scale: 1.05, zIndex: 10 }}
-      transition={{ duration: 0.3 }}
+      whileHover={{ scale: 1.05 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="relative group cursor-pointer flex-shrink-0 w-32 md:w-40"
+      onClick={onInfoClick}
     >
-      {/* Poster Image */}
-      <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-lg">
-        <img
-          src={posterUrl}
-          alt={movie.title}
-          className="w-full h-full object-cover"
-        />
-        
-        {/* Hover Overlay */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isHovered ? 1 : 0 }}
-          className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent flex flex-col justify-end p-4"
-        >
-          <h3 className="text-white font-semibold text-sm mb-2 line-clamp-2">
-            {movie.title}
-          </h3>
+      <div className="relative overflow-hidden rounded-md bg-card">
+        {/* Poster Image */}
+        <div className="relative aspect-[2/3] overflow-hidden">
+          <img
+            src={posterUrl}
+            alt={movie.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            loading="lazy"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target.src !== '/placeholder.svg') {
+                target.src = '/placeholder.svg';
+              }
+            }}
+          />
           
-          <div className="flex items-center gap-2 mb-3">
-            {movie.vote_average > 0 && (
-              <div className="flex items-center gap-1">
-                <span className="text-yellow-400 text-xs">★</span>
-                <span className="text-white text-xs">{movie.vote_average.toFixed(1)}</span>
-              </div>
-            )}
-            {movie.release_date && (
-              <>
-                <span className="text-white/60 text-xs">•</span>
-                <span className="text-white/80 text-xs">
-                  {new Date(movie.release_date).getFullYear()}
-                </span>
-              </>
-            )}
-          </div>
+          {/* Hover Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Rating Badge */}
+          {rating && Number(rating) > 0 && (
+            <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
+              <Star size={10} className="text-yellow-400 fill-yellow-400" />
+              <span className="text-foreground font-medium">{rating}</span>
+            </div>
+          )}
 
-          <div className="flex gap-2">
-            <button
+          {/* Play Button on Hover */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-11 h-11 bg-foreground/90 hover:bg-foreground rounded-full flex items-center justify-center shadow-xl"
               onClick={(e) => {
                 e.stopPropagation();
                 onPlayClick();
               }}
-              className="flex-1 bg-white text-black rounded-md py-1.5 px-3 flex items-center justify-center gap-1 hover:bg-white/90 transition-colors text-xs font-semibold"
             >
-              <Play className="h-3 w-3 fill-current" />
-              Play
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onInfoClick();
-              }}
-              className="bg-white/20 text-white rounded-md py-1.5 px-3 flex items-center justify-center hover:bg-white/30 transition-colors backdrop-blur-sm"
-            >
-              <Info className="h-3 w-3" />
-            </button>
+              <Play className="w-5 h-5 text-background ml-0.5" fill="currentColor" />
+            </motion.button>
           </div>
-        </motion.div>
-      </div>
 
-      {/* Rating Badge (always visible) */}
-      {!isHovered && movie.vote_average > 0 && (
-        <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-md px-2 py-1 flex items-center gap-1">
-          <span className="text-yellow-400 text-xs">★</span>
-          <span className="text-white text-xs font-semibold">{movie.vote_average.toFixed(1)}</span>
+          {/* Title & Year on Hover */}
+          <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <h3 className="text-foreground text-xs font-medium line-clamp-2 drop-shadow-lg">
+              {movie.title}
+            </h3>
+            {year && (
+              <span className="text-muted-foreground text-xs">{year}</span>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </motion.div>
   );
 };

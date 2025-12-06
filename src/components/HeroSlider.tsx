@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Play, Info, Star, Clock } from "lucide-react";
@@ -6,6 +5,7 @@ import { Movie, TVShow } from "@/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import LogoTitle from "./LogoTitle";
 
 interface HeroSliderProps {
   items: (Movie | TVShow)[];
@@ -67,7 +67,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
   
   return (
     <div 
-      className="relative w-full h-[70vh] md:h-[85vh] lg:h-[90vh] overflow-hidden"
+      className="relative w-full h-[60vh] md:h-[80vh] lg:h-[85vh] overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -81,101 +81,108 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
           className="absolute inset-0"
         >
           {/* Background Image with Ken Burns effect */}
-          <div 
-            className="absolute inset-0 bg-cover bg-center"
+          <motion.div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{ 
               backgroundImage: `url(${backdrop})`,
-              filter: 'brightness(0.7) contrast(1.1)'
             }}
+            animate={{ scale: [1, 1.05] }}
+            transition={{ duration: 10, ease: "linear" }}
           />
-          {/* Enhanced Gradients */}
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background" />
+          
+          {/* Cinematic Gradient Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/30" />
+          <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-background to-transparent" />
         </motion.div>
       </AnimatePresence>
       
       {/* Content */}
-      <div className="absolute inset-0 flex items-center">
-        <div className="container mx-auto px-4 md:px-8 lg:px-12">
+      <div className="absolute inset-0 flex items-end pb-24 md:pb-32 lg:pb-40">
+        <div className="container mx-auto px-6 md:px-12 lg:px-16">
           <AnimatePresence mode="wait">
             <motion.div 
               key={currentSlide}
-              className="max-w-3xl"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 50 }}
+              className="max-w-2xl"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
               {/* Badges */}
               <motion.div 
-                className="flex items-center flex-wrap gap-3 mb-6"
+                className="flex items-center flex-wrap gap-2 mb-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.1 }}
               >
-                <div className="bg-gradient-to-r from-primary to-primary/80 text-white text-sm px-4 py-1.5 rounded-full font-semibold shadow-lg shadow-primary/30">
-                  {type === "movie" ? "Movie" : "TV Show"}
+                <div className="bg-primary text-primary-foreground text-xs px-3 py-1 rounded font-semibold uppercase tracking-wider">
+                  {type === "movie" ? "Movie" : "Series"}
                 </div>
                 
                 {currentItem.vote_average > 0 && (
-                  <div className="bg-black/60 backdrop-blur-md text-white text-sm px-4 py-1.5 rounded-full flex items-center gap-2 border border-white/10">
-                    <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                    <span className="font-semibold">{currentItem.vote_average.toFixed(1)}</span>
+                  <div className="bg-black/60 backdrop-blur-sm text-foreground text-xs px-3 py-1 rounded flex items-center gap-1.5">
+                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                    <span className="font-medium">{currentItem.vote_average.toFixed(1)}</span>
                   </div>
                 )}
                 
                 {year && (
-                  <div className="bg-black/60 backdrop-blur-md text-white text-sm px-4 py-1.5 rounded-full flex items-center gap-2 border border-white/10">
-                    <Clock size={14} />
-                    <span className="font-medium">{year}</span>
+                  <div className="bg-black/60 backdrop-blur-sm text-foreground text-xs px-3 py-1 rounded">
+                    {year}
                   </div>
                 )}
               </motion.div>
               
-              {/* Title */}
-              <motion.h1 
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white font-bold mb-6 leading-tight drop-shadow-2xl"
+              {/* Logo or Title */}
+              <motion.div
+                className="mb-4"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
               >
-                {title}
-              </motion.h1>
+                <LogoTitle
+                  id={currentItem.id}
+                  title={title}
+                  type={type}
+                  className="max-w-md md:max-w-lg max-h-20 md:max-h-28 object-contain drop-shadow-2xl"
+                  fallbackClassName="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground drop-shadow-2xl"
+                />
+              </motion.div>
               
               {/* Overview */}
               <motion.p 
-                className="text-gray-100 text-base md:text-lg mb-8 line-clamp-3 leading-relaxed drop-shadow-lg"
+                className="text-muted-foreground text-sm md:text-base mb-6 line-clamp-2 md:line-clamp-3 leading-relaxed max-w-xl"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
               >
                 {currentItem.overview}
               </motion.p>
               
               {/* Buttons */}
               <motion.div 
-                className="flex flex-wrap gap-4"
+                className="flex flex-wrap gap-3"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.7 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
               >
                 <Button 
                   size="lg" 
-                  className="gap-3 px-8 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white shadow-xl shadow-primary/40 hover:shadow-2xl hover:shadow-primary/50 transition-all hover:scale-105"
+                  className="gap-2 px-6 md:px-8 h-11 md:h-12 text-sm md:text-base font-semibold bg-foreground hover:bg-foreground/90 text-background rounded-md"
                   onClick={navigateToWatch}
                 >
-                  <Play size={22} className="fill-current" />
-                  Watch Now
+                  <Play size={18} className="fill-current" />
+                  Play
                 </Button>
                 
                 <Button 
-                  variant="outline" 
+                  variant="secondary" 
                   size="lg"
-                  className="gap-3 px-8 py-6 text-lg font-semibold bg-white/10 backdrop-blur-md border-2 border-white/30 hover:bg-white/20 hover:border-white/50 text-white shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+                  className="gap-2 px-6 md:px-8 h-11 md:h-12 text-sm md:text-base font-semibold bg-muted/80 hover:bg-muted text-foreground rounded-md"
                   onClick={navigateToDetail}
                 >
-                  <Info size={22} />
+                  <Info size={18} />
                   More Info
                 </Button>
               </motion.div>
@@ -184,42 +191,33 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
         </div>
       </div>
       
-      {/* Navigation buttons */}
-      <div className="absolute inset-y-0 left-0 flex items-center z-20">
-        <motion.button
-          whileHover={{ scale: 1.15, x: 5 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-black/40 backdrop-blur-md hover:bg-primary/90 text-white p-4 ml-4 rounded-full transition-all border border-white/20 shadow-xl"
-          onClick={handlePrev}
-          aria-label="Previous slide"
-        >
-          <ChevronLeft size={28} strokeWidth={2.5} />
-        </motion.button>
-      </div>
+      {/* Navigation buttons - Netflix style */}
+      <button
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-black/40 hover:bg-black/60 text-foreground rounded-full transition-all opacity-0 hover:opacity-100 focus:opacity-100 group-hover:opacity-100"
+        onClick={handlePrev}
+        aria-label="Previous slide"
+      >
+        <ChevronLeft size={24} />
+      </button>
       
-      <div className="absolute inset-y-0 right-0 flex items-center z-20">
-        <motion.button
-          whileHover={{ scale: 1.15, x: -5 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-black/40 backdrop-blur-md hover:bg-primary/90 text-white p-4 mr-4 rounded-full transition-all border border-white/20 shadow-xl"
-          onClick={handleNext}
-          aria-label="Next slide"
-        >
-          <ChevronRight size={28} strokeWidth={2.5} />
-        </motion.button>
-      </div>
+      <button
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-black/40 hover:bg-black/60 text-foreground rounded-full transition-all opacity-0 hover:opacity-100 focus:opacity-100"
+        onClick={handleNext}
+        aria-label="Next slide"
+      >
+        <ChevronRight size={24} />
+      </button>
       
-      {/* Indicators */}
-      <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-3 z-20">
+      {/* Slide Indicators - Netflix style */}
+      <div className="absolute bottom-6 right-6 md:right-12 flex gap-1 z-20">
         {filteredItems.map((_, index) => (
-          <motion.button
+          <button
             key={index}
-            whileHover={{ scale: 1.2 }}
             className={cn(
-              "transition-all duration-300",
+              "h-0.5 rounded-full transition-all duration-300",
               currentSlide === index 
-                ? "bg-primary w-12 h-1.5 rounded-full shadow-lg shadow-primary/50" 
-                : "bg-white/40 hover:bg-white/70 h-1.5 w-1.5 rounded-full"
+                ? "bg-foreground w-6" 
+                : "bg-foreground/40 hover:bg-foreground/60 w-4"
             )}
             onClick={() => setCurrentSlide(index)}
             aria-label={`Go to slide ${index + 1}`}

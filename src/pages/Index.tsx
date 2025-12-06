@@ -186,8 +186,6 @@ const Index: React.FC = () => {
           <Suspense fallback={<LoadingSkeleton />}>
             <HeroSlider items={state.heroItems} type="movie" />
           </Suspense>
-          {/* Enhanced gradient blend */}
-          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none z-10" />
         </motion.div>
       )}
       
@@ -195,21 +193,19 @@ const Index: React.FC = () => {
       {state.isLoading && <LoadingSkeleton />}
       
       {!state.isLoading && (
-        <div className="relative -mt-32 z-20">
-          <div className="container mx-auto px-4 md:px-6 lg:px-8 space-y-12 pb-16">
+        <div className="relative -mt-16 md:-mt-24 z-20">
+          <div className="px-4 md:px-6 lg:px-12 space-y-8 md:space-y-10 pb-24">
             
             {/* Recently Watched */}
             {currentUser && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
+                transition={{ duration: 0.5 }}
               >
-                <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-3">
-                  <Clock className="w-6 h-6 text-primary" />
-                  <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                    Continue Watching
-                  </span>
+                <h2 className="text-lg md:text-xl font-semibold mb-3 flex items-center gap-2 text-foreground">
+                  <Clock className="w-5 h-5 text-primary" />
+                  Continue Watching
                 </h2>
                 <RecentlyWatchedList limit={6} />
               </motion.div>
@@ -220,13 +216,11 @@ const Index: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.15 }}
+                transition={{ duration: 0.5, delay: 0.05 }}
               >
-                <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-3">
-                  <Heart className="w-6 h-6 text-primary" />
-                  <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                    My List
-                  </span>
+                <h2 className="text-lg md:text-xl font-semibold mb-3 flex items-center gap-2 text-foreground">
+                  <Heart className="w-5 h-5 text-primary" />
+                  My List
                 </h2>
                 <FavoritesList />
               </motion.div>
@@ -236,7 +230,7 @@ const Index: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.25 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
             >
               <StreamingProviders />
             </motion.div>
@@ -246,11 +240,11 @@ const Index: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
               >
                 <CategoryRow
-                  title="🔥 Trending Now"
-                  items={state.trendingMovies.slice(0, 10)}
+                  title="Trending Now"
+                  items={state.trendingMovies.slice(0, 15)}
                   type="movie"
                   isRanked={true}
                 />
@@ -262,10 +256,10 @@ const Index: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <CategoryRow
-                  title="📺 Popular TV Shows"
+                  title="Popular TV Shows"
                   items={state.trendingTVShows}
                   type="tv"
                 />
@@ -277,10 +271,10 @@ const Index: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
+                transition={{ duration: 0.5, delay: 0.25 }}
               >
                 <CategoryRow
-                  title="🎬 Popular Movies"
+                  title="Popular Movies"
                   items={state.popularMovies} 
                   type="movie"
                 />
@@ -292,10 +286,10 @@ const Index: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
               >
                 <CategoryRow
-                  title="⭐ Binge-Worthy Series"
+                  title="Binge-Worthy Series"
                   items={state.popularTVShows} 
                   type="tv"
                 />
@@ -307,8 +301,7 @@ const Index: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.7 }}
-                className="pb-8"
+                transition={{ duration: 0.5, delay: 0.35 }}
               >
                 <Suspense fallback={<div className="h-48 bg-muted/20 rounded-lg animate-pulse" />}>
                   <PersonalizedRecommendations />

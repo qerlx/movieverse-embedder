@@ -1,33 +1,29 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Collection, Movie } from "@/types";
 import { fetchAllCollections } from "@/lib/collections";
+import { Collection, Movie } from "@/types";
 import { HeroCollectionBanner } from "@/components/collections/HeroCollectionBanner";
 import { CollectionRow } from "@/components/collections/CollectionRow";
 import { MovieDetailModal } from "@/components/collections/MovieDetailModal";
-import { useNavigate } from "react-router-dom";
-import { SkeletonLoader } from "@/components/ui/skeleton-loader";
 
 const Collections = () => {
-  const navigate = useNavigate();
   const [collections, setCollections] = useState<Collection[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadCollections = async () => {
-      try {
-        setIsLoading(true);
-        const data = await fetchAllCollections();
-        setCollections(data);
-      } catch (error) {
-        console.error("Error loading collections:", error);
-      } finally {
-        setIsLoading(false);
-      }
+      const data = await fetchAllCollections();
+      // Filter collections with parts and sort by number of movies
+      const validCollections = data
+        .filter(c => c.parts && c.parts.length > 0)
+        .sort((a, b) => (b.parts?.length || 0) - (a.parts?.length || 0));
+      setCollections(validCollections);
+      setLoading(false);
     };
-
     loadCollections();
   }, []);
 
@@ -40,78 +36,52 @@ const Collections = () => {
     navigate(`/watch/movie/${movie.id}`);
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="animate-pulse">
-          <SkeletonLoader variant="hero" />
-          <div className="space-y-8 mt-8 px-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i}>
-                <div className="h-8 w-64 bg-muted rounded mb-4" />
-                <div className="flex gap-3">
-                  {[1, 2, 3, 4, 5, 6].map((j) => (
-                    <SkeletonLoader key={j} variant="card" className="w-40 md:w-48" />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  const heroCollection = collections[0];
+  const heroCollection = collections.find(c => c.backdrop_path || c.parts?.[0]?.backdrop_path);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
-      className="min-h-screen bg-background"
-    >
+    <div className="min-h-screen bg-background">
       {/* Hero Banner */}
       {heroCollection && <HeroCollectionBanner collection={heroCollection} />}
 
-      {/* Collection Rows */}
-      <div className="pb-20 -mt-32 relative z-20">
-        <div className="space-y-8">
-          {collections.map((collection) => (
-            <CollectionRow
+      {/* Collections Grid */}
+      <div className="relative -mt-16 z-20 space-y-8 pb-24">
+        {collections.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground">No collections found</p>
+          </div>
+        ) : (
+          collections.map((collection, index) => (
+            <motion.div
               key={collection.id}
-              collection={collection}
-              onMovieInfoClick={handleMovieInfoClick}
-              onMoviePlayClick={handleMoviePlayClick}
-            />
-          ))}
-        </div>
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
+            >
+              <CollectionRow
+                collection={collection}
+                onMovieInfoClick={handleMovieInfoClick}
+                onMoviePlayClick={handleMoviePlayClick}
+              />
+            </motion.div>
+          ))
+        )}
       </div>
-
-      {/* Empty State */}
-      {collections.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-20 px-6"
-        >
-          <h3 className="text-2xl font-bold text-white mb-4">No Collections Available</h3>
-          <p className="text-white/60 mb-8">
-            Collections are currently being prepared. Check back soon!
-          </p>
-        </motion.div>
-      )}
 
       {/* Movie Detail Modal */}
       <MovieDetailModal
         movie={selectedMovie}
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedMovie(null);
-        }}
+        onClose={() => setIsModalOpen(false)}
       />
-    </motion.div>
+    </div>
   );
 };
 
