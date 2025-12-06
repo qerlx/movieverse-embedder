@@ -3,7 +3,6 @@ import { Collection, Movie } from "@/types";
 import { MoviePosterCard } from "./MoviePosterCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 
 interface CollectionRowProps {
   collection: Collection;
@@ -29,7 +28,7 @@ export const CollectionRow = ({ collection, onMovieInfoClick, onMoviePlayClick }
   const handleScroll = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setShowLeftArrow(scrollLeft > 0);
+      setShowLeftArrow(scrollLeft > 10);
       setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
     }
   };
@@ -38,13 +37,12 @@ export const CollectionRow = ({ collection, onMovieInfoClick, onMoviePlayClick }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="relative group mb-10"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="relative group"
     >
       {/* Collection Title */}
-      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-5 px-6 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+      <h2 className="text-lg md:text-xl lg:text-2xl font-semibold mb-3 px-6 md:px-12 text-foreground">
         {collection.name}
       </h2>
 
@@ -52,21 +50,21 @@ export const CollectionRow = ({ collection, onMovieInfoClick, onMoviePlayClick }
       <div className="relative">
         {/* Left Arrow */}
         {showLeftArrow && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-12 w-12 bg-background/90 hover:bg-background border border-border/50 text-foreground rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl"
+          <button
+            className="absolute left-0 top-0 bottom-0 z-20 w-12 md:w-16 bg-gradient-to-r from-background via-background/80 to-transparent flex items-center justify-start pl-2 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => scroll("left")}
           >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-muted/80 hover:bg-muted rounded-full flex items-center justify-center">
+              <ChevronLeft className="w-5 h-5 text-foreground" />
+            </div>
+          </button>
         )}
 
         {/* Movies Scroll */}
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex gap-4 overflow-x-auto scrollbar-hide px-6 py-2"
+          className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide px-6 md:px-12 py-2"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {collection.parts.map((movie) => (
@@ -81,14 +79,14 @@ export const CollectionRow = ({ collection, onMovieInfoClick, onMoviePlayClick }
 
         {/* Right Arrow */}
         {showRightArrow && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-12 w-12 bg-background/90 hover:bg-background border border-border/50 text-foreground rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl"
+          <button
+            className="absolute right-0 top-0 bottom-0 z-20 w-12 md:w-16 bg-gradient-to-l from-background via-background/80 to-transparent flex items-center justify-end pr-2 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => scroll("right")}
           >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-muted/80 hover:bg-muted rounded-full flex items-center justify-center">
+              <ChevronRight className="w-5 h-5 text-foreground" />
+            </div>
+          </button>
         )}
       </div>
     </motion.div>
