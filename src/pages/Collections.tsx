@@ -6,6 +6,7 @@ import { Collection, Movie } from "@/types";
 import { HeroCollectionBanner } from "@/components/collections/HeroCollectionBanner";
 import { CollectionRow } from "@/components/collections/CollectionRow";
 import { MovieDetailModal } from "@/components/collections/MovieDetailModal";
+import { usePageTransition } from "@/components/PageTransition";
 
 const Collections = () => {
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -13,6 +14,7 @@ const Collections = () => {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { triggerTransition } = usePageTransition();
 
   useEffect(() => {
     const loadCollections = async () => {
@@ -28,8 +30,17 @@ const Collections = () => {
   }, []);
 
   const handleMovieInfoClick = (movie: Movie) => {
-    setSelectedMovie(movie);
-    setIsModalOpen(true);
+    const posterUrl = movie.poster_path
+      ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+      : "/placeholder.svg";
+    
+    triggerTransition({
+      posterUrl,
+      title: movie.title,
+      type: "movie",
+      id: movie.id,
+      destinationPath: `/movie/${movie.id}`
+    });
   };
 
   const handleMoviePlayClick = (movie: Movie) => {

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Play, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { usePageTransition } from "@/components/PageTransition";
 
 interface MovieCardProps {
   item: any;
@@ -24,9 +25,22 @@ const MovieCard: React.FC<MovieCardProps> = ({
   size = "md",
 }) => {
   const navigate = useNavigate();
+  const { triggerTransition } = usePageTransition();
   
+  const posterUrl = item.poster_path
+    ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+    : "/placeholder.svg";
+
+  const title = item.title || item.name;
+
   const handleClick = () => {
-    navigate(`/${type}/${item.id}`);
+    triggerTransition({
+      posterUrl,
+      title,
+      type,
+      id: item.id,
+      destinationPath: `/${type}/${item.id}`
+    });
   };
 
   const handlePlayClick = (e: React.MouseEvent) => {
@@ -39,12 +53,6 @@ const MovieCard: React.FC<MovieCardProps> = ({
       navigate(`/watch/movie/${item.id}`);
     }
   };
-
-  const posterUrl = item.poster_path
-    ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-    : "/placeholder.svg";
-
-  const title = item.title || item.name;
   const rating = item.vote_average ? Number(item.vote_average).toFixed(1) : null;
 
   const sizeConfig = {

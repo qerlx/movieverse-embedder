@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import LogoTitle from "./LogoTitle";
+import { usePageTransition } from "@/components/PageTransition";
 
 interface HeroSliderProps {
   items: (Movie | TVShow)[];
@@ -17,6 +18,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const navigate = useNavigate();
+  const { triggerTransition } = usePageTransition();
   
   const filteredItems = items.filter(item => item.backdrop_path);
   const totalSlides = filteredItems.length;
@@ -31,6 +33,10 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
   const backdrop = currentItem.backdrop_path 
     ? `https://image.tmdb.org/t/p/original${currentItem.backdrop_path}`
     : "";
+
+  const posterUrl = currentItem.poster_path
+    ? `https://image.tmdb.org/t/p/w500${currentItem.poster_path}`
+    : "/placeholder.svg";
   
   const handlePrev = () => {
     if (isAnimating) return;
@@ -47,7 +53,13 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ items, type }) => {
   };
   
   const navigateToDetail = () => {
-    navigate(`/${type}/${currentItem.id}`);
+    triggerTransition({
+      posterUrl,
+      title,
+      type,
+      id: currentItem.id,
+      destinationPath: `/${type}/${currentItem.id}`
+    });
   };
   
   const navigateToWatch = () => {
