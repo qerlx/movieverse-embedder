@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { PageTransitionProvider } from "@/components/PageTransition";
 import { AnimatePresence } from "framer-motion";
 import { lazy, Suspense } from "react";
 import Layout from "./components/Layout";
@@ -118,8 +119,10 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <AnimatedRoutes />
-                <DnsPopup />
+                <PageTransitionProvider>
+                  <AnimatedRoutes />
+                  <DnsPopup />
+                </PageTransitionProvider>
               </BrowserRouter>
             </TooltipProvider>
           </ThemeProvider>
