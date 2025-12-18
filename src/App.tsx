@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +6,8 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { PageTransitionProvider } from "@/components/PageTransition";
+import { MiniPlayerProvider, useMiniPlayer } from "@/contexts/MiniPlayerContext";
+import { MiniPlayer } from "@/components/watch/MiniPlayer";
 import { AnimatePresence } from "framer-motion";
 import { lazy, Suspense } from "react";
 import Layout from "./components/Layout";
@@ -90,6 +91,27 @@ const AnimatedRoutes = () => {
   );
 };
 
+// Global mini player component
+const GlobalMiniPlayer = () => {
+  const { miniPlayer, hideMiniPlayer } = useMiniPlayer();
+  
+  if (!miniPlayer) return null;
+  
+  return (
+    <MiniPlayer
+      isVisible={miniPlayer.isVisible}
+      videoUrl={miniPlayer.videoUrl}
+      title={miniPlayer.title}
+      posterUrl={miniPlayer.posterUrl}
+      mediaType={miniPlayer.mediaType}
+      mediaId={miniPlayer.mediaId}
+      season={miniPlayer.season}
+      episode={miniPlayer.episode}
+      onClose={hideMiniPlayer}
+    />
+  );
+};
+
 // Configure React Query for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,16 +137,19 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ThemeProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <PageTransitionProvider>
-                  <AnimatedRoutes />
-                  <DnsPopup />
-                </PageTransitionProvider>
-              </BrowserRouter>
-            </TooltipProvider>
+            <MiniPlayerProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <PageTransitionProvider>
+                    <AnimatedRoutes />
+                    <GlobalMiniPlayer />
+                    <DnsPopup />
+                  </PageTransitionProvider>
+                </BrowserRouter>
+              </TooltipProvider>
+            </MiniPlayerProvider>
           </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
