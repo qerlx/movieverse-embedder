@@ -4,14 +4,19 @@ import { toast } from "sonner";
 import { getMovieDetails, getTVShowDetails, getTVShowSeasonDetails } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { storageService } from "@/lib/storage-service";
-import { addToWatchHistory } from "@/lib/firebase-watch";
 import { STORAGE_KEYS } from "@/constants";
 import { videoSources, getVideoSource, buildVideoUrl, isValidVideoSource } from "@/utils/video";
 import { validateMediaId, validateSeasonEpisode, sanitizeText } from "@/utils/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, SkipForward, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import InPlayerEpisodeSelector from "@/components/InPlayerEpisodeSelector";
+import { SafeVideoPlayer } from "@/components/watch/SafeVideoPlayer";
+import { EnhancedSourceSelector } from "@/components/watch/EnhancedSourceSelector";
+import { AutoAdvanceOverlay } from "@/components/watch/AutoAdvanceOverlay";
+import { useSourceStatus } from "@/hooks/useSourceStatus";
+import { useAutoAdvance } from "@/hooks/useAutoAdvance";
+import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
 
 interface WatchPageState {
   title: string;
@@ -19,10 +24,8 @@ interface WatchPageState {
   error: string | null;
   videoUrl: string;
   currentSource: typeof videoSources[0];
-  isPlaying: boolean;
-  volume: number;
-  isMuted: boolean;
   controlsVisible: boolean;
+  posterPath: string | null;
 }
 
 const WatchPage: React.FC = () => {
@@ -36,6 +39,8 @@ const WatchPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useAuth();
+  const { showMiniPlayer } = useMiniPlayer();
+  const { reportLoadSuccess, reportLoadFailure, getBestSource } = useSourceStatus();
   
   const [state, setState] = useState<WatchPageState>({
     title: "",
@@ -43,23 +48,21 @@ const WatchPage: React.FC = () => {
     error: null,
     videoUrl: "",
     currentSource: videoSources[0],
-    isPlaying: false,
-    volume: 1,
-    isMuted: false,
-    controlsVisible: true
+    controlsVisible: true,
+    posterPath: null
   });
   
   const [showData, setShowData] = useState<any>(null);
   const [animeDub, setAnimeDub] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [showSourceSelector, setShowSourceSelector] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const loadStartTimeRef = useRef<number>(0);
 
   // Validate parameters
   const validatedParams = useMemo(() => {
     if (!type || !id) return null;
     
-    // Anime supports flexible IDs (prefix sanitized in source builder)
     if (type === 'anime') {
       if (!episode) return null;
       const epNum = parseInt(episode, 10);
@@ -90,13 +93,25 @@ const WatchPage: React.FC = () => {
     return null;
   }, [type, id, season, episode]);
 
-  // Handle source switching
+  // Auto-advance hook for TV shows
+  const autoAdvance = useAutoAdvance(
+    validatedParams?.type === 'tv' ? {
+      showId: validatedParams.id,
+      currentSeason: validatedParams.season!,
+      currentEpisode: validatedParams.episode!,
+      totalSeasons: showData?.number_of_seasons,
+      enabled: true,
+      delaySeconds: 10
+    } : null
+  );
+
+  // Handle source switching with status tracking
   const switchVideoSource = useCallback((sourceId: string) => {
     if (!validatedParams) return;
     
     let newSource = getVideoSource(sourceId);
+    loadStartTimeRef.current = Date.now();
 
-    // Ensure anime uses an anime-capable source
     if (validatedParams.type === 'anime' && !newSource.supportsAnime) {
       const fallbackAnime = videoSources.find(src => src.supportsAnime);
       if (!fallbackAnime) {
@@ -128,6 +143,7 @@ const WatchPage: React.FC = () => {
     
     if (!newUrl || !isValidVideoSource(newUrl)) {
       toast.error("Invalid video source selected");
+      reportLoadFailure(sourceId);
       return;
     }
     
@@ -138,19 +154,52 @@ const WatchPage: React.FC = () => {
       videoUrl: newUrl
     }));
     
-    // Update URL with source parameter
     const searchParams = new URLSearchParams(location.search);
     searchParams.set('source', newSource.id);
     const newLocation = `${location.pathname}?${searchParams.toString()}`;
     window.history.replaceState(null, '', newLocation);
     
-    setTimeout(() => {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }, 1000);
-  }, [validatedParams, location, animeDub]);
+  }, [validatedParams, location, animeDub, reportLoadFailure]);
 
-  // Handle back/exit navigation with validation
+  // Handle player load success
+  const handlePlayerLoad = useCallback(() => {
+    const loadTime = Date.now() - loadStartTimeRef.current;
+    reportLoadSuccess(state.currentSource.id, loadTime);
+    setState(prev => ({ ...prev, isLoading: false }));
+  }, [state.currentSource.id, reportLoadSuccess]);
+
+  // Handle player error with auto-fallback
+  const handlePlayerError = useCallback(() => {
+    reportLoadFailure(state.currentSource.id);
+    
+    // Try next best source
+    const availableSources = validatedParams?.type === 'anime'
+      ? videoSources.filter(s => s.supportsAnime).map(s => s.id)
+      : videoSources.filter(s => s.id !== 'vidsrc-anime').map(s => s.id);
+    
+    const bestSource = getBestSource(availableSources.filter(id => id !== state.currentSource.id));
+    
+    if (bestSource) {
+      toast.info(`Trying ${getVideoSource(bestSource).name}...`);
+      setTimeout(() => switchVideoSource(bestSource), 1000);
+    }
+  }, [state.currentSource.id, validatedParams, reportLoadFailure, getBestSource, switchVideoSource]);
+
+  // Handle back/exit navigation
   const handleBackNavigation = useCallback(() => {
+    // Show mini player when leaving watch page
+    if (state.videoUrl && state.title && validatedParams) {
+      showMiniPlayer({
+        videoUrl: state.videoUrl,
+        title: state.title,
+        posterUrl: state.posterPath ? `https://image.tmdb.org/t/p/w300${state.posterPath}` : undefined,
+        mediaType: validatedParams.type as 'movie' | 'tv' | 'anime',
+        mediaId: validatedParams.id,
+        season: validatedParams.type === 'tv' ? validatedParams.season : undefined,
+        episode: validatedParams.type === 'tv' ? validatedParams.episode : validatedParams.type === 'anime' ? validatedParams.episode : undefined
+      });
+    }
+
     if (!validatedParams) {
       navigate('/');
       return;
@@ -168,55 +217,7 @@ const WatchPage: React.FC = () => {
     } else {
       navigate('/');
     }
-  }, [validatedParams, location.key, navigate]);
-
-  // Media message handling for progress tracking
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // Security: validate origin
-      const allowedOrigins = ['https://vidsrc.cc', 'https://vidlink.pro', 'https://player.autoembed.cc'];
-      if (!allowedOrigins.some(origin => event.origin === origin)) {
-        return;
-      }
-      
-      if (event.data?.type === 'MEDIA_DATA') {
-        const mediaData = event.data.data;
-        if (mediaData?.id && (mediaData.type === 'movie' || mediaData.type === 'tv')) {
-          console.log('Progress update received:', mediaData);
-          
-          // Update local storage
-          try {
-            const watchProgress = JSON.parse(localStorage.getItem(STORAGE_KEYS.WATCH_PROGRESS) || '{}');
-            watchProgress[mediaData.id] = {
-              ...watchProgress[mediaData.id],
-              ...mediaData,
-              last_updated: Date.now()
-            };
-            localStorage.setItem(STORAGE_KEYS.WATCH_PROGRESS, JSON.stringify(watchProgress));
-            
-            // Update Firebase for authenticated users
-            if (currentUser && validatedParams) {
-              const progress = mediaData.progress?.percent || 0;
-              storageService.addToWatchHistory(
-                validatedParams.id.toString(),
-                validatedParams.type as "movie" | "tv",
-                state.title,
-                mediaData.poster_path || '',
-                progress,
-                undefined,
-                currentUser
-              ).catch(err => console.error("Failed to update watch history:", err));
-            }
-          } catch (error) {
-            console.error("Error updating watch progress:", error);
-          }
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [currentUser, validatedParams, state.title]);
+  }, [validatedParams, location.key, navigate, showMiniPlayer, state]);
 
   // Controls visibility management
   useEffect(() => {
@@ -236,7 +237,9 @@ const WatchPage: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
         e.preventDefault();
-        setState(prev => ({ ...prev, isPlaying: !prev.isPlaying }));
+      }
+      if (e.code === 'Escape') {
+        handleBackNavigation();
       }
       showControls();
     };
@@ -252,7 +255,7 @@ const WatchPage: React.FC = () => {
       }
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [handleBackNavigation]);
 
   // Fetch media details and setup video
   useEffect(() => {
@@ -263,11 +266,11 @@ const WatchPage: React.FC = () => {
 
     const fetchMediaDetails = async () => {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
+      loadStartTimeRef.current = Date.now();
       
       try {
-        // Handle Anime separately (no TMDb fetch required)
+        // Handle Anime
         if (validatedParams.type === 'anime') {
-          // Determine source from URL or fallback to first anime-capable
           const searchParams = new URLSearchParams(location.search);
           const sourceParam = searchParams.get('source');
           let source: typeof videoSources[0];
@@ -277,12 +280,13 @@ const WatchPage: React.FC = () => {
             if (requestedSource?.supportsAnime) {
               source = requestedSource;
             } else {
-              // Requested source doesn't support anime, use fallback
               source = videoSources.find(s => s.supportsAnime) || videoSources[0];
             }
           } else {
-            // No source specified, use first anime-capable source
-            source = videoSources.find(s => s.supportsAnime) || videoSources[0];
+            // Use best known source
+            const animeSources = videoSources.filter(s => s.supportsAnime).map(s => s.id);
+            const bestSource = getBestSource(animeSources);
+            source = bestSource ? getVideoSource(bestSource) : videoSources.find(s => s.supportsAnime) || videoSources[0];
           }
           
           const videoUrl = buildVideoUrl(
@@ -294,12 +298,8 @@ const WatchPage: React.FC = () => {
             { dub: animeDub, autoPlay: true, autoSkipIntro: true }
           );
           
-          if (!videoUrl) {
+          if (!videoUrl || !isValidVideoSource(videoUrl)) {
             throw new Error('Failed to generate anime video URL');
-          }
-          
-          if (!isValidVideoSource(videoUrl)) {
-            throw new Error('Invalid anime video source URL');
           }
           
           setState(prev => ({
@@ -331,7 +331,16 @@ const WatchPage: React.FC = () => {
         
         const searchParams = new URLSearchParams(location.search);
         const sourceParam = searchParams.get('source');
-        const source = getVideoSource(sourceParam || undefined);
+        
+        // Use best source if no specific source requested
+        let source: typeof videoSources[0];
+        if (sourceParam) {
+          source = getVideoSource(sourceParam);
+        } else {
+          const availableSources = videoSources.filter(s => s.id !== 'vidsrc-anime').map(s => s.id);
+          const bestSourceId = getBestSource(availableSources);
+          source = bestSourceId ? getVideoSource(bestSourceId) : videoSources[0];
+        }
         
         const videoUrl = buildVideoUrl(
           source,
@@ -350,6 +359,7 @@ const WatchPage: React.FC = () => {
           title: mediaTitle,
           videoUrl,
           currentSource: source,
+          posterPath: mediaData.poster_path,
           isLoading: false
         }));
         
@@ -395,20 +405,15 @@ const WatchPage: React.FC = () => {
     };
 
     fetchMediaDetails();
-  }, [validatedParams, currentUser, location.search, handleBackNavigation]);
+  }, [validatedParams, currentUser, location.search, handleBackNavigation, getBestSource, animeDub]);
 
   if (!validatedParams) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md px-6">
           <h1 className="text-2xl font-bold text-destructive mb-4">Invalid Parameters</h1>
           <p className="text-muted-foreground mb-4">The video parameters are not valid.</p>
-          <button 
-            onClick={() => navigate('/')}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg"
-          >
-            Go Home
-          </button>
+          <Button onClick={() => navigate('/')}>Go Home</Button>
         </div>
       </div>
     );
@@ -417,15 +422,10 @@ const WatchPage: React.FC = () => {
   if (state.error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md px-6">
           <h1 className="text-2xl font-bold text-destructive mb-4">Error</h1>
           <p className="text-muted-foreground mb-4">{state.error}</p>
-          <button 
-            onClick={handleBackNavigation}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg"
-          >
-            Go Back
-          </button>
+          <Button onClick={handleBackNavigation}>Go Back</Button>
         </div>
       </div>
     );
@@ -434,152 +434,157 @@ const WatchPage: React.FC = () => {
   return (
     <div ref={containerRef} className="min-h-screen bg-black">
       <div className="h-screen w-screen relative">
-        {/* Exit Button */}
+        {/* Top Controls Bar */}
         <motion.div 
-          className="absolute top-6 left-6 z-40"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: state.controlsVisible ? 1 : 0, x: 0 }}
+          className="absolute top-0 left-0 right-0 z-40 p-4 md:p-6 flex items-start justify-between gap-4"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: state.controlsVisible ? 1 : 0, y: state.controlsVisible ? 0 : -20 }}
           transition={{ duration: 0.3 }}
         >
+          {/* Left: Exit Button */}
           <Button 
             variant="ghost"
             size="lg" 
             onClick={handleBackNavigation}
-            className="bg-black/80 hover:bg-black/90 text-white rounded-xl border border-white/30 backdrop-blur-xl transition-all duration-300 hover:scale-105 shadow-2xl px-5 py-3"
+            className="bg-black/60 hover:bg-black/80 text-white rounded-xl border border-white/10 backdrop-blur-xl transition-all duration-300 hover:scale-105 shadow-2xl px-4 py-2"
             aria-label="Exit player"
           >
-            <ArrowLeft className="mr-2" size={20} />
-            <span className="font-semibold text-base">Exit</span>
+            <ArrowLeft className="mr-2" size={18} />
+            <span className="font-medium hidden sm:inline">Exit</span>
           </Button>
-        </motion.div>
-        
-        {/* Source Switcher + Anime Sub/Dub */}
-        <motion.div 
-          className="absolute top-6 right-6 z-40 flex flex-col items-end gap-3"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: state.controlsVisible ? 1 : 0, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {/* Source buttons */}
-          <div className="flex flex-wrap gap-2 justify-end">
-            {videoSources
-              .filter(src => (validatedParams?.type === 'anime' ? src.supportsAnime : src.id !== 'vidsrc-anime'))
-              .map((source) => (
-                <motion.button
-                  key={source.id}
-                  onClick={() => switchVideoSource(source.id)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={
-                    `px-4 py-2 text-sm font-medium rounded-xl border-2 transition-all duration-300 backdrop-blur-xl shadow-lg ` +
-                    (state.currentSource.id === source.id 
-                      ? 'bg-primary/90 text-primary-foreground border-primary shadow-primary/50' 
-                      : 'bg-black/80 text-white border-white/30 hover:bg-white/20 hover:border-white/50')
-                  }
-                >
-                  {source.name}
-                </motion.button>
-              ))}
-          </div>
-          
-          {/* Sub/Dub toggle for anime */}
-          {validatedParams?.type === 'anime' && (
-            <motion.div 
-              className="flex gap-1 bg-black/80 border-2 border-white/30 rounded-xl p-1.5 backdrop-blur-xl shadow-2xl"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <button
-                onClick={() => { setAnimeDub(false); switchVideoSource(state.currentSource.id); }}
-                className={
-                  `px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 ` + 
-                  (!animeDub 
-                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
-                    : 'text-white/80 hover:text-white hover:bg-white/10')
-                }
-              >
-                SUB
-              </button>
-              <button
-                onClick={() => { setAnimeDub(true); switchVideoSource(state.currentSource.id); }}
-                className={
-                  `px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 ` + 
-                  (animeDub 
-                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
-                    : 'text-white/80 hover:text-white hover:bg-white/10')
-                }
-              >
-                DUB
-              </button>
-            </motion.div>
-          )}
-        </motion.div>
-        
-        {/* Enhanced Loading Screen */}
-        <AnimatePresence>
-          {state.isLoading && (
-            <motion.div
+
+          {/* Center: Title */}
+          <div className="flex-1 text-center px-4">
+            <motion.h1 
+              className="text-white text-lg md:text-xl font-semibold line-clamp-1 text-shadow"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black z-50"
+              transition={{ delay: 0.2 }}
             >
-              <div className="relative mb-10">
-                <div className="w-24 h-24 border-4 border-primary/20 rounded-full"></div>
+              {state.title}
+            </motion.h1>
+          </div>
+
+          {/* Right: Source Selector Toggle */}
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={() => setShowSourceSelector(!showSourceSelector)}
+            className="bg-black/60 hover:bg-black/80 text-white rounded-xl border border-white/10 backdrop-blur-xl transition-all duration-300 hover:scale-105 shadow-2xl px-4 py-2"
+          >
+            <Settings2 size={18} />
+            <span className="ml-2 font-medium hidden sm:inline">{state.currentSource.name}</span>
+          </Button>
+        </motion.div>
+
+        {/* Source Selector Panel */}
+        <AnimatePresence>
+          {showSourceSelector && state.controlsVisible && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="absolute top-20 right-4 md:right-6 z-40 w-80"
+            >
+              <EnhancedSourceSelector
+                currentSourceId={state.currentSource.id}
+                onSwitch={(sourceId) => {
+                  switchVideoSource(sourceId);
+                  setShowSourceSelector(false);
+                }}
+                isAnime={validatedParams?.type === 'anime'}
+                onTryBest={() => {
+                  const sources = validatedParams?.type === 'anime'
+                    ? videoSources.filter(s => s.supportsAnime).map(s => s.id)
+                    : videoSources.filter(s => s.id !== 'vidsrc-anime').map(s => s.id);
+                  const best = getBestSource(sources);
+                  if (best && best !== state.currentSource.id) {
+                    switchVideoSource(best);
+                    setShowSourceSelector(false);
+                  }
+                }}
+              />
+              
+              {/* Anime Sub/Dub Toggle */}
+              {validatedParams?.type === 'anime' && (
                 <motion.div 
-                  className="absolute inset-0 w-24 h-24 border-4 border-t-primary border-r-primary/50 border-b-transparent border-l-transparent rounded-full"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                />
-                <motion.div 
-                  className="absolute inset-2 w-20 h-20 border-4 border-t-transparent border-r-transparent border-b-primary/50 border-l-primary rounded-full"
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-                />
-              </div>
-              <div className="text-center max-w-md px-6">
-                <motion.h2 
-                  className="text-white text-2xl font-bold mb-3"
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
+                  className="mt-3 flex gap-1 bg-black/80 border border-white/10 rounded-xl p-1.5 backdrop-blur-xl shadow-2xl"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  Loading Video
-                </motion.h2>
-                <motion.div
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <p className="text-primary text-lg font-semibold mb-2">{state.currentSource.name}</p>
-                  <p className="text-white/70 text-base">{state.title}</p>
+                  <button
+                    onClick={() => { setAnimeDub(false); switchVideoSource(state.currentSource.id); }}
+                    className={
+                      `flex-1 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 ` + 
+                      (!animeDub 
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
+                        : 'text-white/80 hover:text-white hover:bg-white/10')
+                    }
+                  >
+                    SUB
+                  </button>
+                  <button
+                    onClick={() => { setAnimeDub(true); switchVideoSource(state.currentSource.id); }}
+                    className={
+                      `flex-1 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 ` + 
+                      (animeDub 
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
+                        : 'text-white/80 hover:text-white hover:bg-white/10')
+                    }
+                  >
+                    DUB
+                  </button>
                 </motion.div>
-              </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
         
-        {/* Video Player iframe - No sandbox restriction */}
+        {/* Safe Video Player with click shield and error handling */}
         {state.videoUrl && (
-          <motion.div
+          <SafeVideoPlayer
+            videoUrl={state.videoUrl}
+            title={state.title}
+            onLoad={handlePlayerLoad}
+            onError={handlePlayerError}
+            onSourceChange={() => {
+              const sources = validatedParams?.type === 'anime'
+                ? videoSources.filter(s => s.supportsAnime).map(s => s.id)
+                : videoSources.filter(s => s.id !== 'vidsrc-anime').map(s => s.id);
+              const best = getBestSource(sources.filter(id => id !== state.currentSource.id));
+              if (best) switchVideoSource(best);
+            }}
             className="w-full h-full"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: state.isLoading ? 0 : 1 }}
+          />
+        )}
+
+        {/* Auto Advance Overlay for TV Shows */}
+        {validatedParams?.type === "tv" && (
+          <AutoAdvanceOverlay
+            isVisible={autoAdvance.showCountdown}
+            countdown={autoAdvance.countdown}
+            nextEpisode={autoAdvance.nextEpisode}
+            onSkip={autoAdvance.skipToNext}
+            onCancel={autoAdvance.cancelAutoAdvance}
+          />
+        )}
+
+        {/* Next Episode Button (when available) */}
+        {validatedParams?.type === "tv" && autoAdvance.hasNextEpisode && !autoAdvance.showCountdown && (
+          <motion.div
+            className="absolute bottom-24 right-6 z-40"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: state.controlsVisible ? 1 : 0, x: state.controlsVisible ? 0 : 20 }}
             transition={{ duration: 0.3 }}
-            style={{ visibility: state.isLoading ? 'hidden' : 'visible' }}
           >
-            <iframe
-              ref={iframeRef}
-              src={state.videoUrl}
-              title={state.title}
-              frameBorder="0"
-              allowFullScreen
-              className="w-full h-full absolute inset-0 bg-black"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-              style={{ zIndex: 10 }}
-              referrerPolicy="no-referrer"
-            />
+            <Button
+              onClick={autoAdvance.skipToNext}
+              className="gap-2 bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/20"
+            >
+              <SkipForward className="w-4 h-4" />
+              Next Episode
+            </Button>
           </motion.div>
         )}
 
