@@ -15,6 +15,7 @@ import Index from "./pages/Index";
 import Watch from "./pages/Watch";
 import NotFound from "./pages/NotFound";
 import DnsPopup from "./components/DnsPopup";
+import NotificationManager from "./components/NotificationManager";
 
 // Optimized lazy loaded components with preloading hints
 const Movies = lazy(() => import(/* webpackChunkName: "pages-movies" */ "./pages/Movies"));
@@ -146,6 +147,7 @@ const App = () => {
                     <AnimatedRoutes />
                     <GlobalMiniPlayer />
                     <DnsPopup />
+                    <NotificationManager />
                   </PageTransitionProvider>
                 </BrowserRouter>
               </TooltipProvider>

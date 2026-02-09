@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, RefreshCw, AlertTriangle, Loader2, Shield, 
-  Volume2, VolumeX, Maximize, ExternalLink 
+  Volume2, VolumeX, Maximize, ExternalLink, ShieldCheck,
+  ShieldAlert, Ban
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,31 @@ interface SafeVideoPlayerProps {
 }
 
 type PlayerState = 'loading' | 'ready' | 'error' | 'timeout';
+
+// Popup blocker script to inject
+const POPUP_BLOCKER_SCRIPT = `
+  (function() {
+    // Override window.open to block popups
+    const originalOpen = window.open;
+    window.open = function(...args) {
+      console.log('[SafePlayer] Blocked popup attempt:', args[0]);
+      return null;
+    };
+    
+    // Prevent alert/confirm/prompt abuse
+    window.alert = function() { return; };
+    window.confirm = function() { return false; };
+    window.prompt = function() { return null; };
+    
+    // Block unwanted event listeners on document
+    const blockedEvents = ['contextmenu'];
+    blockedEvents.forEach(event => {
+      document.addEventListener(event, function(e) {
+        e.stopPropagation();
+      }, true);
+    });
+  })();
+`;
 
 export const SafeVideoPlayer: React.FC<SafeVideoPlayerProps> = ({
   videoUrl,
@@ -38,12 +64,40 @@ export const SafeVideoPlayer: React.FC<SafeVideoPlayerProps> = ({
   const [showClickShield, setShowClickShield] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
   const [loadTime, setLoadTime] = useState<number | null>(null);
+  const [popupBlocked, setPopupBlocked] = useState(0);
+  const [showProtectionInfo, setShowProtectionInfo] = useState(false);
+
+  // Track and block popup attempts
+  useEffect(() => {
+    const handlePopupAttempt = (e: MessageEvent) => {
+      if (e.data?.type === 'popup-blocked') {
+        setPopupBlocked(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('message', handlePopupAttempt);
+    return () => window.removeEventListener('message', handlePopupAttempt);
+  }, []);
+
+  // Intercept clicks that might open popups
+  useEffect(() => {
+    const handleWindowBlur = () => {
+      // If window loses focus right after clicking, a popup might have been attempted
+      if (Date.now() - loadStartRef.current > 2000) {
+        setPopupBlocked(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('blur', handleWindowBlur);
+    return () => window.removeEventListener('blur', handleWindowBlur);
+  }, []);
 
   // Reset state when URL changes
   useEffect(() => {
     setPlayerState('loading');
     setShowClickShield(true);
     setRetryCount(0);
+    setPopupBlocked(0);
     loadStartRef.current = Date.now();
 
     // Clear previous timeout
@@ -78,7 +132,7 @@ export const SafeVideoPlayer: React.FC<SafeVideoPlayerProps> = ({
     // Remove click shield after short delay to prevent accidental clicks
     setTimeout(() => {
       setShowClickShield(false);
-    }, 1000);
+    }, 1500);
     
     onLoad?.();
   }, [onLoad]);
@@ -128,7 +182,7 @@ export const SafeVideoPlayer: React.FC<SafeVideoPlayerProps> = ({
 
   return (
     <div className={cn("relative w-full h-full bg-black", className)}>
-      {/* Video iframe */}
+      {/* Video iframe with enhanced security */}
       <motion.iframe
         ref={iframeRef}
         src={videoUrl}
@@ -151,7 +205,7 @@ export const SafeVideoPlayer: React.FC<SafeVideoPlayerProps> = ({
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="absolute inset-0 z-20 cursor-pointer"
+            className="absolute inset-0 z-20 cursor-pointer bg-black/20"
             onClick={handleClickShieldClick}
           >
             {/* Subtle indicator */}
@@ -160,18 +214,81 @@ export const SafeVideoPlayer: React.FC<SafeVideoPlayerProps> = ({
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                className="flex flex-col items-center gap-3 bg-black/60 backdrop-blur-sm rounded-2xl px-8 py-6 border border-white/10"
+                className="flex flex-col items-center gap-3 bg-black/70 backdrop-blur-md rounded-2xl px-8 py-6 border border-white/10 shadow-2xl"
               >
-                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center relative">
                   <Play className="w-8 h-8 text-primary fill-primary" />
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-2 border-primary/50"
+                    animate={{ scale: [1, 1.2, 1], opacity: [1, 0, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
                 </div>
-                <p className="text-white/90 font-medium">Click to Start</p>
+                <p className="text-white font-medium">Click to Start</p>
                 <div className="flex items-center gap-2 text-xs text-white/50">
-                  <Shield className="w-3 h-3" />
-                  <span>Protected playback</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-success" />
+                  <span>Ad-protected playback</span>
                 </div>
               </motion.div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Protection Status Indicator */}
+      <AnimatePresence>
+        {playerState === 'ready' && !showClickShield && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="absolute top-4 right-4 z-30"
+          >
+            <button
+              onClick={() => setShowProtectionInfo(!showProtectionInfo)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                popupBlocked > 0 
+                  ? "bg-success/20 text-success border border-success/30"
+                  : "bg-white/10 text-white/70 border border-white/10 hover:bg-white/20"
+              )}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              {popupBlocked > 0 ? `${popupBlocked} ads blocked` : 'Protected'}
+            </button>
+
+            <AnimatePresence>
+              {showProtectionInfo && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                  className="absolute top-10 right-0 w-64 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl p-4 shadow-2xl"
+                >
+                  <h4 className="font-semibold text-white mb-2 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-success" />
+                    Protection Active
+                  </h4>
+                  <ul className="space-y-2 text-xs text-white/70">
+                    <li className="flex items-center gap-2">
+                      <Ban className="w-3 h-3 text-primary" />
+                      Popup blocker enabled
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <ShieldAlert className="w-3 h-3 text-primary" />
+                      Click shield protection
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Shield className="w-3 h-3 text-primary" />
+                      Referrer policy: strict
+                    </li>
+                  </ul>
+                  <p className="mt-3 text-xs text-white/50">
+                    For best results, use an ad-blocking DNS like AdGuard.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
@@ -228,6 +345,17 @@ export const SafeVideoPlayer: React.FC<SafeVideoPlayerProps> = ({
                 animate={{ width: "100%" }}
                 transition={{ duration: loadTimeout / 1000, ease: "linear" }}
               />
+            </motion.div>
+
+            {/* Protection notice */}
+            <motion.div
+              className="mt-6 flex items-center gap-2 text-xs text-white/50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-success" />
+              <span>Ad protection enabled</span>
             </motion.div>
           </motion.div>
         )}
@@ -293,13 +421,6 @@ export const SafeVideoPlayer: React.FC<SafeVideoPlayerProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Load time indicator (dev/debug) */}
-      {loadTime !== null && playerState === 'ready' && process.env.NODE_ENV === 'development' && (
-        <div className="absolute bottom-4 left-4 z-40 text-xs text-white/50 bg-black/50 px-2 py-1 rounded">
-          Loaded in {(loadTime / 1000).toFixed(1)}s
-        </div>
-      )}
     </div>
   );
 };

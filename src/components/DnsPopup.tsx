@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Shield, ExternalLink } from 'lucide-react';
+import { X, Shield, ExternalLink, ShieldCheck, Zap, Ban } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -17,7 +16,7 @@ const DnsPopup = () => {
     if (!hasDismissed) {
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, 5000); // Show after 5 seconds
+      }, 8000); // Show after 8 seconds
       return () => clearTimeout(timer);
     }
   }, []);
@@ -38,7 +37,7 @@ const DnsPopup = () => {
       scale: 1,
       transition: { 
         type: "spring",
-        damping: 20,
+        damping: 25,
         stiffness: 300
       }
     },
@@ -62,7 +61,7 @@ const DnsPopup = () => {
             "fixed z-50 w-11/12 max-w-sm",
             isMobile 
               ? "bottom-20 left-1/2 -translate-x-1/2" 
-              : "bottom-10 right-10 translate-x-0"
+              : "bottom-6 right-6 translate-x-0"
           )}
           initial="hidden"
           animate="visible"
@@ -70,48 +69,68 @@ const DnsPopup = () => {
           variants={popupVariants}
         >
           <motion.div 
-            className="rounded-lg shadow-lg p-4 sm:p-5 border bg-card border-border"
+            className="rounded-2xl shadow-2xl p-5 border bg-gradient-to-br from-card to-card/80 backdrop-blur-xl border-border/50"
           >
-            <div className="flex items-start justify-between">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/20">
-                <Shield className="text-primary" size={20} />
+            {/* Header */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20">
+                <ShieldCheck className="text-primary" size={24} />
               </div>
               <button 
                 onClick={handleDismiss}
-                className="text-gray-400 hover:text-white"
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted/50"
                 aria-label="Close"
               >
                 <X size={18} />
               </button>
             </div>
             
-            <h3 className="text-lg font-semibold mt-2 text-foreground">
-              Enable Ad Blocking
+            <h3 className="text-lg font-bold text-foreground mb-2">
+              🛡️ Block Ads & Pop-ups
             </h3>
             
-            <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-              For the best streaming experience, we recommend using an ad-blocking DNS like AdGuard or NextDNS.
+            <p className="text-sm text-muted-foreground mb-4">
+              For the smoothest streaming experience, we recommend using an ad-blocking DNS. It blocks ads at the network level!
             </p>
+
+            {/* Benefits */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Ban className="w-3.5 h-3.5 text-success" />
+                <span>No pop-ups</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Zap className="w-3.5 h-3.5 text-success" />
+                <span>Faster loading</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Shield className="w-3.5 h-3.5 text-success" />
+                <span>Privacy protection</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <ShieldCheck className="w-3.5 h-3.5 text-success" />
+                <span>Device-wide</span>
+              </div>
+            </div>
             
-            <div className="mt-3 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+            <div className="flex flex-col gap-2">
               <Button
-                variant="default"
-                className="w-full sm:w-auto text-xs sm:text-sm"
+                className="w-full gap-2 shadow-lg"
                 onClick={() => {
                   window.open('https://adguard-dns.io/en/public-dns.html', '_blank');
                 }}
                 size="sm"
               >
-                <ExternalLink size={12} className="mr-1.5" /> AdGuard DNS
+                <ExternalLink size={14} /> Setup AdGuard DNS
               </Button>
               
               <Button
-                variant="outline"
-                className="w-full sm:w-auto text-xs sm:text-sm"
+                variant="ghost"
+                className="w-full text-xs text-muted-foreground hover:text-foreground"
                 onClick={handleDismiss}
                 size="sm"
               >
-                Maybe Later
+                I'll do this later
               </Button>
             </div>
           </motion.div>

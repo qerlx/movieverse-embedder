@@ -3,12 +3,13 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getTVShowDetails } from "@/lib/api";
-import { Star, Calendar, Play, Tv, Users, Clock, Info, PlayCircle, Heart, Plus } from "lucide-react";
+import { Star, Calendar, Play, Tv, Users, Clock, Info, PlayCircle, Heart, Plus, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CategoryRow from "@/components/CategoryRow";
 import { useAuth } from "@/contexts/AuthContext";
 import FavoriteButton from "@/components/FavoriteButton";
+import EpisodeReminderButton from "@/components/EpisodeReminderButton";
 
 import WatchProviders from "@/components/WatchProviders";
 import EpisodeSelector from "@/components/EpisodeSelector";
@@ -188,6 +189,15 @@ const TVShowDetail = () => {
               className="w-full sm:w-auto"
             />
           )}
+          
+          {/* Episode Reminder Button */}
+          <EpisodeReminderButton
+            showId={tvShow.id}
+            showName={tvShow.name}
+            posterPath={tvShow.poster_path}
+            variant="outline"
+            className="w-full sm:w-auto"
+          />
           
           {currentUser && (
             <FavoriteButton
