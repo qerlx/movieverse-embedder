@@ -4,13 +4,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Navigate } from "react-router-dom";
-import { LogOut, User, Heart, Clock, Film, Tv } from "lucide-react";
+import { LogOut, User, Heart, Clock, Film, Tv, Bell } from "lucide-react";
 import FavoritesList from "@/components/FavoritesList";
 import WatchHistoryList from "@/components/WatchHistoryList";
 import { useQuery } from "@tanstack/react-query";
 import { storageService } from "@/lib/storage-service";
 import UserStats from "@/components/enhanced/UserStats";
 import { motion } from "framer-motion";
+import RemindersList from "@/components/RemindersList";
 
 const UserProfile = () => {
   const { currentUser, signOut } = useAuth();
@@ -166,14 +167,18 @@ const UserProfile = () => {
             className="w-full lg:w-2/3"
           >
             <Tabs defaultValue="favorites" className="w-full">
-              <TabsList className="grid grid-cols-2 mb-8 bg-background/50 backdrop-blur border border-border/50">
+              <TabsList className="grid grid-cols-3 mb-8 bg-background/50 backdrop-blur border border-border/50">
                 <TabsTrigger value="favorites" className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                   <Heart size={16} />
-                  <span>Favorites</span>
+                  <span className="hidden sm:inline">Favorites</span>
                 </TabsTrigger>
                 <TabsTrigger value="history" className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                   <Clock size={16} />
-                  <span>Recently Watched</span>
+                  <span className="hidden sm:inline">History</span>
+                </TabsTrigger>
+                <TabsTrigger value="reminders" className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+                  <Bell size={16} />
+                  <span className="hidden sm:inline">Reminders</span>
                 </TabsTrigger>
               </TabsList>
               
@@ -204,6 +209,21 @@ const UserProfile = () => {
                     </div>
                   </div>
                   <WatchHistoryList />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="reminders" className="space-y-6">
+                <div className="bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-xl rounded-2xl border border-border/50 p-6 shadow-xl">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Bell size={20} className="text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">Episode Reminders</h2>
+                      <p className="text-muted-foreground">Get notified when new episodes drop</p>
+                    </div>
+                  </div>
+                  <RemindersList />
                 </div>
               </TabsContent>
             </Tabs>
