@@ -58,7 +58,7 @@ export const SafeVideoPlayer: React.FC<SafeVideoPlayerProps> = ({
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const loadStartRef = useRef<number>(0);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   
   const [playerState, setPlayerState] = useState<PlayerState>('loading');
   const [showClickShield, setShowClickShield] = useState(true);

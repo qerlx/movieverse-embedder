@@ -56,7 +56,7 @@ const WatchPage: React.FC = () => {
   const [animeDub, setAnimeDub] = useState(false);
   const [showSourceSelector, setShowSourceSelector] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const loadStartTimeRef = useRef<number>(0);
 
   // Validate parameters

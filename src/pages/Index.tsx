@@ -1,316 +1,166 @@
-
-import React, { useEffect, useState, useCallback } from "react";
-import { Suspense, lazy } from "react";
-import CategoryRow from "@/components/CategoryRow";
-import { 
-  getPopularMovies, 
-  getTrendingMovies, 
-  getPopularTVShows, 
-  getTrendingTVShows 
-} from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
-import FavoritesList from "@/components/FavoritesList";
-import RecentlyWatchedList from "@/components/RecentlyWatchedList";
-import { Heart, Clock } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { getRecentlyWatched } from "@/lib/firebase-watch";
-import StreamingProviders from "@/components/StreamingProviders";
-import { LOADING_SKELETON_COUNT } from "@/constants";
-
-// Lazy load heavy components
-const HeroSlider = lazy(() => import("@/components/HeroSlider"));
-const PersonalizedRecommendations = lazy(() => import("@/components/PersonalizedRecommendations"));
+import { useAuth } from "@/contexts/AuthContext";
+import HeroPrompt from "@/components/pstream/HeroPrompt";
+import PosterRow from "@/components/pstream/PosterRow";
+import RecentlyWatchedList from "@/components/RecentlyWatchedList";
+import {
+  getPopularMovies,
+  getTrendingMovies,
+  getPopularTVShows,
+  getTrendingTVShows,
+  getTopRatedMovies,
+  getNowPlayingMovies,
+} from "@/lib/api";
 
 interface IndexState {
-  heroItems: any[];
   trendingMovies: any[];
   popularMovies: any[];
-  trendingTVShows: any[];
-  popularTVShows: any[];
+  topRatedMovies: any[];
+  nowPlaying: any[];
+  trendingTV: any[];
+  popularTV: any[];
   isLoading: boolean;
   error: string | null;
 }
 
 const Index: React.FC = () => {
   const { currentUser } = useAuth();
-  
   const [state, setState] = useState<IndexState>({
-    heroItems: [],
     trendingMovies: [],
     popularMovies: [],
-    trendingTVShows: [],
-    popularTVShows: [],
+    topRatedMovies: [],
+    nowPlaying: [],
+    trendingTV: [],
+    popularTV: [],
     isLoading: true,
-    error: null
+    error: null,
   });
-  
-  // Memoized fetch function to prevent unnecessary re-renders
-  const fetchData = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
-    try {
-      // Fetch trending movies first for hero
-      const trendingMoviesData = await getTrendingMovies();
-      if (trendingMoviesData?.results) {
-        setState(prev => ({
-          ...prev,
-          heroItems: trendingMoviesData.results.slice(0, 5),
-          trendingMovies: trendingMoviesData.results
-        }));
-      }
-      
-      // Fetch other categories in parallel
-      const [popularMoviesData, trendingTVData, popularTVData] = await Promise.all([
-        getPopularMovies(),
-        getTrendingTVShows(),
-        getPopularTVShows()
-      ]);
-      
-      setState(prev => ({
-        ...prev,
-        popularMovies: popularMoviesData?.results || [],
-        trendingTVShows: trendingTVData?.results || [],
-        popularTVShows: popularTVData?.results || [],
-        isLoading: false
-      }));
-      
-    } catch (error) {
-      console.error("Error fetching homepage data:", error);
-      setState(prev => ({
-        ...prev,
-        error: "Failed to load content. Please refresh the page.",
-        isLoading: false
-      }));
-    }
-  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-  
-  // Loading skeleton component
-  const LoadingSkeleton = () => (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-background via-background/98 to-background">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="relative"
-      >
-        {/* Outer glowing ring */}
-        <motion.div 
-          className="absolute inset-0 rounded-full blur-2xl bg-gradient-to-r from-primary via-primary/60 to-primary opacity-40"
-          animate={{ 
-            scale: [1, 1.3, 1],
-            rotate: [0, 180, 360]
-          }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        />
-        
-        {/* Main spinner */}
-        <motion.div 
-          className="relative w-20 h-20 rounded-full border-4 border-transparent border-t-primary border-r-primary shadow-2xl shadow-primary/30"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-        />
-        
-        {/* Inner pulse */}
-        <motion.div
-          className="absolute inset-4 rounded-full bg-gradient-to-br from-primary/30 to-transparent"
-          animate={{ 
-            scale: [0.8, 1.2, 0.8],
-            opacity: [0.5, 1, 0.5]
-          }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </motion.div>
-      
-      {/* Loading text */}
-      <motion.div
-        className="mt-8 text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent mb-2">
-          Loading
-        </h2>
-        <div className="flex gap-1.5 justify-center">
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              className="w-2 h-2 bg-primary rounded-full"
-              animate={{
-                scale: [1, 1.5, 1],
-                opacity: [0.3, 1, 0.3],
-              }}
-              transition={{
-                duration: 1.2,
-                repeat: Infinity,
-                delay: i * 0.15,
-              }}
-            />
-          ))}
-        </div>
-      </motion.div>
+    let cancelled = false;
+    (async () => {
+      try {
+        const [trending, popular, topRated, nowPlaying, trendingTV, popularTV] =
+          await Promise.all([
+            getTrendingMovies(),
+            getPopularMovies(),
+            getTopRatedMovies(),
+            getNowPlayingMovies(),
+            getTrendingTVShows(),
+            getPopularTVShows(),
+          ]);
+        if (cancelled) return;
+        setState({
+          trendingMovies: trending?.results || [],
+          popularMovies: popular?.results || [],
+          topRatedMovies: topRated?.results || [],
+          nowPlaying: nowPlaying?.results || [],
+          trendingTV: trendingTV?.results || [],
+          popularTV: popularTV?.results || [],
+          isLoading: false,
+          error: null,
+        });
+      } catch (e) {
+        console.error(e);
+        if (!cancelled)
+          setState((s) => ({
+            ...s,
+            isLoading: false,
+            error: "Failed to load content. Please refresh.",
+          }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const RowSkeleton = () => (
+    <div className="space-y-3">
+      <div className="h-5 w-40 bg-muted/60 rounded animate-pulse" />
+      <div className="flex gap-3 md:gap-4 overflow-hidden">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="shrink-0 w-[42vw] sm:w-44 md:w-48 lg:w-52 aspect-[2/3] rounded-xl bg-muted/50 animate-pulse"
+          />
+        ))}
+      </div>
     </div>
   );
 
-  if (state.error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
-          <p className="text-muted-foreground mb-4">{state.error}</p>
-          <button 
-            onClick={fetchData}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Slider */}
-      {!state.isLoading && state.heroItems.length > 0 && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          className="w-full relative overflow-hidden"
-        >
-          <Suspense fallback={<LoadingSkeleton />}>
-            <HeroSlider items={state.heroItems} type="movie" />
-          </Suspense>
-        </motion.div>
-      )}
-      
-      {/* Loading */}
-      {state.isLoading && <LoadingSkeleton />}
-      
-      {!state.isLoading && (
-        <div className="relative -mt-16 md:-mt-24 z-20">
-          <div className="px-4 md:px-6 lg:px-12 space-y-8 md:space-y-10 pb-24">
-            
-            {/* Recently Watched */}
-            {currentUser && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2 className="text-lg md:text-xl font-semibold mb-3 flex items-center gap-2 text-foreground">
-                  <Clock className="w-5 h-5 text-primary" />
-                  Continue Watching
-                </h2>
-                <RecentlyWatchedList limit={6} />
-              </motion.div>
-            )}
+    <div className="min-h-screen">
+      <HeroPrompt />
 
-            {/* My List/Favorites */}
-            {currentUser && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.05 }}
-              >
-                <h2 className="text-lg md:text-xl font-semibold mb-3 flex items-center gap-2 text-foreground">
-                  <Heart className="w-5 h-5 text-primary" />
-                  My List
-                </h2>
-                <FavoritesList />
-              </motion.div>
-            )}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 -mt-6 md:-mt-10 space-y-10 md:space-y-12 pb-24 relative z-10">
+        {currentUser && (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <h2 className="text-lg md:text-xl font-semibold mb-3">
+              Continue Watching
+            </h2>
+            <RecentlyWatchedList limit={8} />
+          </motion.section>
+        )}
 
-            {/* Streaming Providers */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <StreamingProviders />
-            </motion.div>
-            
-            {/* Trending Now */}
-            {state.trendingMovies.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.15 }}
-              >
-                <CategoryRow
-                  title="Trending Now"
-                  items={state.trendingMovies.slice(0, 15)}
-                  type="movie"
-                  isRanked={true}
-                />
-              </motion.div>
-            )}
-            
-            {/* Popular TV Shows */}
-            {state.trendingTVShows.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <CategoryRow
-                  title="Popular TV Shows"
-                  items={state.trendingTVShows}
-                  type="tv"
-                />
-              </motion.div>
-            )}
-            
-            {/* Popular Movies */}
-            {state.popularMovies.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.25 }}
-              >
-                <CategoryRow
-                  title="Popular Movies"
-                  items={state.popularMovies} 
-                  type="movie"
-                />
-              </motion.div>
-            )}
-            
-            {/* Binge-Worthy Series */}
-            {state.popularTVShows.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <CategoryRow
-                  title="Binge-Worthy Series"
-                  items={state.popularTVShows} 
-                  type="tv"
-                />
-              </motion.div>
-            )}
-            
-            {/* Personalized Recommendations */}
-            {currentUser && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.35 }}
-              >
-                <Suspense fallback={<div className="h-48 bg-muted/20 rounded-lg animate-pulse" />}>
-                  <PersonalizedRecommendations />
-                </Suspense>
-              </motion.div>
-            )}
+        {state.error && (
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+            {state.error}
           </div>
-        </div>
-      )}
+        )}
+
+        {state.isLoading ? (
+          <>
+            <RowSkeleton />
+            <RowSkeleton />
+            <RowSkeleton />
+          </>
+        ) : (
+          <>
+            <PosterRow
+              title="Most Popular"
+              items={state.popularMovies}
+              type="movie"
+              viewMoreHref="/discover/popular/movie"
+            />
+            <PosterRow
+              title="In Cinemas"
+              items={state.nowPlaying}
+              type="movie"
+              viewMoreHref="/discover/nowPlaying/movie"
+            />
+            <PosterRow
+              title="Trending Today"
+              items={state.trendingMovies}
+              type="movie"
+              viewMoreHref="/discover/trending/movie"
+            />
+            <PosterRow
+              title="Top Rated"
+              items={state.topRatedMovies}
+              type="movie"
+              viewMoreHref="/discover/topRated/movie"
+            />
+            <PosterRow
+              title="Trending TV Shows"
+              items={state.trendingTV}
+              type="tv"
+              viewMoreHref="/discover/trending/tv"
+            />
+            <PosterRow
+              title="Popular TV Shows"
+              items={state.popularTV}
+              type="tv"
+              viewMoreHref="/discover/popular/tv"
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 };

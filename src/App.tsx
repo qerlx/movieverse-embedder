@@ -30,6 +30,7 @@ const AIRecommendations = lazy(() => import(/* webpackChunkName: "components-ai"
 const AIAutomation = lazy(() => import(/* webpackChunkName: "components-ai" */ "./components/AIAutomation"));
 const Providers = lazy(() => import(/* webpackChunkName: "pages-providers" */ "./pages/Providers"));
 const ProviderDetail = lazy(() => import(/* webpackChunkName: "pages-providers" */ "./pages/ProviderDetail"));
+const Discover = lazy(() => import(/* webpackChunkName: "pages-discover" */ "./pages/Discover"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -73,6 +74,9 @@ const AnimatedRoutes = () => {
           } />
           <Route path="search" element={
             <Suspense fallback={<PageLoader />}><Search /></Suspense>
+          } />
+          <Route path="discover/:category/:type" element={
+            <Suspense fallback={<PageLoader />}><Discover /></Suspense>
           } />
           <Route path="profile" element={
             <Suspense fallback={<PageLoader />}><UserProfile /></Suspense>

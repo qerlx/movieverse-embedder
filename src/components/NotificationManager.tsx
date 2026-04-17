@@ -8,7 +8,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 
 export const NotificationManager: React.FC = () => {
-  const checkIntervalRef = useRef<NodeJS.Timeout>();
+  const checkIntervalRef = useRef<ReturnType<typeof setInterval>>();
   const hasInitialized = useRef(false);
 
   useEffect(() => {
