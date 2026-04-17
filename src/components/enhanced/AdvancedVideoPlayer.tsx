@@ -47,7 +47,7 @@ const AdvancedVideoPlayer: React.FC<AdvancedVideoPlayerProps> = ({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
 
-  const hideControlsTimeout = useRef<NodeJS.Timeout | null>(null);
+  const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize video with saved progress
   useEffect(() => {

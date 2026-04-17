@@ -27,8 +27,8 @@ export function useAutoAdvance(config: AutoAdvanceConfig | null) {
   } | null>(null);
   const [showCountdown, setShowCountdown] = useState(false);
   const [countdown, setCountdown] = useState(10);
-  const countdownRef = useRef<NodeJS.Timeout>();
-  const advanceTimerRef = useRef<NodeJS.Timeout>();
+  const countdownRef = useRef<ReturnType<typeof setTimeout>>();
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Fetch next episode info
   useEffect(() => {
