@@ -31,6 +31,8 @@ const AIAutomation = lazy(() => import(/* webpackChunkName: "components-ai" */ "
 const Providers = lazy(() => import(/* webpackChunkName: "pages-providers" */ "./pages/Providers"));
 const ProviderDetail = lazy(() => import(/* webpackChunkName: "pages-providers" */ "./pages/ProviderDetail"));
 const Discover = lazy(() => import(/* webpackChunkName: "pages-discover" */ "./pages/Discover"));
+const Anime = lazy(() => import(/* webpackChunkName: "pages-anime" */ "./pages/Anime"));
+const AnimeDetail = lazy(() => import(/* webpackChunkName: "pages-anime" */ "./pages/AnimeDetail"));
 
 // Loading fallback
 const PageLoader = () => (
