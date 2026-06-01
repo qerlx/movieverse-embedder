@@ -80,6 +80,12 @@ const AnimatedRoutes = () => {
           <Route path="discover/:category/:type" element={
             <Suspense fallback={<PageLoader />}><Discover /></Suspense>
           } />
+          <Route path="anime" element={
+            <Suspense fallback={<PageLoader />}><Anime /></Suspense>
+          } />
+          <Route path="anime/:id" element={
+            <Suspense fallback={<PageLoader />}><AnimeDetail /></Suspense>
+          } />
           <Route path="profile" element={
             <Suspense fallback={<PageLoader />}><UserProfile /></Suspense>
           } />
