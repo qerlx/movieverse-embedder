@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Search, Bell, User, Menu, X, Film, Tv, Bookmark, Home } from "lucide-react";
+import { Search, Bell, User, Menu, X, Film, Tv, Bookmark, Home, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,7 @@ const PStreamNav: React.FC = () => {
     { to: "/", label: "Home", icon: Home },
     { to: "/movies", label: "Movies", icon: Film },
     { to: "/tv-shows", label: "TV Shows", icon: Tv },
+    { to: "/anime", label: "Anime", icon: Sparkles },
     { to: "/collections", label: "Collections", icon: Bookmark },
   ];
 
