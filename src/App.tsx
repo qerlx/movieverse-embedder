@@ -31,6 +31,8 @@ const AIAutomation = lazy(() => import(/* webpackChunkName: "components-ai" */ "
 const Providers = lazy(() => import(/* webpackChunkName: "pages-providers" */ "./pages/Providers"));
 const ProviderDetail = lazy(() => import(/* webpackChunkName: "pages-providers" */ "./pages/ProviderDetail"));
 const Discover = lazy(() => import(/* webpackChunkName: "pages-discover" */ "./pages/Discover"));
+const Anime = lazy(() => import(/* webpackChunkName: "pages-anime" */ "./pages/Anime"));
+const AnimeDetail = lazy(() => import(/* webpackChunkName: "pages-anime" */ "./pages/AnimeDetail"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -77,6 +79,12 @@ const AnimatedRoutes = () => {
           } />
           <Route path="discover/:category/:type" element={
             <Suspense fallback={<PageLoader />}><Discover /></Suspense>
+          } />
+          <Route path="anime" element={
+            <Suspense fallback={<PageLoader />}><Anime /></Suspense>
+          } />
+          <Route path="anime/:id" element={
+            <Suspense fallback={<PageLoader />}><AnimeDetail /></Suspense>
           } />
           <Route path="profile" element={
             <Suspense fallback={<PageLoader />}><UserProfile /></Suspense>
