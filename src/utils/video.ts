@@ -485,6 +485,7 @@ export function isValidVideoSource(url: string): boolean {
     const allowedDomains = [
       'vidsrc.xyz',
       'vidsrc.cc',
+      'vidsrc.icu',
       'multiembed.mov',
       'moviesapi.club',
       'player.autoembed.cc',
@@ -496,7 +497,19 @@ export function isValidVideoSource(url: string): boolean {
       'rivestream.org',
       'anyembed.xyz',
       'embedmaster.com',
-      'superembed.stream'
+      'superembed.stream',
+      // Anime-specific embed hosts
+      '2anime.xyz',
+      'animez.to',
+      'miruro.tv',
+      'animeowl.me',
+      'aniwatch.to',
+      'anicrush.to',
+      'hianime.to',
+      'megaplay.buzz',
+      'vidlink.pro',
+      'anizone.to',
+      'animekai.to',
     ];
     
     return allowedDomains.some(domain => 
