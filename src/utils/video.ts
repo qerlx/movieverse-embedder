@@ -403,8 +403,8 @@ export function isValidVideoSource(url: string): boolean {
       'player.smashy.stream', 'smashy.stream',
       'vembed.online', 'vidapi.xyz', 'rivestream.org',
       'anyembed.xyz', 'embedmaster.com', 'superembed.stream',
-      // Anime hosts
-      '2anime.xyz', 'miruro.tv', 'megaplay.buzz', 'vidlink.pro',
+      // Anime hosts (verified reachable)
+      'vidlink.pro', 'animetsu.cc', 'megaplay.buzz', 'yugenanime.tv', 'miruro.tv',
     ];
     
     return allowedDomains.some(domain => 
