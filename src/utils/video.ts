@@ -244,11 +244,11 @@ export const videoSources: VideoSource[] = [
     }
   },
   // ============================================================
-  // ANIME SOURCES — all accept AniList ID + episode (+ sub/dub)
+  // ANIME SOURCES — verified working AniList-ID embeds
   // ============================================================
   {
     id: "vidsrc-anime",
-    name: "Vidsrc Anime",
+    name: "Vidsrc.cc (Sub/Dub)",
     fallbackOrder: 12,
     supportsAnime: true,
     getUrl: (type, id, season, episode, extraParams = {}) => {
@@ -261,135 +261,9 @@ export const videoSources: VideoSource[] = [
     }
   },
   {
-    id: "anime-vidsrc-icu",
-    name: "Vidsrc ICU",
-    fallbackOrder: 13,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      if (type !== "anime") return null;
-      const animeId = sanitizeId(id);
-      const ep = episode ? parseInt(episode, 10) : 1;
-      const dub = extraParams.dub ? 'dub' : 'sub';
-      if (!ep || ep < 1) return null;
-      return `https://vidsrc.icu/embed/anime/${animeId}/${ep}/${dub}`;
-    }
-  },
-  {
-    id: "anime-2embed",
-    name: "2Embed Anime",
-    fallbackOrder: 14,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode) => {
-      if (type !== "anime") return null;
-      const animeId = sanitizeId(id);
-      const ep = episode ? parseInt(episode, 10) : 1;
-      if (!ep || ep < 1) return null;
-      return `https://2anime.xyz/embed/${animeId}-episode-${ep}`;
-    }
-  },
-  {
-    id: "anime-animez",
-    name: "Animez",
-    fallbackOrder: 15,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      if (type !== "anime") return null;
-      const animeId = sanitizeId(id);
-      const ep = episode ? parseInt(episode, 10) : 1;
-      const dub = extraParams.dub ? 'dub' : 'sub';
-      if (!ep || ep < 1) return null;
-      return `https://animez.to/embed/${animeId}/${ep}/${dub}`;
-    }
-  },
-  {
-    id: "anime-miruro",
-    name: "Miruro",
-    fallbackOrder: 16,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      if (type !== "anime") return null;
-      const animeId = sanitizeId(id);
-      const ep = episode ? parseInt(episode, 10) : 1;
-      const dub = extraParams.dub ? 'dub' : 'sub';
-      if (!ep || ep < 1) return null;
-      return `https://www.miruro.tv/watch?id=${animeId}&ep=${ep}&type=${dub}`;
-    }
-  },
-  {
-    id: "anime-animeowl",
-    name: "AnimeOwl",
-    fallbackOrder: 17,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      if (type !== "anime") return null;
-      const animeId = sanitizeId(id);
-      const ep = episode ? parseInt(episode, 10) : 1;
-      const dub = extraParams.dub ? 'dub' : 'sub';
-      if (!ep || ep < 1) return null;
-      return `https://animeowl.me/embed/anime/${animeId}/${ep}/${dub}`;
-    }
-  },
-  {
-    id: "anime-aniwatch",
-    name: "AniWatch",
-    fallbackOrder: 18,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      if (type !== "anime") return null;
-      const animeId = sanitizeId(id);
-      const ep = episode ? parseInt(episode, 10) : 1;
-      const dub = extraParams.dub ? 'dub' : 'sub';
-      if (!ep || ep < 1) return null;
-      return `https://aniwatch.to/watch/${animeId}?ep=${ep}&category=${dub}`;
-    }
-  },
-  {
-    id: "anime-anicrush",
-    name: "AniCrush",
-    fallbackOrder: 19,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      if (type !== "anime") return null;
-      const animeId = sanitizeId(id);
-      const ep = episode ? parseInt(episode, 10) : 1;
-      const dub = extraParams.dub ? 'dub' : 'sub';
-      if (!ep || ep < 1) return null;
-      return `https://anicrush.to/embed/${animeId}/${ep}?lang=${dub}`;
-    }
-  },
-  {
-    id: "anime-hianime",
-    name: "HiAnime",
-    fallbackOrder: 20,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      if (type !== "anime") return null;
-      const animeId = sanitizeId(id);
-      const ep = episode ? parseInt(episode, 10) : 1;
-      const dub = extraParams.dub ? 'dub' : 'sub';
-      if (!ep || ep < 1) return null;
-      return `https://hianime.to/embed/watch/${animeId}?ep=${ep}&type=${dub}`;
-    }
-  },
-  {
-    id: "anime-megaplay",
-    name: "MegaPlay",
-    fallbackOrder: 21,
-    supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
-      if (type !== "anime") return null;
-      const animeId = sanitizeId(id);
-      const ep = episode ? parseInt(episode, 10) : 1;
-      const dub = extraParams.dub ? 'dub' : 'sub';
-      if (!ep || ep < 1) return null;
-      const variant = dub === 'dub' ? 's-2' : 's-1';
-      return `https://megaplay.buzz/stream/${variant}/${animeId}/${ep}`;
-    }
-  },
-  {
     id: "anime-vidlink",
-    name: "VidLink Anime",
-    fallbackOrder: 22,
+    name: "VidLink",
+    fallbackOrder: 13,
     supportsAnime: true,
     getUrl: (type, id, season, episode, extraParams = {}) => {
       if (type !== "anime") return null;
@@ -401,23 +275,48 @@ export const videoSources: VideoSource[] = [
     }
   },
   {
-    id: "anime-anizone",
-    name: "AniZone",
-    fallbackOrder: 23,
+    id: "anime-2anime",
+    name: "2Anime",
+    fallbackOrder: 14,
     supportsAnime: true,
-    getUrl: (type, id, season, episode, extraParams = {}) => {
+    getUrl: (type, id, season, episode) => {
       if (type !== "anime") return null;
       const animeId = sanitizeId(id);
       const ep = episode ? parseInt(episode, 10) : 1;
-      const dub = extraParams.dub ? 'dub' : 'sub';
       if (!ep || ep < 1) return null;
-      return `https://anizone.to/embed/${animeId}/${ep}?lang=${dub}`;
+      return `https://2anime.xyz/embed/${animeId}-episode-${ep}`;
     }
   },
   {
-    id: "anime-animekai",
-    name: "AnimeKai",
-    fallbackOrder: 24,
+    id: "anime-megaplay-sub",
+    name: "MegaPlay Sub",
+    fallbackOrder: 15,
+    supportsAnime: true,
+    getUrl: (type, id, season, episode) => {
+      if (type !== "anime") return null;
+      const animeId = sanitizeId(id);
+      const ep = episode ? parseInt(episode, 10) : 1;
+      if (!ep || ep < 1) return null;
+      return `https://megaplay.buzz/stream/s-1/${animeId}/${ep}`;
+    }
+  },
+  {
+    id: "anime-megaplay-dub",
+    name: "MegaPlay Dub",
+    fallbackOrder: 16,
+    supportsAnime: true,
+    getUrl: (type, id, season, episode) => {
+      if (type !== "anime") return null;
+      const animeId = sanitizeId(id);
+      const ep = episode ? parseInt(episode, 10) : 1;
+      if (!ep || ep < 1) return null;
+      return `https://megaplay.buzz/stream/s-2/${animeId}/${ep}`;
+    }
+  },
+  {
+    id: "anime-miruro",
+    name: "Miruro",
+    fallbackOrder: 17,
     supportsAnime: true,
     getUrl: (type, id, season, episode, extraParams = {}) => {
       if (type !== "anime") return null;
@@ -425,7 +324,7 @@ export const videoSources: VideoSource[] = [
       const ep = episode ? parseInt(episode, 10) : 1;
       const dub = extraParams.dub ? 'dub' : 'sub';
       if (!ep || ep < 1) return null;
-      return `https://animekai.to/watch/${animeId}?ep=${ep}&lang=${dub}`;
+      return `https://www.miruro.tv/watch?id=${animeId}&ep=${ep}&type=${dub}`;
     }
   }
 ];
