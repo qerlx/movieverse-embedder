@@ -244,11 +244,12 @@ export const videoSources: VideoSource[] = [
     }
   },
   // ============================================================
-  // ANIME SOURCES — verified working AniList-ID embeds
+  // ANIME SOURCES — verified reachable (HTTP 200) Dec 2025
+  // All accept AniList ID + episode number (+ sub/dub variants)
   // ============================================================
   {
     id: "vidsrc-anime",
-    name: "Vidsrc.cc (Sub/Dub)",
+    name: "Vidsrc.cc",
     fallbackOrder: 12,
     supportsAnime: true,
     getUrl: (type, id, season, episode, extraParams = {}) => {
@@ -275,21 +276,22 @@ export const videoSources: VideoSource[] = [
     }
   },
   {
-    id: "anime-2anime",
-    name: "2Anime",
+    id: "anime-animetsu",
+    name: "Animetsu",
     fallbackOrder: 14,
     supportsAnime: true,
-    getUrl: (type, id, season, episode) => {
+    getUrl: (type, id, season, episode, extraParams = {}) => {
       if (type !== "anime") return null;
       const animeId = sanitizeId(id);
       const ep = episode ? parseInt(episode, 10) : 1;
       if (!ep || ep < 1) return null;
-      return `https://2anime.xyz/embed/${animeId}-episode-${ep}`;
+      const suffix = extraParams.dub ? '/dub' : '';
+      return `https://animetsu.cc/embed/${animeId}/${ep}${suffix}`;
     }
   },
   {
     id: "anime-megaplay-sub",
-    name: "MegaPlay Sub",
+    name: "MegaPlay (Sub)",
     fallbackOrder: 15,
     supportsAnime: true,
     getUrl: (type, id, season, episode) => {
@@ -302,7 +304,7 @@ export const videoSources: VideoSource[] = [
   },
   {
     id: "anime-megaplay-dub",
-    name: "MegaPlay Dub",
+    name: "MegaPlay (Dub)",
     fallbackOrder: 16,
     supportsAnime: true,
     getUrl: (type, id, season, episode) => {
@@ -314,9 +316,22 @@ export const videoSources: VideoSource[] = [
     }
   },
   {
+    id: "anime-yugen",
+    name: "YugenAnime",
+    fallbackOrder: 17,
+    supportsAnime: true,
+    getUrl: (type, id, season, episode) => {
+      if (type !== "anime") return null;
+      const animeId = sanitizeId(id);
+      const ep = episode ? parseInt(episode, 10) : 1;
+      if (!ep || ep < 1) return null;
+      return `https://www.yugenanime.tv/embed/${animeId}/${ep}`;
+    }
+  },
+  {
     id: "anime-miruro",
     name: "Miruro",
-    fallbackOrder: 17,
+    fallbackOrder: 18,
     supportsAnime: true,
     getUrl: (type, id, season, episode, extraParams = {}) => {
       if (type !== "anime") return null;
