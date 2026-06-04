@@ -223,11 +223,14 @@ const WatchPage: React.FC = () => {
   useEffect(() => {
     const showControls = () => {
       setState(prev => ({ ...prev, controlsVisible: true }));
-      
+
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
-      
+
+      // Keep controls visible while source selector is open
+      if (showSourceSelector) return;
+
       controlsTimeoutRef.current = setTimeout(() => {
         setState(prev => ({ ...prev, controlsVisible: false }));
       }, 3000);
@@ -249,13 +252,16 @@ const WatchPage: React.FC = () => {
       document.addEventListener('keydown', handleKeyDown);
     }
 
+    // Show controls immediately when selector toggles
+    showControls();
+
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleBackNavigation]);
+  }, [handleBackNavigation, showSourceSelector]);
 
   // Fetch media details and setup video
   useEffect(() => {
@@ -438,7 +444,7 @@ const WatchPage: React.FC = () => {
         <motion.div 
           className="absolute top-0 left-0 right-0 z-40 p-4 md:p-6 flex items-start justify-between gap-4"
           initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: state.controlsVisible ? 1 : 0, y: state.controlsVisible ? 0 : -20 }}
+          animate={{ opacity: (state.controlsVisible || showSourceSelector) ? 1 : 0, y: (state.controlsVisible || showSourceSelector) ? 0 : -20 }}
           transition={{ duration: 0.3 }}
         >
           {/* Left: Exit Button */}
@@ -479,7 +485,7 @@ const WatchPage: React.FC = () => {
 
         {/* Source Selector Panel */}
         <AnimatePresence>
-          {showSourceSelector && state.controlsVisible && (
+          {showSourceSelector && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
