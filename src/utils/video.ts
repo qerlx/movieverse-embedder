@@ -444,6 +444,7 @@ export function isValidVideoSource(url: string): boolean {
       'anyembed.xyz', 'embedmaster.com', 'superembed.stream',
       // Anime hosts (verified reachable)
       'vidlink.pro', 'animetsu.cc', 'megaplay.buzz', 'yugenanime.tv', 'miruro.tv',
+      '2embed.cc', '2embed.skin', 'uniquestream.net',
     ];
     
     return allowedDomains.some(domain => 
