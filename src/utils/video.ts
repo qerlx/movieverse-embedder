@@ -341,6 +341,45 @@ export const videoSources: VideoSource[] = [
       if (!ep || ep < 1) return null;
       return `https://www.miruro.tv/watch?id=${animeId}&ep=${ep}&type=${dub}`;
     }
+  },
+  {
+    id: "anime-2embed",
+    name: "2Embed",
+    fallbackOrder: 19,
+    supportsAnime: true,
+    getUrl: (type, id, season, episode) => {
+      if (type !== "anime") return null;
+      const animeId = sanitizeId(id);
+      const ep = episode ? parseInt(episode, 10) : 1;
+      if (!ep || ep < 1) return null;
+      return `https://www.2embed.cc/embed/anime/${animeId}/${ep}`;
+    }
+  },
+  {
+    id: "anime-uniquestream",
+    name: "UniqueStream",
+    fallbackOrder: 20,
+    supportsAnime: true,
+    getUrl: (type, id, season, episode) => {
+      if (type !== "anime") return null;
+      const animeId = sanitizeId(id);
+      const ep = episode ? parseInt(episode, 10) : 1;
+      if (!ep || ep < 1) return null;
+      return `https://anime.uniquestream.net/embed/${animeId}/${ep}`;
+    }
+  },
+  {
+    id: "anime-2embed-skin",
+    name: "2Embed Skin",
+    fallbackOrder: 21,
+    supportsAnime: true,
+    getUrl: (type, id, season, episode) => {
+      if (type !== "anime") return null;
+      const animeId = sanitizeId(id);
+      const ep = episode ? parseInt(episode, 10) : 1;
+      if (!ep || ep < 1) return null;
+      return `https://www.2embed.skin/embed/anime/${animeId}/${ep}`;
+    }
   }
 ];
 
@@ -405,6 +444,7 @@ export function isValidVideoSource(url: string): boolean {
       'anyembed.xyz', 'embedmaster.com', 'superembed.stream',
       // Anime hosts (verified reachable)
       'vidlink.pro', 'animetsu.cc', 'megaplay.buzz', 'yugenanime.tv', 'miruro.tv',
+      '2embed.cc', '2embed.skin', 'uniquestream.net',
     ];
     
     return allowedDomains.some(domain => 
